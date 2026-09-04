@@ -26,8 +26,6 @@ const COPY_TABLES = [
   'visitor_events',
 ] as const;
 
-const BOOLEAN_HINTS = /^(is_|has_|active|generated_by_ai|size_image_ai)/;
-
 function requirePostgresUrl(): string {
   const url = String(process.env.DATABASE_URL || '').trim();
   if (!/^postgres(ql)?:\/\//i.test(url)) {
@@ -76,6 +74,18 @@ async function tableExists(db: Sequelize, name: string): Promise<boolean> {
   return rows.length > 0;
 }
 
+async function booleanColumns(db: Sequelize, table: string): Promise<Set<string>> {
+  const rows = (await db.query(
+    `SELECT column_name
+     FROM information_schema.columns
+     WHERE table_schema = current_schema()
+       AND table_name = ?
+       AND data_type = 'boolean'`,
+    { replacements: [table], type: QueryTypes.SELECT }
+  )) as { column_name: string }[];
+  return new Set(rows.map((row) => row.column_name));
+}
+
 async function resetIdentity(db: Sequelize, table: string): Promise<void> {
   await db.query(
     `SELECT setval(
@@ -101,7 +111,7 @@ async function main(): Promise<void> {
 
   await sqlite.authenticate();
   await postgres.authenticate();
-  console.log(`Copy ${sqliteStorage()} → ${process.env.DATABASE_URL}`);
+  console.log(`Copy ${sqliteStorage()} → PostgreSQL`);
 
   for (const table of [...COPY_TABLES].reverse()) {
     if (await tableExists(postgres, table)) {
@@ -129,6 +139,7 @@ async function main(): Promise<void> {
     }
 
     const columns = Object.keys(rows[0]);
+    const boolCols = await booleanColumns(postgres, table);
     const quoted = columns.map((name) => `"${name}"`).join(', ');
     const placeholders = columns.map(() => '?').join(', ');
     const sql = `INSERT INTO ${table} (${quoted}) VALUES (${placeholders})`;
@@ -136,7 +147,7 @@ async function main(): Promise<void> {
     for (const row of rows) {
       const values = columns.map((name) => {
         const value = row[name];
-        if (BOOLEAN_HINTS.test(name)) return asBoolean(value);
+        if (boolCols.has(name)) return asBoolean(value);
         return value;
       });
       await postgres.query(sql, { replacements: values });

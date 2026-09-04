@@ -93,6 +93,22 @@ Sign in at `http://localhost:3000/admin` with the admin user that was copied, or
 - Uploads stay on disk under `frontend/public/`. Put that folder on persistent storage or object storage when you deploy.
 - After deploy, open `/admin`, create a product type, and load a public catalog page to confirm Postgres reads and writes.
 
+### VPS (Ubuntu)
+
+App path: `/var/www/levo`. Postgres listens on localhost only. Nginx on port 80 proxies to Next.js on `127.0.0.1:3000`. Express stays on `127.0.0.1:3333`.
+
+```bash
+sudo systemctl status levo-api levo-web nginx postgresql
+```
+
+Credentials for this VPS live in `/root/levo-credentials.txt` (not in git). After `git pull` on the VPS, rebuild and restart:
+
+```bash
+cd /var/www/levo/backend-server && sudo -u levo npm ci && sudo -u levo npx tsc
+cd /var/www/levo/frontend && sudo -u levo npm ci && sudo -u levo npm run build
+sudo systemctl restart levo-api levo-web
+```
+
 ## 5. Switch back to local SQLite
 
 Remove `DATABASE_URL` and `DB_DIALECT` from `.env`, or set `DB_DIALECT=sqlite`. The API uses `backend-server/database.sqlite` again.
