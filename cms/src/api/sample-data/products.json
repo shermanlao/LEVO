@@ -1,0 +1,78 @@
+{
+  "products": [
+    {
+      "name": "Starpoint 12W Downlight",
+      "description": "Compact recessed downlight with wide flood distribution, ideal for general lighting in corridors and circulation areas.",
+      "slug": "starpoint-12w-downlight",
+      "series": "starpoint",
+      "wattage": 12,
+      "cct": "3000K",
+      "beam_angle": "80",
+      "dimming": "DALI",
+      "is_featured": true,
+      "specifications": {
+        "Luminous Flux": "1200lm",
+        "Color Rendering": "CRI 90",
+        "Cut-out Size": "68mm",
+        "Height": "100mm",
+        "Weight": "0.5kg"
+      }
+    },
+    {
+      "name": "Parscan 24W Spotlight",
+      "description": "High-performance track spotlight with precise beam control, perfect for accent lighting in retail and gallery applications.",
+      "slug": "parscan-24w-spotlight",
+      "series": "parscan",
+      "wattage": 24,
+      "cct": "4000K",
+      "beam_angle": "30",
+      "dimming": "PhaseCut",
+      "is_featured": true,
+      "specifications": {
+        "Luminous Flux": "2400lm",
+        "Color Rendering": "CRI 92",
+        "Head diameter": "120mm",
+        "Length": "225mm",
+        "Weight": "1.2kg"
+      }
+    },
+    {
+      "name": "Compar 36W Linear",
+      "description": "Surface-mounted linear luminaire with oval flood distribution, designed for efficient office and workplace lighting.",
+      "slug": "compar-36w-linear",
+      "series": "compar",
+      "wattage": 36,
+      "cct": "3500K",
+      "beam_angle": "90",
+      "dimming": "ZeroToTen",
+      "is_featured": true,
+      "specifications": {
+        "Luminous Flux": "3600lm",
+        "Color Rendering": "CRI 90",
+        "Length": "1200mm",
+        "Width": "62mm",
+        "Height": "64mm",
+        "Weight": "2.8kg"
+      }
+    },
+    {
+      "name": "Atrium 48W Pendant",
+      "description": "Double-focus pendant luminaire providing powerful yet comfortable illumination for high rooms and prestigious areas.",
+      "slug": "atrium-48w-pendant",
+      "series": "atrium",
+      "wattage": 48,
+      "cct": "2700K",
+      "beam_angle": "60",
+      "dimming": "DALI",
+      "is_featured": true,
+      "specifications": {
+        "Luminous Flux": "4800lm",
+        "Color Rendering": "CRI 92",
+        "Diameter": "200mm",
+        "Height": "250mm",
+        "Cable Length": "3000mm",
+        "Weight": "3.2kg"
+      }
+    }
+  ]
+} 

@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "product_types",
+  "info": {
+    "singularName": "product-type",
+    "pluralName": "product-types",
+    "displayName": "Product Type",
+    "description": "Categories of lighting products"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "series": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product-series-collection.product-series-collection",
+      "mappedBy": "product_type"
+    },
+    "featured_image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "product_type"
+    }
+  }
+} 

@@ -1,0 +1,24 @@
+{
+  "product_types": [
+    {
+      "name": "Recessed Luminaires",
+      "description": "High-performance recessed lighting solutions for architectural integration, offering precise light distribution and visual comfort.",
+      "slug": "recessed-luminaires"
+    },
+    {
+      "name": "Track Lighting",
+      "description": "Versatile track-mounted lighting systems providing flexibility for retail, gallery, and commercial spaces.",
+      "slug": "track-lighting"
+    },
+    {
+      "name": "Surface-mounted Luminaires",
+      "description": "Contemporary surface-mounted lighting solutions combining aesthetic design with optimal illumination.",
+      "slug": "surface-mounted"
+    },
+    {
+      "name": "Pendant Luminaires",
+      "description": "Elegant pendant lighting solutions for ambient and task lighting in various architectural contexts.",
+      "slug": "pendant-luminaires"
+    }
+  ]
+} 

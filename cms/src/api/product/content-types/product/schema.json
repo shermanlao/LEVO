@@ -1,0 +1,170 @@
+{
+  "kind": "collectionType",
+  "collectionName": "products",
+  "info": {
+    "singularName": "product",
+    "pluralName": "products",
+    "displayName": "Product",
+    "description": "Individual lighting products"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "series": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product-series.product-series",
+      "inversedBy": "products"
+    },
+    "specifications": {
+      "type": "json",
+      "required": true
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "featured_image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "wattage": {
+      "type": "float",
+      "required": true
+    },
+    "cct": {
+      "type": "string",
+      "required": true
+    },
+    "beam_angle": {
+      "type": "string",
+      "required": true
+    },
+    "dimming": {
+      "type": "enumeration",
+      "enum": [
+        "None",
+        "Zero_to_Ten_V",
+        "DALI",
+        "Phase_Cut",
+        "DMX",
+        "Triac"
+      ],
+      "required": true
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "datasheet": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "product_code": {
+      "type": "string"
+    },
+    "dimensions": {
+      "type": "string"
+    },
+    "cutout_size": {
+      "type": "string"
+    },
+    "mounting_type": {
+      "type": "string"
+    },
+    "trim_color": {
+      "type": "string"
+    },
+    "reflector_finish": {
+      "type": "string"
+    },
+    "orientation": {
+      "type": "string"
+    },
+    "lamp_source": {
+      "type": "string",
+      "default": "LED"
+    },
+    "lumen": {
+      "type": "integer"
+    },
+    "system_lumen": {
+      "type": "integer"
+    },
+    "cri": {
+      "type": "string"
+    },
+    "ip_rating": {
+      "type": "string"
+    },
+    "lifetime": {
+      "type": "string"
+    },
+    "driver_type": {
+      "type": "string"
+    },
+    "power_factor": {
+      "type": "string"
+    },
+    "input_voltage": {
+      "type": "string"
+    },
+    "main_image_A": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "size_image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "photometric_image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "product_type": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product-type.product-type",
+      "inversedBy": "products"
+    }
+  }
+} 

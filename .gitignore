@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# Next.js / TypeScript build
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# local env and secrets
+.env
+.env.*
+!.env.example
+
+# local SQLite
+*.sqlite
+*.sqlite-journal
+*.db
+
+# caches and logs
+backend-server/cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+
+# accidental local artifacts
+frontend/.f
+frontend/let

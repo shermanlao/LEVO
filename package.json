@@ -1,0 +1,16 @@
+{
+  "name": "levo",
+  "private": true,
+  "description": "Root scripts for LEVO monorepo (avoids npm using a parent directory package.json)",
+  "scripts": {
+    "dev": "npm run dev:all",
+    "dev:all": "concurrently -n web,api -c cyan,magenta \"npm run dev --prefix frontend\" \"npm run dev --prefix backend-server\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend-server",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:backend": "npm run build --prefix backend-server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

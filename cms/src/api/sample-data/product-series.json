@@ -1,0 +1,57 @@
+{
+  "product_series": [
+    {
+      "name": "Starpoint",
+      "description": "Compact recessed downlights combining efficient illumination with elegant design. Perfect for corridors, lobbies, and retail spaces.",
+      "slug": "starpoint",
+      "product_type": "recessed-luminaires",
+      "specifications": {
+        "Installation": "Recessed mounting",
+        "Light Distribution": "Wide flood, Extra wide flood",
+        "Housing Material": "Cast aluminum",
+        "Colors Available": "White, Black, Silver",
+        "IP Rating": "IP44"
+      }
+    },
+    {
+      "name": "Parscan",
+      "description": "Versatile track spotlights for accent lighting and wallwashing in museums, galleries, and retail environments.",
+      "slug": "parscan",
+      "product_type": "track-lighting",
+      "specifications": {
+        "Mounting": "Track adapter",
+        "Rotation": "360°",
+        "Tilt": "90°",
+        "Housing Material": "Cast aluminum",
+        "Colors Available": "White, Black",
+        "IP Rating": "IP20"
+      }
+    },
+    {
+      "name": "Compar",
+      "description": "Linear surface-mounted luminaires offering high visual comfort and efficient workplace lighting.",
+      "slug": "compar",
+      "product_type": "surface-mounted",
+      "specifications": {
+        "Mounting": "Surface-mounted",
+        "Light Distribution": "Wide flood, Oval flood",
+        "Housing Material": "Aluminum profile",
+        "Colors Available": "White, Black, Silver",
+        "IP Rating": "IP54"
+      }
+    },
+    {
+      "name": "Atrium",
+      "description": "Elegant pendant luminaires designed for high rooms and prestigious areas, combining powerful light output with visual comfort.",
+      "slug": "atrium",
+      "product_type": "pendant-luminaires",
+      "specifications": {
+        "Suspension": "Wire-suspended",
+        "Light Distribution": "Flood, Wide flood",
+        "Housing Material": "Cast aluminum",
+        "Colors Available": "White, Black",
+        "IP Rating": "IP20"
+      }
+    }
+  ]
+} 

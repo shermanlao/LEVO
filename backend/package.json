@@ -1,0 +1,28 @@
+{
+  "name": "levo-api",
+  "version": "1.0.0",
+  "description": "Simple API that directly accesses the Strapi SQLite database",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "minimal": "node minimal-api.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "api",
+    "sqlite",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "better-sqlite3": "^11.10.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "multer": "^1.4.5-lts.2",
+    "nodemon": "^3.1.10"
+  }
+}
