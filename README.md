@@ -17,3 +17,5 @@ npm run dev
 - Admin: http://localhost:3000/admin
 
 Clone this repo, run `npm install` at the root plus `frontend` and `backend-server`, then `npm run dev`. Local `node_modules`, `.next`, `.env`, and SQLite files are gitignored.
+
+Production on the VPS pulls this GitHub repo with `sudo /usr/local/sbin/levo-deploy`. See [docs/vps-github.md](docs/vps-github.md).
