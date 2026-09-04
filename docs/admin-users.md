@@ -1,6 +1,6 @@
 # Admin users
 
-Staff logins live in SQLite (`admin_users`). Only the **admin** role can open User management.
+Staff logins live in `admin_users` (SQLite locally, PostgreSQL in production). Only the **admin** role can open User management.
 
 ## Roles
 
@@ -13,7 +13,7 @@ The User management card on `/admin` is shown only when the session role is `adm
 
 ## First admin
 
-On API startup, if `admin_users` is empty, one **admin** row is created from `ADMIN_USERNAME` / `ADMIN_PASSWORD` (defaults `admin` / `abc4321`). After that, those env vars are not used for login. Change passwords in User management (or by replacing the sqlite row).
+On API startup, if `admin_users` is empty, one **admin** row is created from `ADMIN_USERNAME` / `ADMIN_PASSWORD` (defaults `admin` / `abc4321`). After that, those env vars are not used for login. Change passwords in User management.
 
 ## Manage users
 

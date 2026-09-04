@@ -10,7 +10,7 @@ LEVO **pulls** products from LightX’s read-only external API. Partner credenti
 4. Save base URL (default `https://lightx.synology.me/api/external/v1`), API key, and API password.
 5. Click **Test connection**.
 
-Credentials are stored in SQLite (`backend-server/database.sqlite`, table `external_catalog_sources`). The password is not returned after save.
+Credentials are stored in `external_catalog_sources` (SQLite locally, PostgreSQL in production). The password is not returned after save.
 
 ## Import products
 

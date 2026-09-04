@@ -36,6 +36,8 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 
 ## Backend helpers
 
+- `database.ts` — SQLite by default; PostgreSQL when `DATABASE_URL` / `DB_DIALECT=postgres` is set
+- `dbSchema.ts` — dialect-safe `ensureTable` / `ensureIndex` for startup schema
 - `asyncHandler.ts` — Express try/catch + `clientError`
 - `strapiSerialize.ts` — media envelope + type envelope + `parseSpecs`
 - `productMedia.extractStoredImageUrl` — image values on type/series/product writes

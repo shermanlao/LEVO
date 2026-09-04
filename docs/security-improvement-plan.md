@@ -1,6 +1,6 @@
 # Security, error, and vulnerability diagnosis
 
-Lighting catalog: Next.js (`frontend/`, port 3000) + Express (`backend-server/`, loopback port 3333) + SQLite.
+Lighting catalog: Next.js (`frontend/`, port 3000) + Express (`backend-server/`, loopback port 3333) + SQLite locally / PostgreSQL in production.
 
 This document tracks **structural** publish risks. Default testing passwords and encryption keys are a production cutover, not part of the structural work.
 
@@ -22,7 +22,7 @@ Express listens on `127.0.0.1:3333` only. Next **fallback** rewrites public read
 - Helmet + CORS allowlist on Express; smaller JSON body limit (20mb retained on `/api/ai`)
 - Root `error.tsx` / `global-error.tsx`; production 500s do not send stacks
 - Login `next` path allowlisted to `/admin/...`
-- Staff directory in SQLite; user APIs require `role === 'admin'`; last active admin cannot be removed
+- Staff directory in the app database; user APIs require `role === 'admin'`; last active admin cannot be removed
 - First-party visitor hits (`levo_vid`) go through Next `POST /api/visitors/hit`; dashboard counts require an admin session
 
 ## Production cutover (not done here)

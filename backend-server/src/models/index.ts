@@ -22,6 +22,7 @@ import PhotometricBeamTemplate from './PhotometricBeamTemplate';
 import AiProviderSettings from './AiProviderSettings';
 import AiTokenUsageLog from './AiTokenUsageLog';
 import VisitorEvent from './VisitorEvent';
+import ProductCodeSequence from './ProductCodeSequence';
 import { pruneOldVisitorEvents } from '../controllers/dashboardController';
 
 // Project has many paragraphs
@@ -97,4 +98,5 @@ export {
   AiTokenUsageLog,
   AdminUser,
   VisitorEvent,
+  ProductCodeSequence,
 };

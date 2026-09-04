@@ -9,6 +9,7 @@ import ExternalCatalogSource, {
 } from '../models/ExternalCatalogSource';
 import sequelize from '../database';
 import { DataTypes } from 'sequelize';
+import { ensureIndex, ensureTable, integerId } from '../lib/dbSchema';
 import { hashPassword } from '../lib/adminPassword';
 import {
   allocateNextProductCode,
@@ -1399,36 +1400,25 @@ export async function ensureProductExternalColumns(): Promise<void> {
   if (!table.size_image_ai) {
     await qi.addColumn('products', 'size_image_ai', { type: DataTypes.BOOLEAN, allowNull: true });
   }
-  await sequelize.query(
-    'CREATE TABLE IF NOT EXISTS product_code_sequences (prefix TEXT PRIMARY KEY, last_n INTEGER NOT NULL DEFAULT 0)'
+  await ensureTable('product_code_sequences', {
+    prefix: { type: DataTypes.STRING, primaryKey: true },
+    last_n: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  });
+  await ensureIndex(
+    'CREATE UNIQUE INDEX IF NOT EXISTS products_external_source_id ON products (external_source, external_id)'
   );
-  try {
-    await sequelize.query(
-      'CREATE UNIQUE INDEX IF NOT EXISTS products_external_source_id ON products (external_source, external_id)'
-    );
-  } catch (error) {
-    console.warn('Could not create products external id index:', error);
-  }
-  try {
-    await sequelize.query(
-      `CREATE UNIQUE INDEX IF NOT EXISTS products_product_code_unique
-       ON products (product_code)
-       WHERE product_code IS NOT NULL AND product_code != ''`
-    );
-  } catch (error) {
-    console.warn('Could not create products product_code index:', error);
-  }
+  await ensureIndex(
+    `CREATE UNIQUE INDEX IF NOT EXISTS products_product_code_unique
+     ON products (product_code)
+     WHERE product_code IS NOT NULL AND product_code <> ''`
+  );
   const listIndexes = [
     ['products_series_id', 'series_id'],
     ['products_product_type_id', 'product_type_id'],
     ['products_is_featured', 'is_featured'],
   ] as const;
   for (const [name, column] of listIndexes) {
-    try {
-      await sequelize.query(`CREATE INDEX IF NOT EXISTS ${name} ON products (${column})`);
-    } catch (error) {
-      console.warn(`Could not create ${name} index:`, error);
-    }
+    await ensureIndex(`CREATE INDEX IF NOT EXISTS ${name} ON products (${column})`);
   }
 }
 
@@ -1511,15 +1501,11 @@ export async function ensureSeriesFeaturedImageColumn(): Promise<void> {
       allowNull: true,
     });
   }
-  try {
-    await sequelize.query(
-      `CREATE UNIQUE INDEX IF NOT EXISTS product_series_product_code_unique
-       ON product_series (product_code)
-       WHERE product_code IS NOT NULL AND product_code != ''`
-    );
-  } catch (error) {
-    console.warn('Could not create product_series product_code index:', error);
-  }
+  await ensureIndex(
+    `CREATE UNIQUE INDEX IF NOT EXISTS product_series_product_code_unique
+     ON product_series (product_code)
+     WHERE product_code IS NOT NULL AND product_code <> ''`
+  );
   await rewriteSeriesPhraseLumenPlaceholders();
   await backfillSeriesCatalogFields();
 }
@@ -1564,70 +1550,52 @@ function optionText(value: unknown): string {
 }
 
 export async function ensureSeriesOptions(): Promise<void> {
-  await sequelize.query(`
-    CREATE TABLE IF NOT EXISTS series_options (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      series_id INTEGER NOT NULL,
-      kind TEXT NOT NULL,
-      value TEXT NOT NULL,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      lumen REAL,
-      system_lumen REAL,
-      dimensions TEXT,
-      cutout_size TEXT
-    )
-  `);
-  try {
-    await sequelize.query(
-      'CREATE INDEX IF NOT EXISTS series_options_series_kind ON series_options (series_id, kind)'
-    );
-  } catch (error) {
-    console.warn('Could not create series_options index:', error);
-  }
+  await ensureTable('series_options', {
+    id: { ...integerId },
+    series_id: { type: DataTypes.INTEGER, allowNull: false },
+    kind: { type: DataTypes.STRING, allowNull: false },
+    value: { type: DataTypes.STRING, allowNull: false },
+    sort_order: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    lumen: { type: DataTypes.FLOAT, allowNull: true },
+    system_lumen: { type: DataTypes.FLOAT, allowNull: true },
+    dimensions: { type: DataTypes.STRING, allowNull: true },
+    cutout_size: { type: DataTypes.STRING, allowNull: true },
+  });
+  await ensureIndex(
+    'CREATE INDEX IF NOT EXISTS series_options_series_kind ON series_options (series_id, kind)'
+  );
   const { backfillSeriesOptionsFromProducts } = await import('../lib/seriesConfig');
   await backfillSeriesOptionsFromProducts();
 }
 
 export async function ensureSeriesAppearancePhotos(): Promise<void> {
-  await sequelize.query(`
-    CREATE TABLE IF NOT EXISTS series_appearance_photos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      series_id INTEGER NOT NULL,
-      colour TEXT NOT NULL DEFAULT '',
-      trim_color TEXT NOT NULL DEFAULT '',
-      reflector_finish TEXT NOT NULL DEFAULT '',
-      main_image_A TEXT NOT NULL DEFAULT '',
-      source_product_id INTEGER,
-      generated_by_ai INTEGER NOT NULL DEFAULT 0
-    )
-  `);
-  try {
-    await sequelize.query(
-      'CREATE UNIQUE INDEX IF NOT EXISTS series_appearance_photos_combo ON series_appearance_photos (series_id, colour, trim_color, reflector_finish)'
-    );
-  } catch (error) {
-    console.warn('Could not create series_appearance_photos index:', error);
-  }
+  await ensureTable('series_appearance_photos', {
+    id: { ...integerId },
+    series_id: { type: DataTypes.INTEGER, allowNull: false },
+    colour: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
+    trim_color: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
+    reflector_finish: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
+    main_image_A: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
+    source_product_id: { type: DataTypes.INTEGER, allowNull: true },
+    generated_by_ai: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  });
+  await ensureIndex(
+    'CREATE UNIQUE INDEX IF NOT EXISTS series_appearance_photos_combo ON series_appearance_photos (series_id, colour, trim_color, reflector_finish)'
+  );
 }
 
 export async function ensureVariantOptionCatalog(): Promise<void> {
-  await sequelize.query(`
-    CREATE TABLE IF NOT EXISTS variant_option_catalog (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      kind TEXT NOT NULL,
-      value TEXT NOT NULL,
-      code TEXT NOT NULL DEFAULT '',
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      label_image TEXT
-    )
-  `);
-  try {
-    await sequelize.query(
-      'CREATE UNIQUE INDEX IF NOT EXISTS variant_option_catalog_kind_value ON variant_option_catalog (kind, value)'
-    );
-  } catch (error) {
-    console.warn('Could not create variant_option_catalog unique index:', error);
-  }
+  await ensureTable('variant_option_catalog', {
+    id: { ...integerId },
+    kind: { type: DataTypes.STRING, allowNull: false },
+    value: { type: DataTypes.STRING, allowNull: false },
+    code: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
+    sort_order: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    label_image: { type: DataTypes.STRING, allowNull: true },
+  });
+  await ensureIndex(
+    'CREATE UNIQUE INDEX IF NOT EXISTS variant_option_catalog_kind_value ON variant_option_catalog (kind, value)'
+  );
   const qi = sequelize.getQueryInterface();
   try {
     const table = await qi.describeTable('variant_option_catalog');

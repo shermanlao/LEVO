@@ -1,6 +1,6 @@
 # Admin login
 
-Staff routes under `/admin` require a signed-in session. Logins are rows in SQLite (`admin_users`), not a single hardcoded pair after first boot.
+Staff routes under `/admin` require a signed-in session. Logins are rows in `admin_users` (SQLite locally, PostgreSQL in production), not a single hardcoded pair after first boot.
 
 ## How to sign in
 

@@ -8,7 +8,8 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "npm run dev --prefix backend-server",
     "build:frontend": "npm run build --prefix frontend",
-    "build:backend": "npm run build --prefix backend-server"
+    "build:backend": "npm run build --prefix backend-server",
+    "db:copy-sqlite-to-pg": "npm run db:copy-sqlite-to-pg --prefix backend-server"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

@@ -25,6 +25,7 @@
 - [Frontend UI](docs/frontend-ui.md) — CSS tokens, Button/FormField/Card, and helpKey
 - [Image crop board](docs/image-cutboard.md) — contain-start cutboard; series featured image is one source plus 16:9 / 4:5 / 1:1 crops
 - [Shared modules](docs/shared-modules.md) — product specs, slugify, API clients, Express helpers
+- [PostgreSQL](docs/postgresql.md) — SQLite for local development, Postgres for production, copy script, and env vars
 
 ## Run locally
 
@@ -34,4 +35,4 @@ From the repo root:
 - Frontend only: `npm run dev:frontend`
 - API only: `npm run dev:backend`
 
-SQLite file used by the API: `backend-server/database.sqlite`
+Local SQLite file used by the API: `backend-server/database.sqlite`. Production uses PostgreSQL when `DATABASE_URL` is set — see [docs/postgresql.md](docs/postgresql.md).

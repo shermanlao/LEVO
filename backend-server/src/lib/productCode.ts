@@ -1,5 +1,6 @@
 import sequelize from '../database';
 import Product from '../models/Product';
+import ProductCodeSequence from '../models/ProductCodeSequence';
 import ProductSeries from '../models/ProductSeries';
 import ProductType from '../models/ProductType';
 
@@ -67,17 +68,14 @@ export async function allocateNextProductCode(prefix: string): Promise<string> {
   const safePrefix = (prefix || 'GP').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2) || 'GP';
 
   return sequelize.transaction(async (transaction) => {
-    await sequelize.query(
-      'INSERT OR IGNORE INTO product_code_sequences (prefix, last_n) VALUES (?, 0)',
-      { replacements: [safePrefix], transaction }
-    );
+    const [row] = await ProductCodeSequence.findOrCreate({
+      where: { prefix: safePrefix },
+      defaults: { prefix: safePrefix, last_n: 0 },
+      transaction,
+    });
+    await row.reload({ transaction, lock: transaction.LOCK.UPDATE });
 
-    const [rows] = (await sequelize.query(
-      'SELECT last_n FROM product_code_sequences WHERE prefix = ?',
-      { replacements: [safePrefix], transaction }
-    )) as [{ last_n: number }[], unknown];
-
-    let n = Number(rows?.[0]?.last_n || 0) + 1;
+    let n = Number(row.get('last_n') || 0) + 1;
     let code = formatCode(safePrefix, n);
     while (
       (await Product.findOne({ where: { product_code: code }, transaction })) ||
@@ -87,11 +85,7 @@ export async function allocateNextProductCode(prefix: string): Promise<string> {
       code = formatCode(safePrefix, n);
     }
 
-    await sequelize.query(
-      'UPDATE product_code_sequences SET last_n = ? WHERE prefix = ?',
-      { replacements: [n, safePrefix], transaction }
-    );
-
+    await row.update({ last_n: n }, { transaction });
     return code;
   });
 }
