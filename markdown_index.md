@@ -26,7 +26,7 @@
 - [Image crop board](docs/image-cutboard.md) — contain-start cutboard; series featured image is one source plus 16:9 / 4:5 / 1:1 crops
 - [Shared modules](docs/shared-modules.md) — product specs, slugify, API clients, Express helpers
 - [PostgreSQL](docs/postgresql.md) — SQLite for local development, Postgres for production, copy script, and env vars
-- [VPS GitHub deploy](docs/vps-github.md) — deploy key, `levo-deploy` script, and how to publish from `main`
+- [VPS GitHub deploy](docs/vps-github.md) — ask Cursor to push/deploy, or run `levo-deploy`; how the VPS deploy key was set up
 
 ## Run locally
 

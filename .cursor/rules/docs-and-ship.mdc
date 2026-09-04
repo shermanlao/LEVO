@@ -1,0 +1,12 @@
+---
+description: Keep guides in markdown; user often asks the agent to push and deploy.
+alwaysApply: true
+---
+
+# Docs and shipping
+
+After a codebase change, update the matching file under `docs/` (or add one) and list it in `markdown_index.md`. Write so a human can set the feature up without this chat.
+
+When the user asks to **git push**, commit only if they also asked to commit (or the commit is required to push new work they just requested), then `git push` to `https://github.com/shermanlao/LEVO`. When they ask to update production / the VPS, SSH in and run `sudo /usr/local/sbin/levo-deploy`. Do not put `.env` or passwords in git.
+
+See `docs/vps-github.md`.
