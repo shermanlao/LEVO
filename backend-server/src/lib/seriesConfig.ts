@@ -67,6 +67,30 @@ export async function loadSeriesOptions(seriesId: number): Promise<SeriesOptionD
   return rows.map(serializeSeriesOption);
 }
 
+export async function loadSeriesOptionsForIds(
+  seriesIds: number[]
+): Promise<Map<number, SeriesOptionDto[]>> {
+  const map = new Map<number, SeriesOptionDto[]>();
+  const ids = seriesIds.filter((id) => Number.isInteger(id));
+  for (const id of ids) map.set(id, []);
+  if (ids.length === 0) return map;
+  const rows = await SeriesOption.findAll({
+    where: { series_id: ids },
+    order: [
+      ['kind', 'ASC'],
+      ['sort_order', 'ASC'],
+      ['id', 'ASC'],
+    ],
+  });
+  for (const row of rows) {
+    const seriesId = Number(row.get('series_id'));
+    const list = map.get(seriesId) || [];
+    list.push(serializeSeriesOption(row));
+    map.set(seriesId, list);
+  }
+  return map;
+}
+
 export function serializeAppearancePhoto(
   row: SeriesAppearancePhoto | Record<string, unknown>
 ): AppearancePhotoDto {

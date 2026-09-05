@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import { Project, ProjectSection, ProjectSectionImage, ProjectProduct, ProjectParagraph } from '../models';
 import { asyncHandler } from '../lib/asyncHandler';
 import { clientError } from '../lib/errors';
@@ -104,10 +105,15 @@ export const getFeaturedProjects = asyncHandler(async (_req: Request, res: Respo
   }
 });
 
-export const getAllProjects = asyncHandler(async (_req: Request, res: Response) => {
+export const getAllProjects = asyncHandler(async (req: Request, res: Response) => {
   try {
+    const exclude = String(req.query.exclude || '').trim();
+    const limit = Math.min(Number(req.query.limit) || 0, 24);
+    const where = exclude ? { slug: { [Op.ne]: exclude } } : undefined;
     const projects = await Project.findAll({
+      where,
       order: [['created_at', 'DESC']],
+      ...(limit > 0 ? { limit } : {}),
     });
     setPublicListCache(res);
     return res.status(200).json({ success: true, data: projects });
@@ -120,13 +126,9 @@ export const getAllProjects = asyncHandler(async (_req: Request, res: Response) 
 export const getProjectBySlug = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
-    const simpleProject = await Project.findOne({ where: { slug } });
-    if (!simpleProject) {
-      return fail(res, 404, `Project not found with slug "${slug}"`);
-    }
     const project = await Project.findOne({ where: { slug }, include: PROJECT_INCLUDE });
     if (!project) {
-      return fail(res, 500, 'Project found but associations failed to load');
+      return fail(res, 404, `Project not found with slug "${slug}"`);
     }
     return res.status(200).json({ success: true, data: project });
   } catch (error) {

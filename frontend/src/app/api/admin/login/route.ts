@@ -7,6 +7,7 @@ import {
 } from '@/lib/admin-session';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { expressBaseCandidates } from '@/lib/api-config';
+import { internalApiHeaders } from '@/lib/internal-api';
 
 function isRole(value: unknown): value is AdminRole {
   return value === 'admin' || value === 'staff';
@@ -15,13 +16,16 @@ function isRole(value: unknown): value is AdminRole {
 async function verifyWithExpress(
   username: string,
   password: string
-): Promise<{ status: number; json: { username?: string; role?: string; error?: string } }> {
+): Promise<{
+  status: number;
+  json: { username?: string; role?: string; session_epoch?: number; error?: string };
+}> {
   let lastError = 'Could not reach the API server';
   for (const base of expressBaseCandidates()) {
     try {
       const response = await fetch(`${base}/api/auth/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: internalApiHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ username, password }),
         cache: 'no-store',
         signal: AbortSignal.timeout(15000),
@@ -29,6 +33,7 @@ async function verifyWithExpress(
       const json = (await response.json().catch(() => ({}))) as {
         username?: string;
         role?: string;
+        session_epoch?: number;
         error?: string;
       };
       return { status: response.status, json };
@@ -78,7 +83,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const value = await createSessionValue(result.json.username, result.json.role);
+  const value = await createSessionValue(
+    result.json.username,
+    result.json.role,
+    Number(result.json.session_epoch) || 0
+  );
   const response = NextResponse.json({ ok: true, username: result.json.username, role: result.json.role });
   response.cookies.set(ADMIN_SESSION_COOKIE, value, SESSION_COOKIE_OPTIONS);
   return response;

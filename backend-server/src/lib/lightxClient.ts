@@ -81,7 +81,8 @@ export function serializeSourceSettings(source: ExternalCatalogSource) {
     id: source.id,
     name: source.name,
     base_url: source.base_url || DEFAULT_LIGHTX_BASE_URL,
-    api_key: source.api_key || '',
+    api_key: source.api_key ? `••••${String(source.api_key).slice(-4)}` : '',
+    api_key_saved: Boolean(source.api_key),
     password_saved: Boolean(source.api_password),
     is_active: source.is_active,
   };

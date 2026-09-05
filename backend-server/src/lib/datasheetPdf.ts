@@ -1388,52 +1388,144 @@ function drawFamilySizeCards(
   return y;
 }
 
+type ColourGroupBox = {
+  group: FamilyColourGroup;
+  colW: number;
+  width: number;
+  cols: number;
+  rows: number;
+  labelH: number;
+  rowH: number;
+};
+
+function colourChipColumnWidth(
+  doc: PDFKit.PDFDocument,
+  label: string,
+  labelSize: number,
+  minColW: number
+): number {
+  doc.font('Helvetica').fontSize(labelSize);
+  return Math.max(minColW, Math.ceil(doc.widthOfString(label)) + 6);
+}
+
+function measureColourGroupBox(
+  doc: PDFKit.PDFDocument,
+  group: FamilyColourGroup,
+  innerW: number,
+  chip: number,
+  labelSize: number,
+  minColW: number,
+  maxCols: number
+): ColourGroupBox {
+  const colW = Math.min(
+    innerW,
+    Math.max(
+      minColW,
+      ...group.chips.map((item) => colourChipColumnWidth(doc, item.label, labelSize, minColW))
+    )
+  );
+  doc.font('Helvetica-Bold').fontSize(7);
+  const titleW = Math.ceil(doc.widthOfString(group.title.toUpperCase()));
+  const naturalW = Math.max(titleW, group.chips.length * colW);
+  const wraps = naturalW > innerW;
+  const cols = wraps
+    ? Math.min(maxCols, Math.max(1, Math.floor(innerW / colW)))
+    : Math.max(1, group.chips.length);
+  const width = wraps ? innerW : naturalW;
+  const rows = Math.ceil(group.chips.length / cols);
+  doc.font('Helvetica').fontSize(labelSize);
+  const labelH = Math.max(
+    10,
+    ...group.chips.map((item) => doc.heightOfString(item.label, { width: colW, align: 'center' }))
+  );
+  return { group, colW, width, cols, rows, labelH, rowH: chip + 4 + labelH };
+}
+
+function colourGroupDrawHeight(box: ColourGroupBox): number {
+  return 10 + 6 + box.rows * box.rowH;
+}
+
+function drawColourChip(
+  doc: PDFKit.PDFDocument,
+  item: FamilyColourGroup['chips'][number],
+  cellX: number,
+  cy: number,
+  colW: number,
+  chip: number,
+  labelSize: number
+) {
+  const hex = finishSwatchColors(item.value)[0] || finishSwatchColors(item.label)[0];
+  const cx = cellX + colW / 2;
+  const circleY = cy + chip / 2;
+  doc.save();
+  if (hex) {
+    doc.circle(cx, circleY, chip / 2 - 0.8).lineWidth(0.7).fillAndStroke(hex, BLACK);
+  } else {
+    doc.circle(cx, circleY, chip / 2 - 0.8).lineWidth(0.9).stroke(BLACK);
+  }
+  doc.restore();
+  doc.fillColor(BLACK).font('Helvetica').fontSize(labelSize).text(item.label, cellX, cy + chip + 2, {
+    width: colW,
+    align: 'center',
+    lineBreak: true,
+  });
+}
+
+function drawColourGroupBox(
+  doc: PDFKit.PDFDocument,
+  box: ColourGroupBox,
+  x: number,
+  y: number,
+  chip: number,
+  labelSize: number
+) {
+  doc.fillColor(MUTED).font('Helvetica-Bold').fontSize(7).text(box.group.title.toUpperCase(), x, y, {
+    width: box.width,
+    lineBreak: false,
+  });
+  const chipsY = y + 16;
+  box.group.chips.forEach((item, index) => {
+    const col = index % box.cols;
+    const row = Math.floor(index / box.cols);
+    drawColourChip(doc, item, x + col * box.colW, chipsY + row * box.rowH, box.colW, chip, labelSize);
+  });
+}
+
 function drawColourGroups(doc: PDFKit.PDFDocument, groups: FamilyColourGroup[], y: number): number {
   if (!groups.length) return y;
   const innerW = doc.page.width - MARGIN * 2;
   const chip = 28;
-  const colW = 58;
+  const minColW = 58;
   const labelSize = 6.5;
   const maxCols = 10;
-  y = ensureSpace(doc, y, 22 + 14 + chip + 22);
+  const groupGap = 20;
+  const boxes = groups.map((group) =>
+    measureColourGroupBox(doc, group, innerW, chip, labelSize, minColW, maxCols)
+  );
+  const packed = packCodingRowsByWidth(
+    boxes.map((box) => box.width),
+    innerW,
+    groupGap
+  );
+  const first = packed[0];
+  const firstH = first
+    ? Math.max(...boxes.slice(first.start, first.end).map(colourGroupDrawHeight))
+    : 0;
+  y = ensureSpace(doc, y, 22 + firstH);
   doc.fillColor(BLACK).font('Helvetica-Bold').fontSize(9).text('COLOUR OPTIONS', MARGIN, y, { width: innerW });
   y = doc.y + 8;
-  for (const group of groups) {
-    const cols = Math.min(maxCols, Math.max(1, Math.floor(innerW / colW)));
-    const rows = Math.ceil(group.chips.length / cols);
-    doc.font('Helvetica').fontSize(labelSize);
-    const labelH = Math.max(
-      10,
-      ...group.chips.map((item) => doc.heightOfString(item.label, { width: colW, align: 'center' }))
-    );
-    const rowH = chip + 4 + labelH;
-    y = ensureSpace(doc, y, 14 + rows * rowH);
-    doc.fillColor(MUTED).font('Helvetica-Bold').fontSize(7).text(group.title.toUpperCase(), MARGIN, y, {
-      width: innerW,
-    });
-    y = doc.y + 6;
-    group.chips.forEach((item, index) => {
-      const col = index % cols;
-      const row = Math.floor(index / cols);
-      const cellX = MARGIN + col * colW;
-      const cy = y + row * rowH;
-      const hex = finishSwatchColors(item.value)[0] || finishSwatchColors(item.label)[0];
-      const cx = cellX + colW / 2;
-      const circleY = cy + chip / 2;
-      doc.save();
-      if (hex) {
-        doc.circle(cx, circleY, chip / 2 - 0.8).lineWidth(0.7).fillAndStroke(hex, BLACK);
-      } else {
-        doc.circle(cx, circleY, chip / 2 - 0.8).lineWidth(0.9).stroke(BLACK);
-      }
-      doc.restore();
-      doc.fillColor(BLACK).font('Helvetica').fontSize(labelSize).text(item.label, cellX, cy + chip + 2, {
-        width: colW,
-        align: 'center',
-        lineBreak: true,
-      });
-    });
-    y += rows * rowH + 4;
+  for (const range of packed) {
+    const row = boxes.slice(range.start, range.end);
+    const rowH = Math.max(...row.map(colourGroupDrawHeight)) + 4;
+    y = ensureSpace(doc, y, rowH);
+    const rowTop = y;
+    let x = MARGIN;
+    for (let i = 0; i < row.length; i += 1) {
+      if (i > 0) x += groupGap;
+      drawColourGroupBox(doc, row[i], x, rowTop, chip, labelSize);
+      x += row[i].width;
+    }
+    y = rowTop + rowH;
   }
   return y + 14;
 }

@@ -444,6 +444,8 @@ export function specFromCombo(
   return spec;
 }
 
+export const MAX_CARTESIAN_COMBO_ROWS = 200;
+
 export function cartesianComboRows(grouped: Record<string, SeriesOptionDto[]>): SeriesComboRow[] {
   const axes = visibleSelectorKinds(grouped);
   if (axes.length === 0) {
@@ -465,7 +467,8 @@ export function cartesianComboRows(grouped: Record<string, SeriesOptionDto[]>): 
         });
       }
     }
-    rows = next;
+    rows = next.length > MAX_CARTESIAN_COMBO_ROWS ? next.slice(0, MAX_CARTESIAN_COMBO_ROWS) : next;
+    if (rows.length >= MAX_CARTESIAN_COMBO_ROWS) break;
   }
   return rows;
 }

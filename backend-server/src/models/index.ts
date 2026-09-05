@@ -1,5 +1,5 @@
 import sequelize from '../database';
-import { ensureDefaultProductTypes, ensureDefaultHelpTips, ensureDefaultCatalogSource, ensureDefaultSiteContact, ensureDefaultAdminUser, ensureProductExternalColumns, ensureProductTypeColumns, ensureSeriesFeaturedImageColumn, ensureSeriesOptions, ensureSeriesAppearancePhotos, ensureVariantOptionCatalog, ensureAiSettingsColumns, ensureProjectFeaturedColumn, backfillLightxProductCodes } from '../seed/ensureDefaults';
+import { ensureDefaultProductTypes, ensureDefaultHelpTips, ensureDefaultCatalogSource, ensureDefaultSiteContact, ensureDefaultAdminUser, ensureAdminUserColumns, ensureProductExternalColumns, ensureProductTypeColumns, ensureSeriesFeaturedImageColumn, ensureSeriesOptions, ensureSeriesAppearancePhotos, ensureVariantOptionCatalog, ensureAiSettingsColumns, ensureProjectFeaturedColumn, backfillLightxProductCodes } from '../seed/ensureDefaults';
 import AdminUser from './AdminUser';
 import { ensurePhotometricBeamLibrary } from '../lib/photometric/beamLibraryServer';
 import { backfillMissingProductLdtFiles } from '../lib/photometric/persistProductLdt';
@@ -60,6 +60,7 @@ async function syncDatabase() {
     await ensureVariantOptionCatalog();
     await ensureAiSettingsColumns();
     await ensureProjectFeaturedColumn();
+    await ensureAdminUserColumns();
     await ensureDefaultProductTypes();
     await ensureDefaultHelpTips();
     await ensureDefaultCatalogSource();

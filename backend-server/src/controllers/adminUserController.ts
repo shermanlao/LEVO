@@ -53,7 +53,24 @@ export const verifyCredentials = asyncHandler(async (req: Request, res: Response
   if (!user || !user.active || !verifyPassword(password, user.password_hash)) {
     return res.status(401).json({ error: 'Invalid ID or password' });
   }
-  res.json({ username: user.username, role: user.role });
+  res.json({
+    username: user.username,
+    role: user.role,
+    session_epoch: Number(user.session_epoch) || 0,
+  });
+});
+
+export const checkSession = asyncHandler(async (req: Request, res: Response) => {
+  const username = String(req.query.username || '').trim();
+  if (!username) return res.status(400).json({ error: 'Missing username' });
+  const user = await AdminUser.findOne({ where: { username } });
+  if (!user) return res.status(404).json({ error: 'Not found' });
+  res.json({
+    username: user.username,
+    role: user.role,
+    active: Boolean(user.active),
+    epoch: Number(user.session_epoch) || 0,
+  });
 });
 
 export const listAdminUsers = asyncHandler(async (_req: Request, res: Response) => {
@@ -74,8 +91,8 @@ export const createAdminUser = asyncHandler(async (req: Request, res: Response) 
   if (!USERNAME_RE.test(username)) {
     return res.status(400).json({ error: 'Username must be 2–32 letters, numbers, _ or -' });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (password.length < 10) {
+    return res.status(400).json({ error: 'Password must be at least 10 characters' });
   }
   if (!isRole(role)) {
     return res.status(400).json({ error: 'Role must be admin or staff' });
@@ -97,7 +114,7 @@ export const updateAdminUser = asyncHandler(async (req: Request, res: Response) 
   const user = await AdminUser.findByPk(req.params.id);
   if (!user) return notFound(res, 'User');
 
-  const patch: { role?: AdminRole; active?: boolean; password_hash?: string } = {};
+  const patch: { role?: AdminRole; active?: boolean; password_hash?: string; session_epoch?: number } = {};
   if (req.body?.role !== undefined) {
     if (!isRole(req.body.role)) {
       return res.status(400).json({ error: 'Role must be admin or staff' });
@@ -109,10 +126,14 @@ export const updateAdminUser = asyncHandler(async (req: Request, res: Response) 
   }
   if (req.body?.password != null && String(req.body.password).length > 0) {
     const password = String(req.body.password);
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (password.length < 10) {
+      return res.status(400).json({ error: 'Password must be at least 10 characters' });
     }
     patch.password_hash = hashPassword(password);
+  }
+
+  if (patch.role !== undefined || patch.active !== undefined || patch.password_hash) {
+    patch.session_epoch = (Number(user.session_epoch) || 0) + 1;
   }
 
   const nextRole = patch.role ?? user.role;

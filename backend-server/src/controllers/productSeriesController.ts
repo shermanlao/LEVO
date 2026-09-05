@@ -12,10 +12,12 @@ import {
   stringifyDatasheetLabels,
 } from '../lib/shared/datasheet-labels';
 import { allocateProductCodeForTypeId } from '../lib/productCode';
-import { loadSeriesOptions, loadAppearancePhotos, replaceSeriesOptions } from '../lib/seriesConfig';
+import { loadSeriesOptions, loadSeriesOptionsForIds, loadAppearancePhotos, replaceSeriesOptions } from '../lib/seriesConfig';
 import { rewriteLegacyLumenPlaceholders } from '../lib/shared/description-phrase';
-import { loadVariantCatalog } from '../lib/variantCatalog';
-import { Op, type WhereOptions } from 'sequelize';
+import { loadVariantCatalog, type VariantCatalogOption } from '../lib/variantCatalog';
+import type { SeriesOptionDto } from '../lib/shared/series-options';
+import { Op, type Includeable, type WhereOptions } from 'sequelize';
+import { clearGeneratedPdfCache } from '../lib/generatedPdfCache';
 
 const SERIES_INCLUDE = [{ model: ProductType, as: 'type' }];
 
@@ -61,18 +63,33 @@ function seriesWritePayload(body: Record<string, unknown>) {
   return payload;
 }
 
+type SerializeSeriesOpts = {
+  products?: any[];
+  catalog?: VariantCatalogOption[];
+  options?: SeriesOptionDto[];
+  includeAppearance?: boolean;
+};
+
 /** Strapi-like shape expected by the Next.js admin and catalog pages */
-async function serializeProductSeries(row: any, products?: any[]) {
+async function serializeProductSeries(row: any, productsOrOpts?: any[] | SerializeSeriesOpts) {
+  const opts: SerializeSeriesOpts = Array.isArray(productsOrOpts)
+    ? { products: productsOrOpts }
+    : productsOrOpts || {};
   const p = typeof row?.get === 'function' ? row.get({ plain: true }) : row;
   const type = p.type;
-  const productRows = Array.isArray(products) ? products : [];
+  const productRows = Array.isArray(opts.products) ? opts.products : [];
   const seriesId = Number(p.id);
-  const options = Number.isInteger(seriesId) ? await loadSeriesOptions(seriesId) : [];
-  const catalog = Number.isInteger(seriesId) ? await loadVariantCatalog() : [];
+  const options = opts.options
+    ? [...opts.options]
+    : Number.isInteger(seriesId)
+      ? await loadSeriesOptions(seriesId)
+      : [];
+  const catalog = opts.catalog ?? (Number.isInteger(seriesId) ? await loadVariantCatalog() : []);
   for (const option of options) {
     option.code = lookupCatalogCode(catalog, option.kind, option.value) || option.code || null;
     option.label_image = lookupCatalogLabel(catalog, option.kind, option.value) || option.label_image || null;
   }
+  const includeAppearance = opts.includeAppearance !== false;
   return {
     id: p.id,
     attributes: {
@@ -92,13 +109,32 @@ async function serializeProductSeries(row: any, products?: any[]) {
       datasheet_labels: parseDatasheetLabels(p.datasheet_labels),
       option_count: comboCount(groupOptionsByKind(options)),
       options,
-      appearance_photos: Number.isInteger(seriesId) ? await loadAppearancePhotos(seriesId) : [],
+      appearance_photos: includeAppearance && Number.isInteger(seriesId) ? await loadAppearancePhotos(seriesId) : [],
       product_type: serializeTypeEnvelope(type),
       products: { data: productRows.map(serializeProductListItem) },
       createdAt: p.created_at ?? '',
       updatedAt: p.updated_at ?? '',
     },
   };
+}
+
+async function serializeSeriesList(rows: any[]) {
+  const catalog = await loadVariantCatalog();
+  const ids = rows
+    .map((row) => Number(typeof row?.get === 'function' ? row.get('id') : row.id))
+    .filter((id) => Number.isInteger(id));
+  const optionsById = await loadSeriesOptionsForIds(ids);
+  return Promise.all(
+    rows.map((row) => {
+      const id = Number(typeof row?.get === 'function' ? row.get('id') : row.id);
+      return serializeProductSeries(row, {
+        catalog,
+        options: optionsById.get(id) || [],
+        includeAppearance: false,
+        products: [],
+      });
+    })
+  );
 }
 
 async function productsForSeries(seriesId: number) {
@@ -111,14 +147,22 @@ async function productsForSeries(seriesId: number) {
 async function serializeSeriesWithProducts(series: any) {
   const id = Number(series.get?.('id') ?? series.id);
   const products = Number.isInteger(id) ? await productsForSeries(id) : [];
-  return serializeProductSeries(series, products);
+  return serializeProductSeries(series, { products, includeAppearance: true });
+}
+
+function seriesListInclude(typeSlug: string): Includeable[] {
+  if (!typeSlug) return SERIES_INCLUDE;
+  return [{ model: ProductType, as: 'type', where: { slug: typeSlug }, required: true }];
 }
 
 export const getAllProductSeries = asyncHandler(async (req: Request, res: Response) => {
   const q = String(req.query.q || '').trim();
   const featured = String(req.query.featured || '') === '1' || String(req.query.featured || '') === 'true';
+  const typeSlug = String(req.query.type || req.query.type_slug || '').trim();
+  const typeId = Number(req.query.product_type_id || '');
   const clauses: WhereOptions[] = [];
   if (featured) clauses.push({ is_featured: true });
+  if (Number.isInteger(typeId) && typeId > 0) clauses.push({ product_type_id: typeId });
   if (q) {
     const like = `%${q.replace(/[%_]/g, '')}%`;
     clauses.push({
@@ -133,10 +177,10 @@ export const getAllProductSeries = asyncHandler(async (req: Request, res: Respon
   const where: WhereOptions = clauses.length === 0 ? {} : clauses.length === 1 ? clauses[0] : { [Op.and]: clauses };
   const series = await ProductSeries.findAll({
     where,
-    include: SERIES_INCLUDE,
+    include: seriesListInclude(typeSlug),
   });
   setPublicListCache(res);
-  res.json({ data: await Promise.all(series.map((row) => serializeProductSeries(row))) });
+  res.json({ data: await serializeSeriesList(series) });
 });
 
 export const getFeaturedProductSeries = asyncHandler(async (_req: Request, res: Response) => {
@@ -145,7 +189,7 @@ export const getFeaturedProductSeries = asyncHandler(async (_req: Request, res: 
     include: SERIES_INCLUDE,
   });
   setPublicListCache(res);
-  res.json({ data: await Promise.all(series.map((row) => serializeProductSeries(row))) });
+  res.json({ data: await serializeSeriesList(series) });
 });
 
 export const getProductSeriesById = asyncHandler(async (req: Request, res: Response) => {
@@ -190,6 +234,7 @@ export const createProductSeries = asyncHandler(async (req: Request, res: Respon
   if (Array.isArray(req.body?.options)) {
     await replaceSeriesOptions(Number(created.get('id')), req.body.options);
   }
+  await clearGeneratedPdfCache();
   const series = await ProductSeries.findByPk(created.get('id') as number, {
     include: SERIES_INCLUDE,
   });
@@ -203,6 +248,7 @@ export const updateProductSeries = asyncHandler(async (req: Request, res: Respon
   if (Array.isArray(req.body?.options)) {
     await replaceSeriesOptions(Number(series.get('id')), req.body.options);
   }
+  await clearGeneratedPdfCache();
   const full = await ProductSeries.findByPk(req.params.id, { include: SERIES_INCLUDE });
   res.json({ data: await serializeProductSeries(full || series) });
 });

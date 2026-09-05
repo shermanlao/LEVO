@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import HelpButton from '@/components/admin/HelpButton';
-import { collectProductGalleryImages } from '@/lib/image-utils';
+import { collectProductGalleryImages, shouldSkipImageOptimize } from '@/lib/image-utils';
 
 interface ImageCarouselProps {
   product: any;
@@ -96,15 +97,13 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
               : 'border border-gray-200 hover:border-gray-300'
           } overflow-hidden flex-shrink-0 bg-gray-100`}
         >
-          <img
+          <Image
             src={image.url}
             alt={image.alt}
-            loading="lazy"
-            decoding="async"
-            className="object-cover w-full h-full"
-            ref={(img) => {
-              if (img?.complete && img.naturalWidth === 0) hideImage(image.id);
-            }}
+            fill
+            sizes="64px"
+            unoptimized={shouldSkipImageOptimize(image.url)}
+            className="object-cover"
             onError={() => hideImage(image.id)}
           />
         </button>
@@ -135,19 +134,14 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
           className={compact ? 'w-full h-full cursor-zoom-in' : 'block w-full h-full cursor-zoom-in'}
           aria-label={`Zoom ${selected.alt}`}
         >
-          <img
+          <Image
             src={selectedUrl}
             alt={selected.alt}
-            className={
-              compact
-                ? 'object-contain object-top w-full h-full'
-                : 'object-cover w-full h-full'
-            }
-            fetchPriority="high"
-            decoding="async"
-            ref={(img) => {
-              if (img?.complete && img.naturalWidth === 0) setFailed(true);
-            }}
+            fill
+            sizes={compact ? '100vw' : '400px'}
+            priority
+            unoptimized={shouldSkipImageOptimize(selectedUrl)}
+            className={compact ? 'object-contain object-top' : 'object-cover'}
             onLoad={() => setFailed(false)}
             onError={() => setFailed(true)}
           />
@@ -196,10 +190,13 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
           <div className="relative w-full max-w-4xl max-h-full" onClick={(event) => event.stopPropagation()}>
             <div className="bg-white w-full overflow-hidden rounded-lg shadow-2xl">
               <div className="relative w-full flex items-center justify-center max-h-[min(80dvh,calc(100dvh-6rem))]">
-                <img
+                <Image
                   src={selectedUrl}
                   alt={`${product?.attributes?.name || 'Product'} product view - zoomed`}
-                  className="object-contain max-w-full max-h-[min(80dvh,calc(100dvh-6rem))]"
+                  width={1600}
+                  height={1600}
+                  unoptimized={shouldSkipImageOptimize(selectedUrl)}
+                  className="object-contain max-w-full max-h-[min(80dvh,calc(100dvh-6rem))] w-auto h-auto"
                 />
               </div>
             </div>

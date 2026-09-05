@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { expressBaseCandidates } from '@/lib/api-config';
+import { internalApiHeaders } from '@/lib/internal-api';
 import { ADMIN_SESSION_COOKIE, verifySessionValue } from '@/lib/admin-session';
 
 export const dynamic = 'force-dynamic';
@@ -50,7 +51,7 @@ async function postEvent(visitorKey: string, path: string): Promise<boolean> {
     try {
       const response = await fetch(`${base}/api/visitor-events`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: internalApiHeaders({ 'Content-Type': 'application/json' }),
         body,
         cache: 'no-store',
         signal: AbortSignal.timeout(8000),

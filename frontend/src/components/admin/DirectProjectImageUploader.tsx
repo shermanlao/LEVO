@@ -83,34 +83,6 @@ export default function DirectProjectImageUploader({
         throw new Error(uploadData.error || 'Upload failed');
       }
 
-      console.log('File upload successful:', JSON.stringify(uploadData, null, 2));
-      
-      // Now save the image to the database directly using our debug endpoint
-      console.log(`Saving image to database via /api/debug-save-image with projectId=${projectId}, sectionIndex=${sectionIndex}`);
-      const dbSaveResponse = await fetch('/api/debug-save-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          projectId,
-          sectionIndex,
-          imagePath: uploadData.url
-        })
-      });
-      
-      console.log('Database save response received');
-
-      const dbSaveResult = await dbSaveResponse.json();
-      
-      if (!dbSaveResult.success) {
-        console.error('Database save failed:', dbSaveResult);
-        throw new Error(dbSaveResult.error || 'Failed to save image to database');
-      }
-      
-      console.log('Database save successful:', dbSaveResult);
-      
-      // Update UI
       setPreviewUrl(uploadData.url);
       setUploadSuccess(true);
       setUploading(false);

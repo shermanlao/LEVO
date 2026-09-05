@@ -27,7 +27,7 @@ export default function EntityDatasheetLabelEditor({
   description,
 }: EntityDatasheetLabelEditorProps) {
   const extras = useMemo(() => extraLabelsFromCatalog(catalog), [catalog]);
-  const slotKeys = useMemo(() => new Set(DATASHEET_LABEL_SLOTS.map((slot) => slot.key)), []);
+  const slotKeys = useMemo(() => new Set<string>(DATASHEET_LABEL_SLOTS.map((slot) => slot.key)), []);
   const tags = useMemo(() => {
     const orphans = labels.filter(
       (label) =>

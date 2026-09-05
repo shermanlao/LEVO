@@ -10,7 +10,7 @@ import RelatedProjectCard from '@/components/projects/RelatedProjectCard';
 import ProjectDetails from '@/components/projects/ProjectDetails';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import ProjectGalleryWrapper from '@/components/projects/ProjectGalleryWrapper';
-import { getProjectBySlugFromApi, getProjectsFromApi } from '@/lib/sqlite-api';
+import { getProjectBySlugFromApi, getRelatedProjectsFromApi } from '@/lib/sqlite-api';
 import PageRoute from '@/components/layout/PageRoute';
 import { projectRouteItems } from '@/components/layout/pageRouteItems';
 
@@ -82,10 +82,9 @@ async function getRelatedProjectSummaries(
   limit: number = 3
 ): Promise<RelatedProjectSummary[]> {
   try {
-    const rows = await getProjectsFromApi();
+    const rows = await getRelatedProjectsFromApi(excludeSlug, limit);
     return rows
       .filter((r) => String(r.slug) !== excludeSlug)
-      .slice(0, limit)
       .map((r) => {
         const slug = String(r.slug ?? '');
         const title = String(r.name || r.title || slug || 'Project');

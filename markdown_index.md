@@ -25,8 +25,11 @@
 - [Frontend UI](docs/frontend-ui.md) — CSS tokens, Button/FormField/Card, and helpKey
 - [Image crop board](docs/image-cutboard.md) — contain-start cutboard; series featured image is one source plus 16:9 / 4:5 / 1:1 crops
 - [Shared modules](docs/shared-modules.md) — product specs, slugify, API clients, Express helpers
+- [Unused trees](docs/legacy-unused.md) — old `cms/` and `backend/` folders (do not run)
 - [PostgreSQL](docs/postgresql.md) — SQLite for local development, Postgres for production, copy script, and env vars
 - [VPS GitHub deploy](docs/vps-github.md) — ask Cursor to push/deploy, or run `levo-deploy`; how the VPS deploy key was set up
+- [Several sites on the VPS](docs/vps-multiple-sites.md) — extra domains, nginx server blocks, ports, and Postgres
+- [PostgreSQL backups](docs/vps-postgres-backup.md) — daily dumps, SSH tunnel bind for pgAdmin, monitor and restore
 
 ## Run locally
 

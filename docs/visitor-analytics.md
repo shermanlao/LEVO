@@ -18,4 +18,6 @@ Last **7 days**: unique `visitor_key` values, total page views, top 5 paths.
 
 ## Privacy
 
-This is first-party counting for the catalog operator. It is not advertising. If you later need a cookie notice for UK visitors, treat `levo_vid` as an analytics cookie.
+This is first-party counting for the catalog operator. It is not advertising. If the public site is aimed at the UK or EU, show a cookie notice and treat `levo_vid` as an analytics cookie.
+
+Rate limits trust nginx `X-Real-IP` (not the first `X-Forwarded-For` hop).

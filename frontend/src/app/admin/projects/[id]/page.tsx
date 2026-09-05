@@ -744,7 +744,7 @@ export default function EditProjectPage({ params }: { params: { id: string } | P
                                     
                                     // Show success message
                                     setSaveStatus({
-                                      message: 'Image uploaded and saved to database successfully!',
+                                      message: 'Image uploaded. Save the project to keep it.',
                                       type: 'success'
                                     });
                                     

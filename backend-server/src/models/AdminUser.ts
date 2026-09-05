@@ -9,6 +9,7 @@ class AdminUser extends Model {
   declare password_hash: string;
   declare role: AdminRole;
   declare active: boolean;
+  declare session_epoch: number;
   declare created_at: Date | null;
   declare updated_at: Date | null;
 }
@@ -38,6 +39,11 @@ AdminUser.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    session_epoch: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     created_at: {
       type: DataTypes.DATE,

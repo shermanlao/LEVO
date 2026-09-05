@@ -1,15 +1,12 @@
 import crypto from 'crypto';
+import { resolveAiSettingsKey } from '../shared/production-secrets';
 
 const ALGO = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 
 function deriveKey(): Buffer {
-  const secret =
-    process.env.AI_SETTINGS_ENCRYPTION_KEY?.trim() ||
-    process.env.ADMIN_SESSION_SECRET?.trim() ||
-    'levo-local-ai-settings-key';
-  return crypto.createHash('sha256').update(secret, 'utf8').digest();
+  return crypto.createHash('sha256').update(resolveAiSettingsKey(), 'utf8').digest();
 }
 
 export function encryptAiSecret(plain: string): string {

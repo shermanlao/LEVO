@@ -12,6 +12,8 @@ import {
   writeSiteAsset,
   type SiteAssetSlot,
 } from '../lib/siteSettings';
+import { safeHttpUrl, safePublicHref } from '../lib/shared/safe-href';
+import { isAllowedImageBuffer } from '../lib/shared/image-magic';
 
 const IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
@@ -76,9 +78,32 @@ export const updateSiteSettings = asyncHandler(async (req: Request, res: Respons
     'seo_description',
   ] as const;
 
+  const hrefFields = new Set([
+    'website',
+    'hero_cta_href',
+    'social_linkedin',
+    'social_instagram',
+    'social_facebook',
+    'social_threads',
+    'social_pinterest',
+  ]);
+
   for (const field of stringFields) {
     const next = optionalText(body[field]);
-    if (next !== undefined) patch[field] = next;
+    if (next === undefined) continue;
+    if (hrefFields.has(field)) {
+      if (!next) {
+        patch[field] = '';
+        continue;
+      }
+      const safe = field === 'hero_cta_href' ? safePublicHref(next) : safeHttpUrl(next);
+      if (!safe) {
+        return res.status(400).json({ error: `Invalid URL for ${field}` });
+      }
+      patch[field] = safe;
+      continue;
+    }
+    patch[field] = next;
   }
 
   if (body.why_cards !== undefined) {
@@ -106,6 +131,9 @@ export const uploadSiteAsset = async (req: Request, res: Response) => {
     const file = (req as Request & { file?: Express.Multer.File }).file;
     if (!file?.buffer?.length) {
       return res.status(400).json({ error: 'No image uploaded' });
+    }
+    if (!isAllowedImageBuffer(file.buffer)) {
+      return res.status(400).json({ error: 'File is not a valid JPEG, PNG, WebP, or GIF image' });
     }
     const row = await getOrCreateSiteContact();
     const column = siteAssetColumn(slot);

@@ -101,7 +101,7 @@ App path: `/var/www/levo`. Postgres listens on localhost only. Nginx on port 80 
 sudo systemctl status levo-api levo-web nginx postgresql
 ```
 
-Credentials for this VPS live in `/root/levo-credentials.txt` (not in git). To publish code from GitHub, use `sudo /usr/local/sbin/levo-deploy` — see [VPS GitHub deploy](vps-github.md).
+Credentials for this VPS live in `/root/levo-credentials.txt` (not in git). To publish code from GitHub, use `sudo /usr/local/sbin/levo-deploy` — see [VPS GitHub deploy](vps-github.md). Daily database dumps: [PostgreSQL backups](vps-postgres-backup.md).
 
 ## 5. Switch back to local SQLite
 

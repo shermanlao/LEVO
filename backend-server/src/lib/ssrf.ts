@@ -18,11 +18,12 @@ export function isPrivateOrLocalIp(ip: string): boolean {
     const n = ipToInt(ip);
     if (n == null) return true;
     if (ip === '0.0.0.0') return true;
-    if ((n & 0xff000000) === 0x7f000000) return true; // 127.0.0.0/8
-    if ((n & 0xff000000) === 0x0a000000) return true; // 10.0.0.0/8
-    if ((n & 0xfff00000) === 0xac100000) return true; // 172.16.0.0/12
-    if ((n & 0xffff0000) === 0xc0a80000) return true; // 192.168.0.0/16
-    if ((n & 0xffff0000) === 0xa9fe0000) return true; // 169.254.0.0/16
+    // JS bitwise ops are signed 32-bit; >>> 0 so 192.168/172.16 masks compare correctly.
+    if (((n & 0xff000000) >>> 0) === 0x7f000000) return true; // 127.0.0.0/8
+    if (((n & 0xff000000) >>> 0) === 0x0a000000) return true; // 10.0.0.0/8
+    if (((n & 0xfff00000) >>> 0) === 0xac100000) return true; // 172.16.0.0/12
+    if (((n & 0xffff0000) >>> 0) === 0xc0a80000) return true; // 192.168.0.0/16
+    if (((n & 0xffff0000) >>> 0) === 0xa9fe0000) return true; // 169.254.0.0/16
     return false;
   }
   if (version === 6) {

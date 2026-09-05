@@ -7,6 +7,7 @@ import HelpButton from '@/components/admin/HelpButton';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AlertBanner from '@/components/ui/AlertBanner';
 import Button from '@/components/ui/Button';
+import AdminTable from '@/components/ui/AdminTable';
 
 type TemplateRow = {
   id: number;
@@ -111,20 +112,11 @@ export default function LdtLibraryAdminPage() {
       {message && <AlertBanner variant="success">{message}</AlertBanner>}
 
       <div className="bg-white shadow-md rounded overflow-x-auto">
-        {loading ? (
-          <p className="p-6 text-gray-500">Loading library…</p>
-        ) : (
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left">
-              <tr>
-                <th className="px-4 py-3">Shape</th>
-                <th className="px-4 py-3">Beam</th>
-                <th className="px-4 py-3">File</th>
-                <th className="px-4 py-3">Source</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <AdminTable
+          columns={['Shape', 'Beam', 'File', 'Source', 'Actions']}
+          loading={loading}
+          empty={!loading && rows.length === 0}
+        >
               {rows.map((row) => (
                 <tr key={row.id} className="border-t">
                   <td className="px-4 py-3">{familyLabel(row.family)}</td>
@@ -173,9 +165,7 @@ export default function LdtLibraryAdminPage() {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        )}
+        </AdminTable>
       </div>
     </div>
   );

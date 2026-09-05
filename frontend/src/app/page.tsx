@@ -3,6 +3,7 @@ import Image from 'next/image';
 import SeriesGrid, { type SeriesGridRow } from '@/components/products/SeriesGrid';
 import ProjectCatalog, { type ProjectListItem } from '@/components/projects/ProjectCatalog';
 import { getFeaturedSeries, getFeaturedProjects, getSiteContact } from '@/lib/sqlite-api';
+import { safePublicHref } from '@/lib/safe-http-url';
 import { asStrapiList } from '@/lib/strapi-entity';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
@@ -66,17 +67,15 @@ export default async function Home() {
   } catch {
     /* settings stay empty when contact details are unavailable */
   }
-  try {
-    const response = await getFeaturedSeries();
-    featuredSeries = asStrapiList(response?.data) as SeriesGridRow[];
-  } catch (error) {
-    console.error('Home - Failed to load featured series:', error);
+  const [seriesResult, projectRows] = await Promise.allSettled([getFeaturedSeries(), getFeaturedProjects()]);
+  if (seriesResult.status === 'fulfilled') {
+    featuredSeries = asStrapiList(seriesResult.value?.data) as SeriesGridRow[];
+  } else {
+    console.error('Home - Failed to load featured series:', seriesResult.reason);
     featuredError = 'Could not load featured series. Check that the API and database are available.';
   }
-  try {
-    featuredProjects = (await getFeaturedProjects()).map((row) => toProjectItem(row)).filter(Boolean) as ProjectListItem[];
-  } catch {
-    featuredProjects = [];
+  if (projectRows.status === 'fulfilled') {
+    featuredProjects = projectRows.value.map((row) => toProjectItem(row)).filter(Boolean) as ProjectListItem[];
   }
 
   const slogan = contact?.slogan?.trim() || '';
@@ -86,7 +85,7 @@ export default async function Home() {
     contact?.hero_subtitle?.trim() ||
     'Discover our range of energy-efficient, stylish lighting products designed for both residential and commercial applications.';
   const ctaLabel = contact?.hero_cta_label?.trim() || 'Explore Products';
-  const ctaHref = contact?.hero_cta_href?.trim() || '/products';
+  const ctaHref = safePublicHref(contact?.hero_cta_href) || '/products';
   const heroImage = contact?.hero_image?.trim() || '/hero-image.jpg';
   const featuredHeading = contact?.featured_heading?.trim() || 'Featured Products';
   const featuredProjectsHeading = contact?.featured_projects_heading?.trim() || 'Featured Projects';

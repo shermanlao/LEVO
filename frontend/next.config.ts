@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -52,7 +52,13 @@ const nextConfig: NextConfig = {
     const imageCache = [
       { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' },
     ];
+    const security = [
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+    ];
     return [
+      { source: '/:path*', headers: security },
       { source: '/images/products/:path*', headers: imageCache },
       { source: '/images/ai/:path*', headers: imageCache },
       { source: '/images/site/:path*', headers: imageCache },

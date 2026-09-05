@@ -84,13 +84,8 @@ export default async function ProductCategoryPage({ params, searchParams }: Prop
     }
 
     try {
-      const seriesResponse = await getProductSeries();
-      const allSeries = asStrapiList(seriesResponse?.data) as SeriesRow[];
-      seriesList = allSeries.filter((row) => {
-        const slug = row.attributes?.product_type?.data?.attributes?.slug;
-        const typeId = row.attributes?.product_type_id ?? row.attributes?.product_type?.data?.id;
-        return slug === type || typeId === productType?.id;
-      });
+      const seriesResponse = await getProductSeries({ type });
+      seriesList = asStrapiList(seriesResponse?.data) as SeriesRow[];
     } catch (loadError) {
       console.error('ProductCategoryPage - Error loading series:', loadError);
       apiConnectionError = true;

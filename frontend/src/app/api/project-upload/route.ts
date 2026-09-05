@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { writeFile } from 'fs/promises';
 import { requireAdminSession } from '@/lib/admin-backend';
+import { isAllowedImageBuffer } from '@shared/image-magic';
 
 const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
 
@@ -55,8 +56,11 @@ export async function POST(request: NextRequest) {
 
     await ensureDirectoryExists(resolvedDir);
     const targetPath = path.join(resolvedDir, fileName);
-    const bytes = await file.arrayBuffer();
-    await writeFile(targetPath, Buffer.from(bytes));
+    const bytes = Buffer.from(await file.arrayBuffer());
+    if (!isAllowedImageBuffer(bytes)) {
+      return NextResponse.json({ error: 'File is not a valid JPEG, PNG, WebP, or GIF image' }, { status: 400 });
+    }
+    await writeFile(targetPath, bytes);
 
     const publicUrl = `/images/projects/${projectSlug}/${fileName}`;
     return NextResponse.json({ success: true, url: publicUrl, path: publicUrl });

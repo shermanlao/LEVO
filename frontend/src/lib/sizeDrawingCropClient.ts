@@ -1,15 +1,6 @@
-export type NormalizedBbox = { x: number; y: number; width: number; height: number };
+import { loadImageElement } from '@/lib/image-cutboard';
 
-async function loadImageElement(src: string): Promise<HTMLImageElement> {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error('Failed to load image for crop'));
-    img.src = src;
-  });
-  return img;
-}
+export type NormalizedBbox = { x: number; y: number; width: number; height: number };
 
 export async function imageUrlToDataUrl(imageUrl: string): Promise<string> {
   if (imageUrl.startsWith('data:')) return imageUrl;

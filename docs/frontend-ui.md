@@ -59,7 +59,7 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `StatTile` | Dashboard number + label; optional `href` + `helpKey` |
 | `OptionTag` | Catalog option chip on series variants. Outline = available; filled black = selected. Requires `helpKey`. |
 | `SpecificationsEditor` | Series/product key-value specs |
-| `ProductCreateForm` / `ProductEditForm` / `ProductTable` | Admin products list page |
+| Size packs | Series variants page (`SizePackPhotos`); `/admin/products` redirects to series |
 
 ## helpKey
 

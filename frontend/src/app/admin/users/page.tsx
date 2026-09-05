@@ -196,10 +196,12 @@ export default function AdminUsersPage() {
             />
             <TextInput
               label="Password"
+              hint="At least 10 characters."
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
+              minLength={10}
               autoComplete="new-password"
             />
             <SelectField
@@ -251,9 +253,11 @@ export default function AdminUsersPage() {
             </SelectField>
             <TextInput
               label="New password (optional)"
+              hint="Leave blank to keep the current password. New passwords need at least 10 characters."
               type="password"
               value={editPassword}
               onChange={(e) => setEditPassword(e.target.value)}
+              minLength={10}
               autoComplete="new-password"
             />
             <div className="flex items-end gap-3">

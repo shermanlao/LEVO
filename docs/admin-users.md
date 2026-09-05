@@ -13,16 +13,16 @@ The User management card on `/admin` is shown only when the session role is `adm
 
 ## First admin
 
-On API startup, if `admin_users` is empty, one **admin** row is created from `ADMIN_USERNAME` / `ADMIN_PASSWORD` (defaults `admin` / `abc4321`). After that, those env vars are not used for login. Change passwords in User management.
+On API startup, if `admin_users` is empty, one **admin** row is created from `ADMIN_USERNAME` / `ADMIN_PASSWORD`. Locally the defaults are `admin` / `abc4321`. Production requires `ADMIN_PASSWORD` and will not seed the testing password. After that, those env vars are not used for login. Change passwords in User management.
 
 ## Manage users
 
 1. Sign in as admin and open `/admin`.
 2. **User management** → **Manage users** (`/admin/users`).
-3. **Add user**: username (2–32 letters, numbers, `_` or `-`; this is the login name), password (at least 6 characters), role admin or staff. The numeric ID is assigned by the database.
+3. **Add user**: username (2–32 letters, numbers, `_` or `-`; this is the login name), password (at least 10 characters), role admin or staff. The numeric ID is assigned by the database.
 4. **Edit**: role, active, optional new password.
 5. **Delete**: the last remaining **active admin** cannot be deleted, demoted to staff, or disabled.
 
-Passwords are stored as scrypt hashes. The session cookie is `username.role.exp.sig`.
+Passwords are stored as scrypt hashes. The session cookie is `username.role.exp.epoch.sig`. Changing password, role, or active increments `session_epoch` so existing cookies stop working.
 
 Next proxies user CRUD to Express `/api/admin-users` on loopback. Those Express routes are not in the public Next rewrites.

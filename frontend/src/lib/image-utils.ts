@@ -58,12 +58,7 @@ export function toPublicImagePath(value: unknown): string {
 
 /** Staff `/uploads` files and blob previews must skip Next image optimization. */
 export function shouldSkipImageOptimize(src: string): boolean {
-  return (
-    src.startsWith('/uploads/') ||
-    src.startsWith('blob:') ||
-    src.startsWith('data:') ||
-    src.includes('/api/product-media/')
-  );
+  return src.startsWith('blob:') || src.startsWith('data:');
 }
 
 export type ProductGalleryImage = {

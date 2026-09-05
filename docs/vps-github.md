@@ -81,7 +81,11 @@ GitHub should reply that `shermanlao/LEVO` authenticated, with no shell access.
 | Deploy script | `/usr/local/sbin/levo-deploy` (copy of `scripts/levo-deploy.sh`) |
 | Site | http://187.7.21.12 |
 
+To run **another** website on the same VPS (second domain, nginx block, ports), see [Several sites on the VPS](vps-multiple-sites.md).
+
 `.env` files are gitignored, so `git reset --hard` during deploy does not wipe database credentials.
+
+Production must set `ADMIN_SESSION_SECRET`, `AI_SETTINGS_ENCRYPTION_KEY`, and `INTERNAL_API_SECRET` (same values on `levo-api` and `levo-web`). The API will not start if those are missing or still the local defaults. See [Security improvement plan](security-improvement-plan.md).
 
 ## If `git pull` fails
 

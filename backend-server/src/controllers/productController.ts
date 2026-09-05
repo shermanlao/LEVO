@@ -6,6 +6,7 @@ import { errorMessage } from '../lib/errors';
 import { serializeProduct, serializeProductListItem } from '../lib/serializeProduct';
 import { warmProductRemoteMedia } from '../lib/productMediaCache';
 import { setPublicListCache } from '../lib/publicCache';
+import { clearGeneratedPdfCache } from '../lib/generatedPdfCache';
 import { allocateProductCodeForTypeId } from '../lib/productCode';
 import {
   PRODUCT_IMAGE_FIELDS,
@@ -297,6 +298,7 @@ export const createProduct = asyncHandler(async (req: Request, res: Response) =>
   const product = await Product.create(body as any);
   const productId = product.get('id') as number;
   await persistProductLdtFileSafe(productId);
+  await clearGeneratedPdfCache();
   const full = await Product.findByPk(productId, { include: PRODUCT_INCLUDE });
   res.status(201).json({ data: serializeProduct(full || product) });
 });
@@ -306,6 +308,7 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   if (!product) return notFound(res, 'Product');
   await product.update(unwrapProductBody(req.body));
   await persistProductLdtFileSafe(Number(req.params.id));
+  await clearGeneratedPdfCache();
   const full = await Product.findByPk(req.params.id, { include: PRODUCT_INCLUDE });
   res.json({ data: serializeProduct(full || product) });
 });
@@ -315,5 +318,6 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
   if (!product) return notFound(res, 'Product');
   deleteProductLdtFile(product.get('ldt_file') as string | null);
   await product.destroy();
+  await clearGeneratedPdfCache();
   deleteSuccess(res);
 });

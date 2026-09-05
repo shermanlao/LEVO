@@ -17,6 +17,11 @@ LEVO keeps duplicated logic in one place instead of copying it across the Next.j
 | `slugify.ts` | `slugify()` |
 | `cache-constants.ts` | `PUBLIC_LIST_CACHE` / `PUBLIC_CACHE_CONTROL` |
 | `size-drawing-mounting.ts` | Recessed mount / cuthole checks |
+| `production-secrets.ts` | Local default names, production fail-fast, `INTERNAL_API_HEADER` |
+| `safe-href.ts` | `safeHttpUrl` / `safePublicHref` for stored links |
+| `image-magic.ts` | JPEG/PNG/GIF/WebP magic-byte check |
+| `admin-session-cookie.ts` | HMAC cookie create/verify (`username.role.exp.epoch.sig`) and `safeAdminNextPath` |
+| `admin-backend-path.ts` | Admin BFF path allowlist; public catalog GET/HEAD vs 405 |
 
 Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend wrappers (`productSpecs.ts`, `slugify.ts`, `publicCache.ts`) re-export plus backend-only extras (`uniqueSlug`, datasheet field labels).
 
@@ -43,5 +48,8 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `productMedia.extractStoredImageUrl` — image values on type/series/product writes
 - `photometric/persistProductLdt.ts` — stamp and store a product `.ldt` on create/update (`ldt_file`)
 - `photometric/writeProductLdtFile.ts` — write/resolve/delete `/uploads/product-ldt/{series}/{id}.ldt`
-- `seriesConfig.ts` — load/replace/merge `series_options`, resolve a series + query into a spec (options + size-pack photos), upsert size packs, upsert matching rows into `variant_option_catalog`
+- `seriesConfig.ts` — load/replace/merge `series_options`, batch `loadSeriesOptionsForIds` for list pages, resolve a series + query into a spec (options + size-pack photos), upsert size packs, upsert matching rows into `variant_option_catalog`
 - `variantCatalog.ts` — load/replace/upsert/backfill global option labels and SKU codes
+- `internalAuth.ts` — Express `X-Levo-Internal` check on non-public routes
+- `pdfResponse.ts` — shared `sendPdf` for datasheet / series / label downloads
+- List `GET /api/product-series` uses a light serializer (one catalog load, batched options, no appearance photos). Detail `by-slug` / `:id` stays full.

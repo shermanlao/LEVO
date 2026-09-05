@@ -35,7 +35,6 @@ function SearchPageInner() {
     e.preventDefault();
     if (searchTerm.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
-      performSearch(searchTerm);
     }
   };
 

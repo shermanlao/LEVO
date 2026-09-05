@@ -7,6 +7,7 @@ import HelpButton from '@/components/admin/HelpButton';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AlertBanner from '@/components/ui/AlertBanner';
 import Button from '@/components/ui/Button';
+import { adminFetchJson } from '@/lib/admin-fetch';
 
 type Settings = {
   id: number;
@@ -33,14 +34,13 @@ export default function ExternalCatalogSettingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/admin/external-catalog/settings', { cache: 'no-store' });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to load settings');
-      const row = data.data as Settings;
+      const result = await adminFetchJson<{ data: Settings }>('/api/admin/external-catalog/settings');
+      if (!result.ok) throw new Error(result.error || 'Failed to load settings');
+      const row = result.data.data;
       setSettings(row);
       setName(row.name || 'LightX');
       setBaseUrl(row.base_url || 'https://lightx.synology.me/api/external/v1');
-      setApiKey(row.api_key || '');
+      setApiKey(row.api_key?.startsWith('••••') ? '' : row.api_key || '');
       setApiPassword('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load settings');
@@ -67,14 +67,13 @@ export default function ExternalCatalogSettingsPage() {
       if (apiPassword.trim()) {
         payload.api_password = apiPassword;
       }
-      const response = await fetch('/api/admin/external-catalog/settings', {
+      const result = await adminFetchJson<{ data: Settings }>('/api/admin/external-catalog/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to save settings');
-      setSettings(data.data);
+      if (!result.ok) throw new Error(result.error || 'Failed to save settings');
+      setSettings(result.data.data);
       setApiPassword('');
       setMessage('Partner API settings saved.');
     } catch (err) {

@@ -366,12 +366,6 @@ export default function ProductSeriesAdminPage() {
                 >
                   Test CMS
                 </button>
-                <button
-                  onClick={() => window.open(`${apiUrl}/check-cors`, '_blank')}
-                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded text-xs"
-                >
-                  Check CORS
-                </button>
               </div>
             </div>
           </div>

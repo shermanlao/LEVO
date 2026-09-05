@@ -4,6 +4,7 @@ import type { SiteContact } from '@/lib/sqlite-api';
 import { HelpLink } from '@/components/admin/HelpButton';
 import BrandSlogan from '@/components/layout/BrandSlogan';
 import { BrandLogoMark, LEVO_LOGO_SRC } from '@/components/layout/Logo';
+import { safeHttpUrl } from '@/lib/safe-http-url';
 
 const LINK_CLASS = 'hover:text-gray-600';
 const ICON_CLASS = 'h-5 w-5';
@@ -82,10 +83,14 @@ export default function Footer({ contact }: { contact: SiteContact | null }) {
     },
   ].filter((item) => item.href);
 
+  const safeMedia = media
+    .map((item) => ({ ...item, href: safeHttpUrl(item.href) || '' }))
+    .filter((item) => item.href);
+
   return (
     <footer className="site-chrome border-t mt-16 py-8">
       <div className="container mx-auto px-4">
-        <div className={`grid grid-cols-1 md:grid-cols-3 gap-8${media.length ? ' lg:grid-cols-4' : ''}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-8${safeMedia.length ? ' lg:grid-cols-4' : ''}`}>
           <div>
             <h3 className="text-lg font-bold mb-4">Contact Us</h3>
             {contact ? (
@@ -137,11 +142,11 @@ export default function Footer({ contact }: { contact: SiteContact | null }) {
               </li>
             </ul>
           </div>
-          {media.length ? (
+          {safeMedia.length ? (
             <div>
               <h3 className="text-lg font-bold mb-4">Media</h3>
               <ul className="space-y-2">
-                {media.map((item) => (
+                {safeMedia.map((item) => (
                   <li key={item.helpKey}>
                     <HelpLink
                       href={item.href}

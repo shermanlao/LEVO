@@ -7,6 +7,7 @@ import {
   GENERAL_LABEL_FILENAME,
   labelFilename,
 } from '../lib/labelPdf';
+import { sendPdf } from '../lib/pdfResponse';
 
 const PRODUCT_INCLUDE = [
   {
@@ -16,13 +17,6 @@ const PRODUCT_INCLUDE = [
   },
   { model: ProductType, as: 'type' },
 ];
-
-function sendPdf(res: Response, pdf: Buffer, filename: string) {
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-  res.setHeader('Cache-Control', 'private, max-age=60');
-  return res.send(pdf);
-}
 
 export const getGeneralLabel = async (_req: Request, res: Response) => {
   try {

@@ -10,40 +10,86 @@ import {
   PUBLIC_CACHE_CONTROL,
   tagsForExpressPath,
 } from '@/lib/catalog-cache';
+import { internalApiHeaders } from '@/lib/internal-api';
+import {
+  METHOD_NOT_ALLOWED_STATUS,
+  UNAUTHORIZED_STATUS,
+  isPublicCatalogReadMethod,
+} from '@shared/admin-backend-path';
 
 export { getExpressBaseUrl };
+export {
+  ADMIN_BACKEND_PREFIXES,
+  isAllowedAdminBackendPath,
+} from '@shared/admin-backend-path';
 
-export const ADMIN_BACKEND_PREFIXES = [
-  'products',
-  'product-types',
-  'product-series',
-  'projects',
-  'upload',
-  'variant-options',
-] as const;
+type LiveSession = { ok: boolean; epoch: number; role: string; active: boolean };
 
-export function isAllowedAdminBackendPath(suffix: string): boolean {
-  const first = suffix.split('/').filter(Boolean)[0] || '';
-  return (ADMIN_BACKEND_PREFIXES as readonly string[]).includes(first);
+const liveSessionCache = new Map<string, { live: LiveSession; until: number }>();
+
+async function lookupLiveSession(username: string): Promise<LiveSession | null> {
+  const now = Date.now();
+  const cached = liveSessionCache.get(username);
+  if (cached && cached.until > now) return cached.live;
+
+  for (const base of expressBaseCandidates()) {
+    try {
+      const response = await fetch(
+        `${base}/api/auth/session-check?username=${encodeURIComponent(username)}`,
+        {
+          headers: internalApiHeaders({ Accept: 'application/json' }),
+          cache: 'no-store',
+          signal: AbortSignal.timeout(5000),
+        }
+      );
+      if (!response.ok) continue;
+      const json = (await response.json()) as { epoch?: number; role?: string; active?: boolean };
+      const live: LiveSession = {
+        ok: true,
+        epoch: Number(json.epoch) || 0,
+        role: String(json.role || ''),
+        active: Boolean(json.active),
+      };
+      liveSessionCache.set(username, { live, until: now + 30_000 });
+      return live;
+    } catch {
+      /* try next base */
+    }
+  }
+  return null;
+}
+
+export async function assertLiveSession(session: AdminSession): Promise<boolean> {
+  const live = await lookupLiveSession(session.username);
+  if (!live || !live.active) return false;
+  return live.epoch === session.epoch;
 }
 
 export async function requireAdminSession(request: NextRequest): Promise<NextResponse | null> {
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  if (!(await verifySessionValue(token))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const session = await verifySessionValue(token);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: UNAUTHORIZED_STATUS });
+  }
+  const live = await assertLiveSession(session);
+  if (!live) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: UNAUTHORIZED_STATUS });
   }
   return null;
 }
 
 export async function readAdminSession(request: NextRequest): Promise<AdminSession | null> {
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  return verifySessionValue(token);
+  const session = await verifySessionValue(token);
+  if (!session) return null;
+  if (!(await assertLiveSession(session))) return null;
+  return session;
 }
 
 export async function requireAdminRole(request: NextRequest): Promise<NextResponse | null> {
   const session = await readAdminSession(request);
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: UNAUTHORIZED_STATUS });
   }
   if (session.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -65,7 +111,7 @@ export async function forwardToExpress(
   opts?: { timeoutMs?: number; cacheMode?: 'public' | 'no-store' }
 ): Promise<NextResponse> {
   const incoming = new URL(request.url);
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = internalApiHeaders();
   const accept = request.headers.get('Accept');
   headers.Accept = accept && accept.length > 0 ? accept : 'application/json';
 
@@ -138,7 +184,7 @@ export async function proxyToExpress(
 export function methodNotAllowed(allow = 'GET, HEAD'): NextResponse {
   const headers: Record<string, string> = {};
   if (allow) headers.Allow = allow;
-  return NextResponse.json({ error: 'Method not allowed' }, { status: 405, headers });
+  return NextResponse.json({ error: 'Method not allowed' }, { status: METHOD_NOT_ALLOWED_STATUS, headers });
 }
 
 export async function proxyPublicGetToExpress(
@@ -146,7 +192,7 @@ export async function proxyPublicGetToExpress(
   expressPath: string,
   opts?: { timeoutMs?: number }
 ): Promise<NextResponse> {
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
+  if (!isPublicCatalogReadMethod(request.method)) {
     return methodNotAllowed();
   }
   return forwardToExpress(request, expressPath, { ...opts, cacheMode: 'public' });

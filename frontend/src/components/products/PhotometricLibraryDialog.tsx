@@ -68,7 +68,7 @@ export default function PhotometricLibraryDialog({ productId, open, onClose, onS
     const urlRef = { current: null as string | null };
     setLoading(true);
     fetch(
-      `/api/photometric-library/ldt?family=${encodeURIComponent(family)}&beamDegrees=${beamDegrees}`,
+      `/api/admin/photometric-library/ldt?family=${encodeURIComponent(family)}&beamDegrees=${beamDegrees}`,
       { cache: 'no-store' }
     )
       .then(async (res) => {

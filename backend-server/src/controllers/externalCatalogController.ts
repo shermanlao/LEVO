@@ -42,7 +42,8 @@ export const updateSettings = async (req: Request, res: Response) => {
     if (baseUrl) {
       await assertPublicHttpUrl(baseUrl);
     }
-    const apiKey = req.body?.api_key != null ? String(req.body.api_key).trim() : source.api_key;
+    const incomingKey = req.body?.api_key != null ? String(req.body.api_key).trim() : '';
+    const apiKey = !incomingKey || incomingKey.startsWith('••••') ? source.api_key : incomingKey;
     const incomingPassword =
       req.body?.api_password != null ? String(req.body.api_password) : undefined;
 

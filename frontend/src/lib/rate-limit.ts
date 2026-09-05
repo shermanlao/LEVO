@@ -3,9 +3,9 @@ type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
 
 function clientIp(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return request.headers.get('x-real-ip') || 'local';
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp?.trim()) return realIp.trim();
+  return 'local';
 }
 
 export function consumeRateLimit(

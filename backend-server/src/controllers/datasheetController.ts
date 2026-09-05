@@ -7,6 +7,9 @@ import {
   datasheetFilename,
   installationFilename,
 } from '../lib/datasheetPdf';
+import { sendPdf } from '../lib/pdfResponse';
+import { pdfCacheKey, readCachedPdf, writeCachedPdf } from '../lib/generatedPdfCache';
+import { PUBLIC_CACHE_CONTROL } from '../lib/shared/cache-constants';
 
 const PRODUCT_INCLUDE = [
   {
@@ -24,11 +27,23 @@ async function findProductBySlug(slug: string) {
   });
 }
 
-function sendPdf(res: Response, pdf: Buffer, filename: string) {
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-  res.setHeader('Cache-Control', 'private, max-age=60');
-  return res.send(pdf);
+async function cachedProductPdf(
+  res: Response,
+  slug: string,
+  kind: 'datasheet' | 'installation',
+  build: (product: NonNullable<Awaited<ReturnType<typeof findProductBySlug>>>) => Promise<Buffer>,
+  filename: (product: NonNullable<Awaited<ReturnType<typeof findProductBySlug>>>) => string
+) {
+  const product = await findProductBySlug(slug);
+  if (!product) {
+    return res.status(404).json({ error: 'Product not found' });
+  }
+  const key = pdfCacheKey(['product', kind, slug, String(product.get('updated_at') || '')]);
+  const cached = await readCachedPdf(key);
+  if (cached) return sendPdf(res, cached, filename(product), PUBLIC_CACHE_CONTROL);
+  const pdf = await build(product);
+  await writeCachedPdf(key, pdf);
+  return sendPdf(res, pdf, filename(product), PUBLIC_CACHE_CONTROL);
 }
 
 export const getProductDatasheet = async (req: Request, res: Response) => {
@@ -37,14 +52,13 @@ export const getProductDatasheet = async (req: Request, res: Response) => {
     if (!slug) {
       return res.status(400).json({ error: 'Missing product slug' });
     }
-
-    const product = await findProductBySlug(slug);
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
-    const pdf = await buildDatasheetPdf(product);
-    return sendPdf(res, pdf, datasheetFilename(product.get('product_code'), slug));
+    return cachedProductPdf(
+      res,
+      slug,
+      'datasheet',
+      (product) => buildDatasheetPdf(product),
+      (product) => datasheetFilename(product.get('product_code'), slug)
+    );
   } catch (error) {
     console.error('Datasheet PDF generation failed:', error);
     return res.status(500).json({ error: clientError(error) });
@@ -57,14 +71,13 @@ export const getProductInstallation = async (req: Request, res: Response) => {
     if (!slug) {
       return res.status(400).json({ error: 'Missing product slug' });
     }
-
-    const product = await findProductBySlug(slug);
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
-    const pdf = await buildInstallationPdf(product);
-    return sendPdf(res, pdf, installationFilename(product.get('product_code'), slug));
+    return cachedProductPdf(
+      res,
+      slug,
+      'installation',
+      (product) => buildInstallationPdf(product),
+      (product) => installationFilename(product.get('product_code'), slug)
+    );
   } catch (error) {
     console.error('Installation PDF generation failed:', error);
     return res.status(500).json({ error: clientError(error) });

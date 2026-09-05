@@ -4,6 +4,8 @@ import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
+import { assertProductionSecrets } from './lib/shared/production-secrets';
+import { requireInternalSecret } from './lib/internalAuth';
 import projectRoutes from './routes/projectRoutes';
 import productRoutes from './routes/productRoutes';
 import productTypeRoutes from './routes/productTypeRoutes';
@@ -64,33 +66,41 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/product-types', productTypeRoutes);
 app.use('/api/product-series', productSeriesRoutes);
-app.use('/api/upload', rateLimit({ windowMs: 60 * 60 * 1000, max: 40, name: 'upload' }), uploadRoutes);
+app.use(
+  '/api/upload',
+  requireInternalSecret,
+  rateLimit({ windowMs: 60 * 60 * 1000, max: 40, name: 'upload' }),
+  uploadRoutes
+);
 app.use('/api/product-media', productMediaRoutes);
-app.use('/api/external-catalog', externalCatalogRoutes);
+app.use('/api/external-catalog', requireInternalSecret, externalCatalogRoutes);
 app.use('/api/help-tips', helpTipRoutes);
 app.use('/api/contact', contactRoutes);
-app.use('/api/site-settings', siteSettingsRoutes);
-app.use('/api/contact-inquiries', contactInquiryRoutes);
+app.use('/api/site-settings', requireInternalSecret, siteSettingsRoutes);
+app.use('/api/contact-inquiries', requireInternalSecret, contactInquiryRoutes);
 app.use('/api/datasheets', datasheetRoutes);
-app.use('/api/variant-options', variantOptionRoutes);
+app.use('/api/variant-options', requireInternalSecret, variantOptionRoutes);
 app.use('/api/series', seriesFileRoutes);
 app.use('/api/labels', labelRoutes);
-app.use('/api/photometric-library', photometricLibraryRoutes);
+app.use('/api/photometric-library', requireInternalSecret, photometricLibraryRoutes);
 app.use(
   '/api/ai',
+  requireInternalSecret,
   rateLimit({ windowMs: 60 * 60 * 1000, max: 20, name: 'ai' }),
   aiRoutes
 );
-app.use('/api/auth', authRoutes);
-app.use('/api/admin-users', adminUserRoutes);
-app.use('/api/visitor-events', visitorRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/auth', requireInternalSecret, authRoutes);
+app.use('/api/admin-users', requireInternalSecret, adminUserRoutes);
+app.use('/api/visitor-events', requireInternalSecret, visitorRoutes);
+app.use('/api/dashboard', requireInternalSecret, dashboardRoutes);
 
 app.get('/', (_req, res) => {
   res.json({
     message: 'Welcome to the LEVO API',
   });
 });
+
+assertProductionSecrets();
 
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`Server is running on 127.0.0.1:${PORT}`);

@@ -11,7 +11,7 @@ Public series lookup uses `GET /api/product-series/by-slug/:slug` (not `/api/pro
 | Method | Path | Notes |
 |--------|------|--------|
 | `GET` | `/api/product-types` | All types (Strapi-like) |
-| `GET` | `/api/product-series` | All series with nested `product_type` (no product list). Optional `q`, `featured=1` |
+| `GET` | `/api/product-series` | Series list with nested `product_type` and `options` (no products, no appearance photos). Optional `q`, `featured=1`, `type` / `type_slug`, `product_type_id` |
 | `GET` | `/api/product-series/featured` | Featured series for the homepage |
 | `GET` | `/api/product-series/by-slug/:slug` | By series slug, including `attributes.products.data` (size packs) |
 | `GET` | `/api/product-series/:id` | Numeric series id, including `attributes.products.data` (list payload) |

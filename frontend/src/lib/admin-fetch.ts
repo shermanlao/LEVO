@@ -5,6 +5,7 @@ export type AdminFetchErr = { ok: false; error: string; status: number };
 export type AdminFetchResult<T> = AdminFetchOk<T> | AdminFetchErr;
 
 function adminUrl(path: string): string {
+  if (path.startsWith('/api/admin/')) return path;
   const suffix = path.startsWith('/') ? path : `/${path}`;
   return `${ADMIN_BACKEND_BASE}${suffix}`;
 }

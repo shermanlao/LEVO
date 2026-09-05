@@ -1348,6 +1348,7 @@ export async function ensureProjectFeaturedColumn(): Promise<void> {
       defaultValue: false,
     });
   }
+  await ensureIndex('CREATE INDEX IF NOT EXISTS projects_is_featured ON projects (is_featured)');
 }
 
 export async function ensureDefaultCatalogSource(): Promise<void> {
@@ -1360,16 +1361,37 @@ export async function ensureDefaultCatalogSource(): Promise<void> {
   });
 }
 
+export async function ensureAdminUserColumns(): Promise<void> {
+  const qi = sequelize.getQueryInterface();
+  let table: Record<string, unknown>;
+  try {
+    table = await qi.describeTable('admin_users');
+  } catch {
+    return;
+  }
+  if (!table.session_epoch) {
+    await qi.addColumn('admin_users', 'session_epoch', {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    });
+  }
+}
+
 export async function ensureDefaultAdminUser(): Promise<void> {
   const count = await AdminUser.count();
   if (count > 0) return;
   const username = (process.env.ADMIN_USERNAME || 'admin').trim() || 'admin';
-  const password = process.env.ADMIN_PASSWORD || 'abc4321';
+  const password = process.env.ADMIN_PASSWORD?.trim();
+  if (process.env.NODE_ENV === 'production' && !password) {
+    throw new Error('ADMIN_PASSWORD must be set before the first production API start');
+  }
   await AdminUser.create({
     username,
-    password_hash: hashPassword(password),
+    password_hash: hashPassword(password || 'abc4321'),
     role: 'admin',
     active: true,
+    session_epoch: 0,
   });
 }
 
@@ -1489,6 +1511,8 @@ export async function ensureSeriesFeaturedImageColumn(): Promise<void> {
       defaultValue: false,
     });
   }
+  await ensureIndex('CREATE INDEX IF NOT EXISTS product_series_product_type_id ON product_series (product_type_id)');
+  await ensureIndex('CREATE INDEX IF NOT EXISTS product_series_is_featured ON product_series (is_featured)');
   if (!table.datasheet_labels) {
     await qi.addColumn('product_series', 'datasheet_labels', {
       type: DataTypes.TEXT,

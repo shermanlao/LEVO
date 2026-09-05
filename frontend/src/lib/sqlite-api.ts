@@ -18,67 +18,7 @@ devLog('API URL set to:', ACTIVE_API_URL);
  * Call this after adding or updating products
  */
 export async function reloadAPI(): Promise<boolean> {
-  devLog('Reloading API and clearing caches...');
-  
-  const urls = [
-    ...new Set(
-      [...getBackendBaseUrlCandidates(), ACTIVE_API_URL].map((base) => `${base.replace(/\/$/, '')}/api/reload`)
-    ),
-  ];
-  
-  // Remove duplicates
-  const uniqueUrls = Array.from(new Set(urls));
-  
-  // Try each URL until one works
-  for (const url of uniqueUrls) {
-    try {
-      devLog(`Trying API reload at: ${url}`);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store' as RequestCache,
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
-        try {
-          const data = await response.json();
-          devLog('API reload successful:', data.message || 'Cache cleared');
-          return true;
-        } catch (parseError) {
-          devLog('API reload likely successful (response OK but invalid JSON)');
-          return true;
-        }
-      } else {
-        console.warn(`API reload at ${url} failed:`, response.status, response.statusText);
-      }
-    } catch (error) {
-      console.warn(`Error connecting to ${url}:`, error instanceof Error ? error.message : String(error));
-      // Continue to next URL
-    }
-  }
-  
-  // All attempts failed, use built-in cache busting as fallback
-  console.warn('All API reload attempts failed, using cache busting as fallback');
-  
-  try {
-    // Legacy approach: fetch a random endpoint to force browser cache refresh
-    const cacheBuster = Date.now();
-    await fetch(`${ACTIVE_API_URL}/api/health?_=${cacheBuster}`, {
-      method: 'GET',
-      cache: 'no-store' as RequestCache,
-    });
-    return true;
-  } catch (error) {
-    console.error('Even fallback cache busting failed:', error);
-    return false;
-  }
+  return true;
 }
 
 type FetchApiOptions = RequestInit & {
@@ -97,10 +37,6 @@ async function fetchAPI<T>(
 ): Promise<T> {
   devLog(`fetchAPI called for: ${endpoint}, refreshCache: ${refreshCache}`);
   const { allowNotFound, cacheMode: cacheModeOpt, ...requestOptions } = options;
-
-  if (refreshCache) {
-    await reloadAPI();
-  }
 
   const cacheMode: 'public' | 'no-store' =
     refreshCache || cacheModeOpt === 'no-store' ? 'no-store' : 'public';
@@ -262,7 +198,7 @@ function normalizeProjectRow(row: ApiProjectRow | null | undefined): ApiProjectR
   };
 }
 
-export async function getProjectBySlugFromApi(slug: string): Promise<ApiProjectRow | null> {
+export const getProjectBySlugFromApi = cache(async function getProjectBySlugFromApi(slug: string): Promise<ApiProjectRow | null> {
   try {
     const result = await fetchAPI<{ success?: boolean; data?: ApiProjectRow }>(
       `/projects/slug/${encodeURIComponent(slug)}`,
@@ -273,7 +209,7 @@ export async function getProjectBySlugFromApi(slug: string): Promise<ApiProjectR
   } catch {
     return null;
   }
-}
+});
 
 export async function getProjectByIdFromApi(id: string): Promise<ApiProjectRow | null> {
   try {
@@ -288,7 +224,7 @@ export async function getProjectByIdFromApi(id: string): Promise<ApiProjectRow |
   }
 }
 
-export async function getProjectsFromApi(): Promise<ApiProjectRow[]> {
+export const getProjectsFromApi = cache(async function getProjectsFromApi(): Promise<ApiProjectRow[]> {
   try {
     const result = await fetchAPI<{ success?: boolean; data?: ApiProjectRow[] }>('/projects');
     const list = Array.isArray(result?.data) ? result.data : [];
@@ -296,9 +232,25 @@ export async function getProjectsFromApi(): Promise<ApiProjectRow[]> {
   } catch {
     return [];
   }
-}
+});
 
-export async function getFeaturedProjects(): Promise<ApiProjectRow[]> {
+export const getRelatedProjectsFromApi = cache(async function getRelatedProjectsFromApi(
+  excludeSlug: string,
+  limit = 3
+): Promise<ApiProjectRow[]> {
+  try {
+    const params = new URLSearchParams();
+    if (excludeSlug) params.set('exclude', excludeSlug);
+    params.set('limit', String(limit));
+    const result = await fetchAPI<{ success?: boolean; data?: ApiProjectRow[] }>(`/projects?${params}`);
+    const list = Array.isArray(result?.data) ? result.data : [];
+    return list.map((row) => normalizeProjectRow(row)).filter(Boolean) as ApiProjectRow[];
+  } catch {
+    return [];
+  }
+});
+
+export const getFeaturedProjects = cache(async function getFeaturedProjects(): Promise<ApiProjectRow[]> {
   try {
     const result = await fetchAPI<{ success?: boolean; data?: ApiProjectRow[] }>('/projects/featured');
     const list = Array.isArray(result?.data) ? result.data : [];
@@ -306,7 +258,7 @@ export async function getFeaturedProjects(): Promise<ApiProjectRow[]> {
   } catch {
     return [];
   }
-}
+});
 
 /**
  * Get all product types
@@ -350,7 +302,7 @@ export const getProductType = cache(async function getProductType(slug: string):
 /**
  * Get all product series
  */
-export async function getProductSeries(params: Record<string, string> = {}): Promise<any> {
+export const getProductSeries = cache(async function getProductSeries(params: Record<string, string> = {}): Promise<any> {
   devLog('getProductSeries - Starting fetch with params:', params);
   
   try {
@@ -367,7 +319,7 @@ export async function getProductSeries(params: Record<string, string> = {}): Pro
     console.error('getProductSeries - Fetch failed:', error);
     throw error;
   }
-}
+});
 
 /**
  * Get a specific product series by slug
@@ -415,21 +367,7 @@ export async function getProducts(params: Record<string, string> = {}, refreshCa
     
   const queryString = new URLSearchParams(params).toString();
   const endpoint = queryString ? `/products?${queryString}` : '/products';
-  
-    // If refreshCache is requested, try to reload API but don't fail if it doesn't work
-    if (refreshCache) {
-      try {
-        const reloadSuccess = await reloadAPI();
-        if (reloadSuccess) {
-          devLog('getProducts - Successfully reloaded API cache');
-        } else {
-          console.warn('getProducts - API reload failed, proceeding with regular request');
-        }
-      } catch (reloadError) {
-        console.warn('getProducts - Error during API reload, proceeding with regular request:', reloadError);
-      }
-    }
-    
+
     // Always specify a long timeout for track-lighting products
     const isTrackLighting = params['filters[product_type][slug]'] === 'track-lighting';
     const options: RequestInit = {};

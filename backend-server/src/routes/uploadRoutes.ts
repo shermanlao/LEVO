@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import { isAllowedImageBuffer } from '../lib/shared/image-magic';
 
 const router = Router();
 
@@ -45,6 +46,19 @@ router.post('/', upload.array('files'), (req, res) => {
   const uploaded = req.files;
   if (!uploaded || !Array.isArray(uploaded) || uploaded.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
+  }
+  for (const file of uploaded) {
+    const bytes = fs.readFileSync(file.path);
+    if (!isAllowedImageBuffer(bytes)) {
+      for (const row of uploaded) {
+        try {
+          fs.unlinkSync(row.path);
+        } catch {
+          /* ignore */
+        }
+      }
+      return res.status(400).json({ error: 'File is not a valid JPEG, PNG, WebP, or GIF image' });
+    }
   }
   const fileInfos = uploaded.map((file) => ({
     filename: file.filename,

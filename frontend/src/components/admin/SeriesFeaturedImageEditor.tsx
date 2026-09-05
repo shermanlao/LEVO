@@ -56,7 +56,7 @@ async function uploadSeriesFile(file: File, seriesSlug?: string): Promise<string
   });
   if (!uploaded.ok) throw new Error(uploaded.error);
   const raw = uploaded.data as {
-    files?: Array<{ url?: string; filename?: string; filePath?: string; fileName?: string }>;
+    files?: Array<{ url?: string; filename?: string; filePath?: string; fileName?: string; name?: string }>;
     filePath?: string;
     url?: string;
     fileName?: string;
