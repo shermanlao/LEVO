@@ -14,11 +14,11 @@ function isRole(value: unknown): value is AdminRole {
 }
 
 async function verifyWithExpress(
-  username: string,
+  email: string,
   password: string
 ): Promise<{
   status: number;
-  json: { username?: string; role?: string; session_epoch?: number; error?: string };
+  json: { username?: string; email?: string; role?: string; session_epoch?: number; error?: string };
 }> {
   let lastError = 'Could not reach the API server';
   for (const base of expressBaseCandidates()) {
@@ -26,12 +26,13 @@ async function verifyWithExpress(
       const response = await fetch(`${base}/api/auth/verify`, {
         method: 'POST',
         headers: internalApiHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
         cache: 'no-store',
         signal: AbortSignal.timeout(15000),
       });
       const json = (await response.json().catch(() => ({}))) as {
         username?: string;
+        email?: string;
         role?: string;
         session_epoch?: number;
         error?: string;
@@ -56,17 +57,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let username = '';
+  let email = '';
   let password = '';
   try {
     const body = await request.json();
-    username = String(body?.username ?? body?.id ?? '').trim();
+    email = String(body?.email ?? '').trim().toLowerCase();
     password = String(body?.password ?? '');
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const result = await verifyWithExpress(username, password);
+  const result = await verifyWithExpress(email, password);
   if (result.status === 502) {
     return NextResponse.json(
       {
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
   }
   if (result.status !== 200 || !result.json.username || !isRole(result.json.role)) {
     return NextResponse.json(
-      { error: result.json.error || 'Invalid ID or password' },
+      { error: result.json.error || 'Invalid email or password' },
       { status: 401 }
     );
   }
@@ -88,7 +89,12 @@ export async function POST(request: NextRequest) {
     result.json.role,
     Number(result.json.session_epoch) || 0
   );
-  const response = NextResponse.json({ ok: true, username: result.json.username, role: result.json.role });
+  const response = NextResponse.json({
+    ok: true,
+    username: result.json.username,
+    email: result.json.email || email,
+    role: result.json.role,
+  });
   response.cookies.set(ADMIN_SESSION_COOKIE, value, SESSION_COOKIE_OPTIONS);
   return response;
 }

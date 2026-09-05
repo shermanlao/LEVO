@@ -12,6 +12,12 @@ import { DataTypes } from 'sequelize';
 import { ensureIndex, ensureTable, integerId } from '../lib/dbSchema';
 import { hashPassword } from '../lib/adminPassword';
 import {
+  fallbackStaffEmail,
+  isValidEmail,
+  normalizeEmail,
+  resolveSeedAdminEmail,
+} from '../lib/adminUserFields';
+import {
   allocateNextProductCode,
   isLevoSku,
   levoDisplayName,
@@ -73,7 +79,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.login',
     title: 'Sign in',
-    body: 'Sign in with a staff ID and password to open the dashboard.',
+    body: 'Sign in with your staff email and password to open the dashboard.',
   },
   {
     helpKey: 'admin.logout',
@@ -88,12 +94,12 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.users.add',
     title: 'Add user',
-    body: 'Create a login with a username (used at sign-in). The numeric ID is assigned automatically. Staff can manage the catalog; only admin can manage users.',
+    body: 'Create a staff account. Email is the login. Username is the short display name. Staff can manage the catalog; only admin can manage users.',
   },
   {
     helpKey: 'admin.users.save',
     title: 'Save user',
-    body: 'Save role, active state, or a new password for this account.',
+    body: 'Save profile fields, role, active state, or a new password for this account.',
   },
   {
     helpKey: 'admin.users.cancel',
@@ -1376,6 +1382,43 @@ export async function ensureAdminUserColumns(): Promise<void> {
       defaultValue: 0,
     });
   }
+  if (!table.email) {
+    await qi.addColumn('admin_users', 'email', {
+      type: DataTypes.STRING,
+      allowNull: true,
+    });
+  }
+  if (!table.full_name) {
+    await qi.addColumn('admin_users', 'full_name', { type: DataTypes.STRING, allowNull: true });
+  }
+  if (!table.tel) {
+    await qi.addColumn('admin_users', 'tel', { type: DataTypes.STRING, allowNull: true });
+  }
+  if (!table.position) {
+    await qi.addColumn('admin_users', 'position', { type: DataTypes.STRING, allowNull: true });
+  }
+  if (!table.division) {
+    await qi.addColumn('admin_users', 'division', { type: DataTypes.STRING, allowNull: true });
+  }
+
+  const seedUsername = (process.env.ADMIN_USERNAME || 'admin').trim() || 'admin';
+  const adminEmail = normalizeEmail(process.env.ADMIN_EMAIL);
+  const users = await AdminUser.findAll();
+  for (const user of users) {
+    const current = normalizeEmail(user.email);
+    if (current && isValidEmail(current)) {
+      if (current !== user.email) await user.update({ email: current });
+      continue;
+    }
+    const nextEmail =
+      user.username === seedUsername && adminEmail && isValidEmail(adminEmail)
+        ? adminEmail
+        : fallbackStaffEmail(user.username);
+    await user.update({ email: nextEmail });
+  }
+  await ensureIndex(
+    'CREATE UNIQUE INDEX IF NOT EXISTS admin_users_email_unique ON admin_users (email)'
+  );
 }
 
 export async function ensureDefaultAdminUser(): Promise<void> {
@@ -1383,11 +1426,21 @@ export async function ensureDefaultAdminUser(): Promise<void> {
   if (count > 0) return;
   const username = (process.env.ADMIN_USERNAME || 'admin').trim() || 'admin';
   const password = process.env.ADMIN_PASSWORD?.trim();
-  if (process.env.NODE_ENV === 'production' && !password) {
-    throw new Error('ADMIN_PASSWORD must be set before the first production API start');
+  const email = normalizeEmail(process.env.ADMIN_EMAIL);
+  if (email && !isValidEmail(email)) {
+    throw new Error('ADMIN_EMAIL must be a valid email address');
+  }
+  if (process.env.NODE_ENV === 'production') {
+    if (!password) {
+      throw new Error('ADMIN_PASSWORD must be set before the first production API start');
+    }
+    if (!email) {
+      throw new Error('ADMIN_EMAIL must be set before the first production API start');
+    }
   }
   await AdminUser.create({
     username,
+    email: email && isValidEmail(email) ? email : resolveSeedAdminEmail(),
     password_hash: hashPassword(password || 'abc4321'),
     role: 'admin',
     active: true,

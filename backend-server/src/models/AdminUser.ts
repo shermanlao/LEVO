@@ -6,6 +6,11 @@ export type AdminRole = 'admin' | 'staff';
 class AdminUser extends Model {
   declare id: number;
   declare username: string;
+  declare email: string;
+  declare full_name: string | null;
+  declare tel: string | null;
+  declare position: string | null;
+  declare division: string | null;
   declare password_hash: string;
   declare role: AdminRole;
   declare active: boolean;
@@ -25,6 +30,27 @@ AdminUser.init(
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    full_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    tel: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    position: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    division: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     password_hash: {
       type: DataTypes.STRING,

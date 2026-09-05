@@ -6,12 +6,12 @@ Staff routes under `/admin` require a signed-in session. Logins are rows in `adm
 
 1. Start the app (`npm run dev` from the repo root — runs the site and the API together). The site is `http://localhost:3000`; the API listens on `127.0.0.1:3333` (same machine only).
 2. Open `http://localhost:3000/admin`. You are redirected to `/admin/login`.
-3. Use ID `admin` and password `abc4321` the first time (or `ADMIN_USERNAME` / `ADMIN_PASSWORD` if those were set when the API first created the users table). After that, use accounts from User management.
+3. Use email `admin@levo.local` and password `abc4321` the first time (or `ADMIN_EMAIL` / `ADMIN_PASSWORD` if those were set when the API first created the users table). After that, use accounts from User management. Username is the display name, not the login.
 4. Use **Log out** on the dashboard to end the session.
 
-If the form shows **Failed to fetch** / cannot reach the login API, the Next.js site is not running. Start it with `npm run dev` and retry. An **Invalid ID or password** message means the credentials themselves were rejected. A 502-style message means the Express API is not running.
+If the form shows **Failed to fetch** / cannot reach the login API, the Next.js site is not running. Start it with `npm run dev` and retry. An **Invalid email or password** message means the credentials themselves were rejected. A 502-style message means the Express API is not running.
 
-The session is an httpOnly cookie (`levo_admin_session`) signed with `ADMIN_SESSION_SECRET`. Payload is `username.role.exp` plus HMAC. Next.js middleware blocks `/admin/*` except `/admin/login`. Staff cannot open `/admin/users`. Admin writes go through `/api/admin/*` (including `/api/admin/backend` for catalog and uploads, and `/api/admin/users` for the staff directory) and are **not** rewritten as open Express routes.
+The session is an httpOnly cookie (`levo_admin_session`) signed with `ADMIN_SESSION_SECRET`. Payload is `username.role.exp` plus HMAC (username stays the cookie subject after email login). Next.js middleware blocks `/admin/*` except `/admin/login`. Staff cannot open `/admin/users`. Admin writes go through `/api/admin/*` (including `/api/admin/backend` for catalog and uploads, and `/api/admin/users` for the staff directory) and are **not** rewritten as open Express routes.
 
 Roles: **admin** (including User management) and **staff** (catalog and projects only). See [Admin users](admin-users.md). The dashboard layout and counts are in [Admin dashboard](admin-dashboard.md). Public visitor counts use a first-party cookie; see [Visitor analytics](visitor-analytics.md).
 

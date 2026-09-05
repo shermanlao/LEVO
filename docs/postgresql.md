@@ -41,6 +41,7 @@ In `backend-server/.env`:
 DB_DIALECT=postgres
 DATABASE_URL=postgres://levo:choose-a-strong-password@127.0.0.1:5432/levo
 ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@your-domain.example
 ADMIN_PASSWORD=change-me
 ADMIN_SESSION_SECRET=use-a-long-random-string
 AI_SETTINGS_ENCRYPTION_KEY=use-a-long-random-string
@@ -82,7 +83,7 @@ Then start the full app from the repo root:
 npm run dev
 ```
 
-Sign in at `http://localhost:3000/admin` with the admin user that was copied, or the first-boot user from `ADMIN_USERNAME` / `ADMIN_PASSWORD` if `admin_users` was empty.
+Sign in at `http://localhost:3000/admin` with the admin email that was copied, or the first-boot user from `ADMIN_EMAIL` / `ADMIN_PASSWORD` if `admin_users` was empty. Local default email is `admin@levo.local`.
 
 ## 4. Production checklist
 

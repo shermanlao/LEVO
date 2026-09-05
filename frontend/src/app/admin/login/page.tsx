@@ -11,7 +11,7 @@ import { TextInput } from '@/components/ui/FormField';
 function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -24,11 +24,11 @@ function AdminLoginForm() {
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Invalid ID or password');
+        throw new Error(data.error || 'Invalid email or password');
       }
       const next = safeAdminNextPath(searchParams.get('next'));
       router.push(next);
@@ -52,12 +52,12 @@ function AdminLoginForm() {
         {error && <AlertBanner>{error}</AlertBanner>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <TextInput
-            label="ID"
-            id="admin-id"
-            type="text"
+            label="Email"
+            id="admin-email"
+            type="email"
             autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
           <TextInput

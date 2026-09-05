@@ -3,8 +3,12 @@ import { Op } from 'sequelize';
 import AdminUser, { AdminRole } from '../models/AdminUser';
 import { asyncHandler, deleteSuccess, notFound } from '../lib/asyncHandler';
 import { hashPassword, verifyPassword } from '../lib/adminPassword';
-
-const USERNAME_RE = /^[a-zA-Z0-9_-]{2,32}$/;
+import {
+  USERNAME_RE,
+  isValidEmail,
+  normalizeEmail,
+  normalizeOptionalText,
+} from '../lib/adminUserFields';
 
 function isRole(value: unknown): value is AdminRole {
   return value === 'admin' || value === 'staff';
@@ -14,6 +18,11 @@ export function serializeAdminUser(row: AdminUser) {
   const p = row.get({ plain: true }) as {
     id: number;
     username: string;
+    email: string | null;
+    full_name: string | null;
+    tel: string | null;
+    position: string | null;
+    division: string | null;
     role: AdminRole;
     active: boolean;
     created_at: Date | null;
@@ -22,6 +31,11 @@ export function serializeAdminUser(row: AdminUser) {
   return {
     id: p.id,
     username: p.username,
+    email: p.email || '',
+    full_name: p.full_name || '',
+    tel: p.tel || '',
+    position: p.position || '',
+    division: p.division || '',
     role: p.role,
     active: Boolean(p.active),
     created_at: p.created_at,
@@ -43,18 +57,39 @@ function lastAdminError(res: Response) {
   return res.status(400).json({ error: 'Cannot remove or demote the last admin' });
 }
 
+async function emailTaken(email: string, excludeId?: number): Promise<boolean> {
+  const existing = await AdminUser.findOne({
+    where: {
+      email,
+      ...(excludeId != null ? { id: { [Op.ne]: excludeId } } : {}),
+    },
+  });
+  return Boolean(existing);
+}
+
+async function usernameTaken(username: string, excludeId?: number): Promise<boolean> {
+  const existing = await AdminUser.findOne({
+    where: {
+      username,
+      ...(excludeId != null ? { id: { [Op.ne]: excludeId } } : {}),
+    },
+  });
+  return Boolean(existing);
+}
+
 export const verifyCredentials = asyncHandler(async (req: Request, res: Response) => {
-  const username = String(req.body?.username ?? req.body?.id ?? '').trim();
+  const email = normalizeEmail(req.body?.email);
   const password = String(req.body?.password ?? '');
-  if (!username || !password) {
-    return res.status(401).json({ error: 'Invalid ID or password' });
+  if (!email || !password) {
+    return res.status(401).json({ error: 'Invalid email or password' });
   }
-  const user = await AdminUser.findOne({ where: { username } });
+  const user = await AdminUser.findOne({ where: { email } });
   if (!user || !user.active || !verifyPassword(password, user.password_hash)) {
-    return res.status(401).json({ error: 'Invalid ID or password' });
+    return res.status(401).json({ error: 'Invalid email or password' });
   }
   res.json({
     username: user.username,
+    email: user.email,
     role: user.role,
     session_epoch: Number(user.session_epoch) || 0,
   });
@@ -86,10 +121,18 @@ export const getAdminUser = asyncHandler(async (req: Request, res: Response) => 
 
 export const createAdminUser = asyncHandler(async (req: Request, res: Response) => {
   const username = String(req.body?.username ?? '').trim();
+  const email = normalizeEmail(req.body?.email);
   const password = String(req.body?.password ?? '');
   const role = req.body?.role;
+  const full_name = normalizeOptionalText(req.body?.full_name);
+  const tel = normalizeOptionalText(req.body?.tel);
+  const position = normalizeOptionalText(req.body?.position);
+  const division = normalizeOptionalText(req.body?.division);
   if (!USERNAME_RE.test(username)) {
     return res.status(400).json({ error: 'Username must be 2–32 letters, numbers, _ or -' });
+  }
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'A valid email is required' });
   }
   if (password.length < 10) {
     return res.status(400).json({ error: 'Password must be at least 10 characters' });
@@ -97,12 +140,19 @@ export const createAdminUser = asyncHandler(async (req: Request, res: Response) 
   if (!isRole(role)) {
     return res.status(400).json({ error: 'Role must be admin or staff' });
   }
-  const existing = await AdminUser.findOne({ where: { username } });
-  if (existing) {
-    return res.status(409).json({ error: 'That ID is already in use' });
+  if (await usernameTaken(username)) {
+    return res.status(409).json({ error: 'That username is already in use' });
+  }
+  if (await emailTaken(email)) {
+    return res.status(409).json({ error: 'That email is already in use' });
   }
   const user = await AdminUser.create({
     username,
+    email,
+    full_name,
+    tel,
+    position,
+    division,
     password_hash: hashPassword(password),
     role,
     active: true,
@@ -114,7 +164,51 @@ export const updateAdminUser = asyncHandler(async (req: Request, res: Response) 
   const user = await AdminUser.findByPk(req.params.id);
   if (!user) return notFound(res, 'User');
 
-  const patch: { role?: AdminRole; active?: boolean; password_hash?: string; session_epoch?: number } = {};
+  const patch: {
+    username?: string;
+    email?: string;
+    full_name?: string | null;
+    tel?: string | null;
+    position?: string | null;
+    division?: string | null;
+    role?: AdminRole;
+    active?: boolean;
+    password_hash?: string;
+    session_epoch?: number;
+  } = {};
+
+  if (req.body?.username !== undefined) {
+    const username = String(req.body.username).trim();
+    if (!USERNAME_RE.test(username)) {
+      return res.status(400).json({ error: 'Username must be 2–32 letters, numbers, _ or -' });
+    }
+    if (await usernameTaken(username, user.id)) {
+      return res.status(409).json({ error: 'That username is already in use' });
+    }
+    patch.username = username;
+  }
+  if (req.body?.email !== undefined) {
+    const email = normalizeEmail(req.body.email);
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'A valid email is required' });
+    }
+    if (await emailTaken(email, user.id)) {
+      return res.status(409).json({ error: 'That email is already in use' });
+    }
+    patch.email = email;
+  }
+  if (req.body?.full_name !== undefined) {
+    patch.full_name = normalizeOptionalText(req.body.full_name);
+  }
+  if (req.body?.tel !== undefined) {
+    patch.tel = normalizeOptionalText(req.body.tel);
+  }
+  if (req.body?.position !== undefined) {
+    patch.position = normalizeOptionalText(req.body.position);
+  }
+  if (req.body?.division !== undefined) {
+    patch.division = normalizeOptionalText(req.body.division);
+  }
   if (req.body?.role !== undefined) {
     if (!isRole(req.body.role)) {
       return res.status(400).json({ error: 'Role must be admin or staff' });
@@ -132,7 +226,15 @@ export const updateAdminUser = asyncHandler(async (req: Request, res: Response) 
     patch.password_hash = hashPassword(password);
   }
 
-  if (patch.role !== undefined || patch.active !== undefined || patch.password_hash) {
+  const identityChanged =
+    (patch.username !== undefined && patch.username !== user.username) ||
+    (patch.email !== undefined && patch.email !== user.email);
+  if (
+    patch.role !== undefined ||
+    patch.active !== undefined ||
+    patch.password_hash ||
+    identityChanged
+  ) {
     patch.session_epoch = (Number(user.session_epoch) || 0) + 1;
   }
 
