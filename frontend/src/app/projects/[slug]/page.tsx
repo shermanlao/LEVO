@@ -114,13 +114,12 @@ function getImageWithFallback(url: string, fallbackUrl: string = '/images/produc
 }
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 // Generate metadata for the page
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = params instanceof Promise ? await params : params;
-  const { slug } = resolvedParams;
+  const { slug } = await params;
   
   try {
     const project = await getProjectData(slug);
@@ -151,9 +150,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProjectPage({ params }: Props) {
-  console.log('[ProjectPage] Rendered with params:', params);
-  const resolvedParams = params instanceof Promise ? await params : params;
-  const { slug } = resolvedParams;
+  const { slug } = await params;
   
   try {
     // Get the project data using the slug

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import ProjectImageUploader from '@/components/admin/ProjectImageUploader';
 import DirectProjectImageUploader from '@/components/admin/DirectProjectImageUploader';
 import { uploadProjectImage, removeProjectImage } from '@/lib/project-upload';
@@ -45,8 +45,9 @@ interface Project {
   }[];
 }
 
-export default function EditProjectPage({ params }: { params: { id: string } | Promise<{ id: string }> }) {
+export default function EditProjectPage() {
   const router = useRouter();
+  const projectId = String(useParams<{ id: string }>().id || '');
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,10 +55,6 @@ export default function EditProjectPage({ params }: { params: { id: string } | P
   const [editedProject, setEditedProject] = useState<Project | null>(null);
   const [saveStatus, setSaveStatus] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  
-  // Unwrap the params safely
-  const resolvedParams = params instanceof Promise ? React.use(params) : params;
-  const projectId = resolvedParams.id;
 
   // Fetch project data from API
   useEffect(() => {
