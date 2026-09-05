@@ -84,7 +84,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.logout',
     title: 'Log out',
-    body: 'End the admin session and return to the login page.',
+    body: 'End the staff session. The header Login button comes back so you can sign in again.',
   },
   {
     helpKey: 'admin.users.open',
@@ -505,6 +505,11 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'catalog.logo',
     title: 'LEVO',
     body: 'Return to the homepage. The wordmark and slogan come from Site settings.',
+  },
+  {
+    helpKey: 'catalog.header.login',
+    title: 'Login',
+    body: 'Open the staff login page. After you sign in, this control becomes Log out.',
   },
   {
     helpKey: 'catalog.breadcrumb.products',

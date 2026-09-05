@@ -30,7 +30,7 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `AlertBanner` | Error / success / warning |
 | `AdminTable` | Admin list tables |
 | `CatalogCard` | Hover card shell; `CategoryCard`, `SeriesCard`, `ProductCard` wrap it |
-| `ProjectCatalog` | Public project cards. Pass `hideFilters` on the homepage featured section. |
+| `ProjectCatalog` | Public project cards. Filter pills are built from loaded project categories (`project-categories.ts`); empty categories are omitted, and the row is hidden when there is nothing to filter. Pass `hideFilters` on the homepage featured section. |
 | `ProductList` | Public series combination list (cartesian of series variants). From `lg` up: full-width `table-fixed` layout (image, wrapping SKU, then physical columns such as size / finish / trim / reflector / IP, then electrical / optic / control such as wattage / CCT / beam / dimming, then Datasheet / LDT). The SKU string uses that same segment order. SKU and size stay narrow so extra variant columns fit the browser width. CCT / beam / finish use `SpecValueIcons`. SKU text uses the same regular-weight grey as other spec cells. Below `lg`: stacked rows with the same spec values in the same physical-then-electrical-optic-control order. SKU and thumbnail open `ProductSkuDialog` for that combination. The series name is not repeated in the list (it is already in the page title). |
 | `SpecValueIcons` | Catalog spec icons: Kelvin-tinted CCT circle, beam cone that widens with the angle, finish colour swatch (split circle for `Black/White`). Used by `ProductList`. |
 | `SeriesGrid` | Series cards for homepage featured, search, and category pages. Count is cartesian option count. |
@@ -54,7 +54,7 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `AppearancePhotos` | Series Finish × Trim × Reflector photos, directly under Size. Square thumbs, Upload, Generate by AI (pending preview, Confirm to save), Generate missing, Generate all, Confirm all / Discard all, Remove. Unused leftover photos from cleared tags are listed separately. Hidden when those kinds are N/A and no unused photos remain. |
 | `WhyChooseIcon` | Homepage Why Choose SVG keyed by `energy` / `lifespan` / `design` |
 | `AdminPageHeader` | Admin title, actions, back link, optional logout |
-| `SiteNav` | Header links. On `/admin` (not login): Home plus Catalog / Projects / Settings / Users hover menus from `admin-nav.ts`. Public pages keep Products / Projects / Contact Us. |
+| `SiteNav` | Header links. On `/admin` (not login): Home plus Catalog / Projects / Settings / Users hover menus from `admin-nav.ts`. Public pages keep Products / Projects / Contact Us. `HeaderAuthButton` sits at the end of the row: **Login** (`catalog.header.login` → `/admin/login`) when signed out, **Log out** (`admin.logout`) when signed in. Hidden on `/admin/login`. |
 | `AdminNavSectionBody` | Shared Catalog / Projects / Settings / Users link lists for the dashboard cards and header hover panels |
 | `StatTile` | Dashboard number + label; optional `href` + `helpKey` |
 | `OptionTag` | Catalog option chip on series variants. Outline = available; filled black = selected. Requires `helpKey`. |

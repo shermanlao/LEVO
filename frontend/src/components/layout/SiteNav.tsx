@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SearchButton from '@/components/layout/SearchButton';
+import HeaderAuthButton from '@/components/layout/HeaderAuthButton';
 import MobileNav from '@/components/layout/MobileNav';
 import AdminNavSectionBody from '@/components/admin/AdminNavSectionBody';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
@@ -53,8 +54,10 @@ export default function SiteNav() {
           {ADMIN_NAV_SECTIONS.map((section, index) => (
             <AdminNavDropdown key={section.id} section={section} alignEnd={index >= 2} />
           ))}
+          <HeaderAuthButton />
         </div>
-        <div className="flex items-center md:hidden">
+        <div className="flex items-center gap-4 md:hidden">
+          <HeaderAuthButton />
           <MobileNav variant="admin" sections={ADMIN_NAV_SECTIONS} />
         </div>
       </nav>
@@ -77,9 +80,11 @@ export default function SiteNav() {
           Contact Us
         </Link>
         <SearchButton />
+        <HeaderAuthButton />
       </div>
       <div className="flex items-center space-x-4 md:hidden">
         <SearchButton />
+        <HeaderAuthButton />
         <MobileNav />
       </div>
     </nav>

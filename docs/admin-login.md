@@ -5,9 +5,9 @@ Staff routes under `/admin` require a signed-in session. Logins are rows in `adm
 ## How to sign in
 
 1. Start the app (`npm run dev` from the repo root — runs the site and the API together). The site is `http://localhost:3000`; the API listens on `127.0.0.1:3333` (same machine only).
-2. Open `http://localhost:3000/admin`. You are redirected to `/admin/login`.
+2. Open `http://localhost:3000/admin`, or click **Login** in the site header. You land on `/admin/login`.
 3. Use email `admin@levo.local` and password `abc4321` the first time (or `ADMIN_EMAIL` / `ADMIN_PASSWORD` if those were set when the API first created the users table). After that, use accounts from User management. Username is the display name, not the login.
-4. Use **Log out** on the dashboard to end the session.
+4. After sign-in the header **Login** control becomes **Log out**. Use that, or **Log out** on the dashboard, to end the session. Header logout on an admin page returns to the homepage.
 
 If the form shows **Failed to fetch** / cannot reach the login API, the Next.js site is not running. Start it with `npm run dev` and retry. An **Invalid email or password** message means the credentials themselves were rejected. A 502-style message means the Express API is not running.
 
