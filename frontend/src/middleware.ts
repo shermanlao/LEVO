@@ -9,19 +9,19 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === '/admin/login') {
     if (session) {
-      return redirectSameOrigin('/admin');
+      return redirectSameOrigin(request, '/admin');
     }
     return NextResponse.next();
   }
 
   if (!session) {
     const next = new URLSearchParams({ next: pathname });
-    return redirectSameOrigin('/admin/login', next.toString());
+    return redirectSameOrigin(request, '/admin/login', next.toString());
   }
 
   if (pathname === '/admin/users' || pathname.startsWith('/admin/users/')) {
     if (session.role !== 'admin') {
-      return redirectSameOrigin('/admin');
+      return redirectSameOrigin(request, '/admin');
     }
   }
 

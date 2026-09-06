@@ -1,12 +1,33 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+function firstHeader(value: string | null): string {
+  return (value || '').split(',')[0].trim();
+}
+
+function isLoopbackHost(host: string): boolean {
+  const hostname = host.replace(/^\[|\]$/g, '').split('%')[0].toLowerCase();
+  const name = hostname.startsWith('::') ? hostname : hostname.split(':')[0];
+  return name === 'localhost' || name === '127.0.0.1' || name === '::1';
+}
 
 /**
- * Redirect without writing the Next.js bind host (localhost / 127.0.0.1:3000)
- * into Location. Browsers resolve a same-site path against the public URL.
+ * Redirect on the public host nginx sent (or SITE_ORIGIN), never the Next.js
+ * bind address. Relative Location headers throw in Next.js 15.
  */
-export function redirectSameOrigin(path: string, search?: string): NextResponse {
+export function redirectSameOrigin(
+  request: NextRequest,
+  path: string,
+  search?: string
+): NextResponse {
   const location = search ? `${path}?${search}` : path;
-  const response = NextResponse.redirect(new URL(location, 'http://127.0.0.1'));
-  response.headers.set('Location', location);
-  return response;
+  const host = firstHeader(request.headers.get('x-forwarded-host')) || firstHeader(request.headers.get('host'));
+  const proto = firstHeader(request.headers.get('x-forwarded-proto')) || 'http';
+  if (host && !isLoopbackHost(host)) {
+    return NextResponse.redirect(`${proto}://${host}${location}`);
+  }
+  const env = (process.env.SITE_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
+  if (env) {
+    return NextResponse.redirect(`${env}${location}`);
+  }
+  return NextResponse.redirect(new URL(location, request.url));
 }
