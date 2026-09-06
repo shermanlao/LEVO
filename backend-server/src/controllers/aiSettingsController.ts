@@ -31,10 +31,13 @@ import {
   DEFAULT_SIZE_DRAWING_REFINE_PROMPT,
 } from '../lib/ai/sizeDrawingPrompts';
 import {
+  deleteProductPhotoStyleImage,
   deleteSizeDrawingStyleImage,
+  resolveProductPhotoStylePathOnDisk,
   resolveSizeDrawingStylePathOnDisk,
+  writeProductPhotoStyleImage,
   writeSizeDrawingStyleImage,
-} from '../lib/ai/sizeDrawingStyleImage';
+} from '../lib/ai/aiStyleImage';
 import multer from 'multer';
 
 function serializeSettings() {
@@ -57,6 +60,11 @@ function serializeSettings() {
         String(row.get('size_drawing_style_image') || '')
       )
         ? String(row.get('size_drawing_style_image'))
+        : null,
+      product_photo_style_image: resolveProductPhotoStylePathOnDisk(
+        String(row.get('product_photo_style_image') || '')
+      )
+        ? String(row.get('product_photo_style_image'))
         : null,
       key_presence: providerKeyPresence(map, {
         envProvider,
@@ -194,6 +202,33 @@ export const deleteSizeDrawingStyle = async (_req: Request, res: Response) => {
     const row = await getOrCreateAiSettings();
     deleteSizeDrawingStyleImage(String(row.get('size_drawing_style_image') || ''));
     await row.update({ size_drawing_style_image: null });
+    res.json({ data: await serializeSettings() });
+  } catch (error) {
+    res.status(500).json({ error: clientError(error) });
+  }
+};
+
+export const uploadProductPhotoStyle = async (req: Request, res: Response) => {
+  try {
+    const file = (req as Request & { file?: Express.Multer.File }).file;
+    if (!file?.buffer?.length) {
+      return res.status(400).json({ error: 'No image uploaded' });
+    }
+    const row = await getOrCreateAiSettings();
+    deleteProductPhotoStyleImage(String(row.get('product_photo_style_image') || ''));
+    const stored = writeProductPhotoStyleImage(file.buffer, file.mimetype);
+    await row.update({ product_photo_style_image: stored });
+    res.json({ data: await serializeSettings() });
+  } catch (error) {
+    res.status(400).json({ error: errorMessage(error) });
+  }
+};
+
+export const deleteProductPhotoStyle = async (_req: Request, res: Response) => {
+  try {
+    const row = await getOrCreateAiSettings();
+    deleteProductPhotoStyleImage(String(row.get('product_photo_style_image') || ''));
+    await row.update({ product_photo_style_image: null });
     res.json({ data: await serializeSettings() });
   } catch (error) {
     res.status(500).json({ error: clientError(error) });

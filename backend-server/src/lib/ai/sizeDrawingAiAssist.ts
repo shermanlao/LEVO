@@ -1,4 +1,4 @@
-import { generateOrEditImage } from './aiImageGeneration';
+import { generateOrEditImage, SIZE_DRAWING_IMAGE_PART_LABELS } from './aiImageGeneration';
 import { getOrCreateAiSettings, getParsingHints, getSizeDrawingPromptTemplates, resolveImageAiCredentials } from './resolveCredentials';
 import { fillPromptTemplate, SIZE_DRAWING_STYLE_LOCK, SIZE_DRAWING_VIEW_LOCK, sizeDrawingPromptVars } from './sizeDrawingPrompts';
 import { readSizeDrawingStyleDataUrl } from './sizeDrawingStyleImage';
@@ -35,6 +35,7 @@ export async function generateSizeDrawing(opts: {
     prompt,
     sourceImageDataUrl: opts.imageDataUrl,
     extraImageDataUrls: styleImageDataUrl ? [styleImageDataUrl] : [],
+    imagePartLabels: SIZE_DRAWING_IMAGE_PART_LABELS,
     usageCtx: {
       feature: 'size_drawing_generate',
       provider: creds.provider,

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
+import ProductPhotoStyleDialog from '@/components/ai/ProductPhotoStyleDialog';
 import SizeDrawingAiDialog from '@/components/ai/SizeDrawingAiDialog';
 import SizeDrawingFocusDialog from '@/components/ai/SizeDrawingFocusDialog';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
@@ -48,8 +49,26 @@ export default function SizePackPhotos({
   const [focusOpen, setFocusOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [croppedDataUrl, setCroppedDataUrl] = useState('');
+  const [hasPhotoStyle, setHasPhotoStyle] = useState(false);
+  const [styleField, setStyleField] = useState<'main_image_A' | 'main_image_B' | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/admin/ai/settings', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) setHasPhotoStyle(Boolean(data.data?.product_photo_style_image));
+      })
+      .catch(() => {
+        if (!cancelled) setHasPhotoStyle(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const mainPhotoUrl = toPublicImagePath(images.main_image_A);
+  const stylePhotoUrl = styleField ? toPublicImagePath(images[styleField]) : null;
   const drawingSize = String(size || '').trim();
   const drawingCuthole = String(cuthole || '').trim();
 
@@ -178,6 +197,17 @@ export default function SizePackPhotos({
                   Generate by AI
                 </Button>
               ) : null}
+              {hasPhotoStyle && src && (field.key === 'main_image_A' || field.key === 'main_image_B') ? (
+                <Button
+                  helpKey="admin.product_series.photo_style_match"
+                  variant="secondary"
+                  className="text-xs py-1 px-2"
+                  disabled={busy != null}
+                  onClick={() => setStyleField(field.key)}
+                >
+                  Match catalog style
+                </Button>
+              ) : null}
               {src ? (
                 <Button
                   helpKey={field.helpKey}
@@ -216,6 +246,16 @@ export default function SizePackPhotos({
         }}
         onApply={async (file) => {
           await upload('size_image', file);
+        }}
+      />
+      <ProductPhotoStyleDialog
+        open={Boolean(styleField && stylePhotoUrl)}
+        imageUrl={stylePhotoUrl || ''}
+        photoType={styleField || 'main_image_A'}
+        onClose={() => setStyleField(null)}
+        onApply={async (file) => {
+          if (!styleField) return;
+          await upload(styleField, file);
         }}
       />
     </div>

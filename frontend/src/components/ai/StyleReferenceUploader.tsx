@@ -7,11 +7,31 @@ import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
 
 type Props = {
   imagePath: string | null;
+  title: string;
+  description: string;
+  alt: string;
+  endpoint: string;
+  pathField: string;
+  uploadHelpKey: string;
+  removeHelpKey: string;
+  removeConfirm: string;
   onUploaded: (path: string) => void;
   onRemoved: () => void;
 };
 
-export default function SizeDrawingStyleUploader({ imagePath, onUploaded, onRemoved }: Props) {
+export default function StyleReferenceUploader({
+  imagePath,
+  title,
+  description,
+  alt,
+  endpoint,
+  pathField,
+  uploadHelpKey,
+  removeHelpKey,
+  removeConfirm,
+  onUploaded,
+  onRemoved,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { requestCrop, cutboard } = useImageCutboard();
   const [preview, setPreview] = useState<string | null>(null);
@@ -45,13 +65,13 @@ export default function SizeDrawingStyleUploader({ imagePath, onUploaded, onRemo
     try {
       const formData = new FormData();
       formData.append('file', cropped);
-      const res = await fetch('/api/admin/ai/size-drawing-style', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload failed');
-      const nextPath = String(data.data?.size_drawing_style_image || '');
+      const nextPath = String(data.data?.[pathField] || '');
       setPreview(nextPath || objectUrl);
       setRefreshKey(Date.now());
       setUploadSuccess(true);
@@ -67,11 +87,11 @@ export default function SizeDrawingStyleUploader({ imagePath, onUploaded, onRemo
   }
 
   async function handleRemove() {
-    if (!window.confirm('Remove the size drawing style reference?')) return;
+    if (!window.confirm(removeConfirm)) return;
     setRemoving(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/ai/size-drawing-style', { method: 'DELETE' });
+      const res = await fetch(endpoint, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Failed to remove');
       setPreview(null);
@@ -89,18 +109,15 @@ export default function SizeDrawingStyleUploader({ imagePath, onUploaded, onRemo
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-2">
-        Optional 2D size drawing used as the style for Generate by AI. The product crop still
-        supplies the fixture outline.
-      </p>
+      <p className="text-sm text-gray-500 mb-2">{description}</p>
       <div className="border rounded-lg overflow-hidden bg-white shadow-sm max-w-xs">
         <div className="p-3 bg-gray-50 border-b">
-          <h3 className="font-medium text-gray-800">Size drawing style</h3>
+          <h3 className="font-medium text-gray-800">{title}</h3>
         </div>
         <div className="aspect-square relative overflow-hidden bg-gray-100 flex items-center justify-center">
           {src ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={src} alt="Size drawing style reference" className="object-contain w-full h-full p-2" />
+            <img src={src} alt={alt} className="object-contain w-full h-full p-2" />
           ) : (
             <div className="text-center p-4">
               <svg className="w-12 h-12 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -117,7 +134,7 @@ export default function SizeDrawingStyleUploader({ imagePath, onUploaded, onRemo
         </div>
         <div className="p-3 flex gap-2">
           <HelpButton
-            helpKey="admin.ai.size_drawing_style_upload"
+            helpKey={uploadHelpKey}
             type="button"
             disabled={uploading || removing}
             className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-center py-2 px-3 rounded-md text-sm font-medium flex items-center justify-center disabled:opacity-60"
@@ -135,7 +152,7 @@ export default function SizeDrawingStyleUploader({ imagePath, onUploaded, onRemo
           />
           {preview ? (
             <HelpButton
-              helpKey="admin.ai.size_drawing_style_remove"
+              helpKey={removeHelpKey}
               type="button"
               disabled={uploading || removing}
               className="bg-red-100 text-red-600 hover:bg-red-200 py-2 px-3 rounded-md text-sm font-medium disabled:opacity-60"
@@ -146,7 +163,7 @@ export default function SizeDrawingStyleUploader({ imagePath, onUploaded, onRemo
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1 1v3M4 7h16"
                 />
               </svg>
             </HelpButton>

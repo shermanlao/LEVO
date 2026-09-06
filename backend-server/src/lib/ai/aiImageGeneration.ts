@@ -15,6 +15,28 @@ export type GeneratedImageResult = {
   modelId: string;
 };
 
+export type ImagePartLabels = {
+  extraFirst: string;
+  extraOther: (index: number) => string;
+  sourceWithExtras: string;
+  sourceOnly: string;
+};
+
+export const SIZE_DRAWING_IMAGE_PART_LABELS: ImagePartLabels = {
+  extraFirst: 'Image: STYLE REFERENCE (copy 2D line style only).',
+  extraOther: (index) => `Image: extra reference ${index + 1}.`,
+  sourceWithExtras: 'Image: PRODUCT PHOTO (outline identity only; flatten to 2D).',
+  sourceOnly: 'Image: product photograph.',
+};
+
+export const PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS: ImagePartLabels = {
+  extraFirst: 'Image: STYLE REFERENCE (copy lighting, background, contrast, and color grade only).',
+  extraOther: (index) => `Image: extra reference ${index + 1}.`,
+  sourceWithExtras:
+    'Image: PRODUCT PHOTO (keep this fixture identity, shape, finish, and viewpoint).',
+  sourceOnly: 'Image: product photograph.',
+};
+
 const XAI_IMAGE_MODEL = 'grok-imagine-image-quality';
 const GOOGLE_IMAGE_MODEL = 'gemini-3.1-flash-image';
 
@@ -122,7 +144,8 @@ async function generateWithGoogle(
   prompt: string,
   sourceImageDataUrl: string | null,
   extraImageDataUrls: string[],
-  usageCtx: AiUsageContext
+  usageCtx: AiUsageContext,
+  imagePartLabels: ImagePartLabels
 ): Promise<GeneratedImageResult> {
   const modelId = GOOGLE_IMAGE_MODEL;
   const url = `${googleNativeBaseUrl(creds)}/models/${modelId}:generateContent`;
@@ -130,10 +153,7 @@ async function generateWithGoogle(
   extraImageDataUrls.forEach((dataUrl, index) => {
     const { mimeType, base64 } = dataUrlToParts(dataUrl);
     parts.push({
-      text:
-        index === 0
-          ? 'Image: STYLE REFERENCE (copy 2D line style only).'
-          : `Image: extra reference ${index + 1}.`,
+      text: index === 0 ? imagePartLabels.extraFirst : imagePartLabels.extraOther(index),
     });
     parts.push({ inline_data: { mime_type: mimeType, data: base64 } });
   });
@@ -141,8 +161,8 @@ async function generateWithGoogle(
     const { mimeType, base64 } = dataUrlToParts(sourceImageDataUrl);
     parts.push({
       text: extraImageDataUrls.length
-        ? 'Image: PRODUCT PHOTO (outline identity only; flatten to 2D).'
-        : 'Image: product photograph.',
+        ? imagePartLabels.sourceWithExtras
+        : imagePartLabels.sourceOnly,
     });
     parts.push({ inline_data: { mime_type: mimeType, data: base64 } });
   }
@@ -218,11 +238,19 @@ async function generateWithProvider(
   prompt: string,
   sourceImageDataUrl: string | null,
   extraImageDataUrls: string[],
-  usageCtx: AiUsageContext
+  usageCtx: AiUsageContext,
+  imagePartLabels: ImagePartLabels
 ): Promise<GeneratedImageResult> {
   const provider = normalizeImageAiProviderId(creds.provider);
   if (provider === 'google') {
-    return generateWithGoogle(creds, prompt, sourceImageDataUrl, extraImageDataUrls, usageCtx);
+    return generateWithGoogle(
+      creds,
+      prompt,
+      sourceImageDataUrl,
+      extraImageDataUrls,
+      usageCtx,
+      imagePartLabels
+    );
   }
   if (provider === 'xai') {
     return generateWithXai(creds, prompt, sourceImageDataUrl, extraImageDataUrls, usageCtx);
@@ -237,10 +265,12 @@ export async function generateOrEditImage(opts: {
   prompt: string;
   sourceImageDataUrl?: string | null;
   extraImageDataUrls?: string[];
+  imagePartLabels?: ImagePartLabels;
   usageCtx: AiUsageContext;
 }): Promise<GeneratedImageResult> {
   const source = opts.sourceImageDataUrl ?? null;
   const extra = (opts.extraImageDataUrls || []).filter((url) => url.startsWith('data:'));
+  const imagePartLabels = opts.imagePartLabels || SIZE_DRAWING_IMAGE_PART_LABELS;
   const tried = new Set<string>();
   const queue: ResolvedImageAiCredentials[] = [opts.creds];
   let lastError: unknown = null;
@@ -255,7 +285,14 @@ export async function generateOrEditImage(opts: {
     }
     tried.add(pid);
     try {
-      return await generateWithProvider(current, opts.prompt, source, extra, opts.usageCtx);
+      return await generateWithProvider(
+        current,
+        opts.prompt,
+        source,
+        extra,
+        opts.usageCtx,
+        imagePartLabels
+      );
     } catch (err) {
       lastError = err;
       if (!isConnectionFailure(err)) throw err;

@@ -3,6 +3,7 @@ import { errorMessage, clientError } from '../lib/errors';
 import { generateSizeDrawing } from '../lib/ai/sizeDrawingAiAssist';
 import { generateAppearancePhoto } from '../lib/ai/appearancePhotoAi';
 import { editProductPhoto } from '../lib/ai/productPhotoAiEdit';
+import { stylizeProductPhoto } from '../lib/ai/productPhotoStyleAi';
 import { generateDatasheetLabel } from '../lib/ai/datasheetLabelAi';
 import { generateDescriptionPhrase } from '../lib/ai/descriptionPhraseAi';
 
@@ -78,6 +79,18 @@ export const postGenerateAppearancePhoto = async (req: Request, res: Response) =
       trim_color,
       reflector_finish,
     });
+    res.json(result);
+  } catch (error) {
+    const message = errorMessage(error);
+    const status = /not configured/i.test(message) ? 503 : /required/i.test(message) ? 400 : 500;
+    res.status(status).json({ error: status >= 500 ? clientError(error) : message });
+  }
+};
+
+export const postStylizeProductPhoto = async (req: Request, res: Response) => {
+  try {
+    const { imageDataUrl } = (req.body || {}) as { imageDataUrl?: string };
+    const result = await stylizeProductPhoto({ imageDataUrl: imageDataUrl || '' });
     res.json(result);
   } catch (error) {
     const message = errorMessage(error);

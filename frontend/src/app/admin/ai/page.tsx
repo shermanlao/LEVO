@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import AdminLogoutButton from '@/components/admin/AdminLogoutButton';
 import HelpButton from '@/components/admin/HelpButton';
-import SizeDrawingStyleUploader from '@/components/ai/SizeDrawingStyleUploader';
+import StyleReferenceUploader from '@/components/ai/StyleReferenceUploader';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AlertBanner from '@/components/ui/AlertBanner';
 import Button from '@/components/ui/Button';
@@ -19,6 +19,7 @@ type Settings = {
   size_drawing_prompt_default: string;
   size_drawing_refine_prompt_default: string;
   size_drawing_style_image: string | null;
+  product_photo_style_image: string | null;
   key_presence: Record<string, boolean>;
   env_key_overrides: boolean;
   env_provider: string | null;
@@ -47,6 +48,7 @@ export default function AdminAiSettingsPage() {
   const [sizeDrawingPrompt, setSizeDrawingPrompt] = useState('');
   const [sizeDrawingRefinePrompt, setSizeDrawingRefinePrompt] = useState('');
   const [sizeDrawingStyleImage, setSizeDrawingStyleImage] = useState<string | null>(null);
+  const [productPhotoStyleImage, setProductPhotoStyleImage] = useState<string | null>(null);
   const [keys, setKeys] = useState<Record<string, string>>({});
   const [routing, setRouting] = useState<Record<string, { provider?: string; modelId?: string }>>({});
   const [loading, setLoading] = useState(true);
@@ -74,6 +76,7 @@ export default function AdminAiSettingsPage() {
       setSizeDrawingPrompt(row.size_drawing_prompt || '');
       setSizeDrawingRefinePrompt(row.size_drawing_refine_prompt || '');
       setSizeDrawingStyleImage(row.size_drawing_style_image || null);
+      setProductPhotoStyleImage(row.product_photo_style_image || null);
       setRouting(row.feature_model_routing || {});
       const usageJson = await usageRes.json();
       if (usageRes.ok) setUsage(usageJson.data);
@@ -123,6 +126,7 @@ export default function AdminAiSettingsPage() {
       setSizeDrawingPrompt(data.data.size_drawing_prompt || '');
       setSizeDrawingRefinePrompt(data.data.size_drawing_refine_prompt || '');
       setSizeDrawingStyleImage(data.data.size_drawing_style_image || null);
+      setProductPhotoStyleImage(data.data.product_photo_style_image || null);
       setKeys({});
       setMessage('AI settings saved.');
     } catch (err) {
@@ -149,6 +153,7 @@ export default function AdminAiSettingsPage() {
         setSizeDrawingPrompt(data.data.size_drawing_prompt || '');
         setSizeDrawingRefinePrompt(data.data.size_drawing_refine_prompt || '');
         setSizeDrawingStyleImage(data.data.size_drawing_style_image || null);
+        setProductPhotoStyleImage(data.data.product_photo_style_image || null);
         setKeys({});
       }
       setMessage(data.message || 'Connected.');
@@ -297,7 +302,7 @@ export default function AdminAiSettingsPage() {
                 org provider.
               </p>
               {(settings.features || [])
-                .filter((f) => f.id !== 'connection_test')
+                .filter((f) => f.id !== 'connection_test' && f.id !== 'product_photo_style')
                 .map((feature) => (
                   <div key={feature.id} className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     <label className="text-sm">
@@ -349,21 +354,54 @@ export default function AdminAiSettingsPage() {
               />
             </div>
 
-            <SizeDrawingStyleUploader
-              imagePath={sizeDrawingStyleImage}
-              onUploaded={(path) => {
-                setSizeDrawingStyleImage(path);
-                setSettings((prev) =>
-                  prev ? { ...prev, size_drawing_style_image: path } : prev
-                );
-              }}
-              onRemoved={() => {
-                setSizeDrawingStyleImage(null);
-                setSettings((prev) =>
-                  prev ? { ...prev, size_drawing_style_image: null } : prev
-                );
-              }}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <StyleReferenceUploader
+                imagePath={sizeDrawingStyleImage}
+                title="Size drawing style"
+                description="Optional 2D size drawing used as the style for Generate by AI. The product crop still supplies the fixture outline."
+                alt="Size drawing style reference"
+                endpoint="/api/admin/ai/size-drawing-style"
+                pathField="size_drawing_style_image"
+                uploadHelpKey="admin.ai.size_drawing_style_upload"
+                removeHelpKey="admin.ai.size_drawing_style_remove"
+                removeConfirm="Remove the size drawing style reference?"
+                onUploaded={(path) => {
+                  setSizeDrawingStyleImage(path);
+                  setSettings((prev) =>
+                    prev ? { ...prev, size_drawing_style_image: path } : prev
+                  );
+                }}
+                onRemoved={() => {
+                  setSizeDrawingStyleImage(null);
+                  setSettings((prev) =>
+                    prev ? { ...prev, size_drawing_style_image: null } : prev
+                  );
+                }}
+              />
+              <StyleReferenceUploader
+                imagePath={productPhotoStyleImage}
+                title="Catalog photo style"
+                description="Optional house-style product photo. Match catalog style on Main A or Main B copies its lighting and background. Upload still saves the original."
+                alt="Catalog photo style reference"
+                endpoint="/api/admin/ai/product-photo-style"
+                pathField="product_photo_style_image"
+                uploadHelpKey="admin.ai.product_photo_style_upload"
+                removeHelpKey="admin.ai.product_photo_style_remove"
+                removeConfirm="Remove the catalog photo style reference?"
+                onUploaded={(path) => {
+                  setProductPhotoStyleImage(path);
+                  setSettings((prev) =>
+                    prev ? { ...prev, product_photo_style_image: path } : prev
+                  );
+                }}
+                onRemoved={() => {
+                  setProductPhotoStyleImage(null);
+                  setSettings((prev) =>
+                    prev ? { ...prev, product_photo_style_image: null } : prev
+                  );
+                }}
+              />
+            </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">

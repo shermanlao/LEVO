@@ -37,7 +37,7 @@ Public fallbacks when a chunk is empty: that surface uses source, then `featured
 
 ## Other upload locations
 
-Every other staff image picker uses `requestCrop(file, frame)` before it uploads: type featured images, size-pack and appearance photos, site assets, size-drawing style, datasheet labels, and project photos.
+Every other staff image picker uses `requestCrop(file, frame)` before it uploads: type featured images, size-pack and appearance photos, site assets, size-drawing style, catalog photo style, datasheet labels, and project photos.
 
 The size-drawing AI **Focus the fixture** dialog stays a free-form box for the AI prompt. It is not this cutboard.
 

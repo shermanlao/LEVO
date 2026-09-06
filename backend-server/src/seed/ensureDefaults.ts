@@ -428,8 +428,8 @@ export const DEFAULT_HELP_TIPS = [
   },
   {
     helpKey: 'admin.products.photo_ai',
-    title: 'Edit photo with AI',
-    body: 'Click a filled Main Image A thumbnail in edit mode to chat-edit the photo, then Apply to replace the slot.',
+    title: 'Match catalog style',
+    body: 'Optional. After Main A or Main B is saved, Match catalog style restyles that photo to the catalog style on /admin/ai. Upload still saves the original. Close the preview without Apply to keep it.',
   },
   {
     helpKey: 'admin.products.photometric_library',
@@ -495,6 +495,26 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.ai.size_drawing_style_remove',
     title: 'Remove style reference',
     body: 'Clear the size-drawing style photo. Generate by AI then uses the text prompt only.',
+  },
+  {
+    helpKey: 'admin.ai.product_photo_style_upload',
+    title: 'Upload catalog photo style',
+    body: 'Upload one finished catalog photo. Match catalog style on Main A or Main B copies its lighting, background, and color grade. Upload of vendor photos still saves the original.',
+  },
+  {
+    helpKey: 'admin.ai.product_photo_style_remove',
+    title: 'Remove catalog photo style',
+    body: 'Clear the catalog photo style. Match catalog style is then hidden on size-pack Main A and Main B.',
+  },
+  {
+    helpKey: 'admin.product_series.photo_style_match',
+    title: 'Match catalog style',
+    body: 'Optional. Restyle this saved Main A or Main B photo to the catalog style on /admin/ai. Preview first; Apply replaces the slot. Close keeps the original.',
+  },
+  {
+    helpKey: 'admin.product_series.photo_style_apply',
+    title: 'Apply styled photo',
+    body: 'Replace the saved Main A or Main B file with the styled preview. Close or Reset keeps the original upload.',
   },
   {
     helpKey: 'admin.products.size_drawing_ai',
@@ -1737,6 +1757,12 @@ export async function ensureAiSettingsColumns(): Promise<void> {
   }
   if (!table.size_drawing_style_image) {
     await qi.addColumn('ai_provider_settings', 'size_drawing_style_image', {
+      type: DataTypes.STRING,
+      allowNull: true,
+    });
+  }
+  if (!table.product_photo_style_image) {
+    await qi.addColumn('ai_provider_settings', 'product_photo_style_image', {
       type: DataTypes.STRING,
       allowNull: true,
     });

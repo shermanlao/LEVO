@@ -10,6 +10,7 @@ export function isAiProviderKeyId(value: string): value is AiProviderKeyId {
 export const AI_USAGE_FEATURES = [
   'size_drawing_generate',
   'product_photo_edit',
+  'product_photo_style',
   'appearance_photo_generate',
   'datasheet_label_generate',
   'description_phrase_generate',
@@ -21,6 +22,7 @@ export type AiUsageFeature = (typeof AI_USAGE_FEATURES)[number];
 export const AI_USAGE_FEATURE_LABELS: Record<AiUsageFeature, string> = {
   size_drawing_generate: 'Size drawing',
   product_photo_edit: 'Product photo edit',
+  product_photo_style: 'Catalog photo style',
   appearance_photo_generate: 'Appearance photo',
   datasheet_label_generate: 'Datasheet label',
   description_phrase_generate: 'Description phrase',

@@ -19,9 +19,16 @@ Upload an optional **style reference** on `/admin/ai` (Size drawing style). When
 
 On the same series page, **Generate missing** / **Generate all** (and upload of size Main A) edits Main A into Finish × Trim × Reflector **previews**. Staff must **Confirm** (or Confirm all) before a file is uploaded and stored. Discard leaves the previous saved photo. See [appearance-photos.md](appearance-photos.md).
 
-## Main photo edit
+## Catalog photo style
 
-In edit mode, click a filled **Main Image A** thumbnail. Chat instructions (or **Upscale**) edit the photo. **Apply** uploads and replaces the slot. Disabled until the preview differs from the original.
+Upload one house-style product photo on `/admin/ai` (**Catalog photo style**). That file is optional.
+
+On `/admin/product-series/[id]`, size-pack **Main A** and **Main B** still save the cropped vendor file immediately. When a catalog style photo is set, a **Match catalog style** button appears on filled Main A / Main B slots. Staff can ignore it. The button:
+
+1. Sends the saved slot photo plus the style reference to `POST /api/admin/ai/stylize-product-photo`
+2. Shows a preview. **Apply** replaces the slot. **Reset** or Close keeps the original upload
+
+The model copies lighting, background, contrast, and color grade. It must keep this fixture, finish, and viewpoint — not flatten to a size drawing. Appearance, featured, and project slots are unchanged.
 
 ## Providers
 
@@ -42,6 +49,7 @@ On `/admin/variant-options`, each datasheet square (IP, warranty, voltage, or a 
 - `POST /api/admin/ai/refine-size-drawing` `{ imageDataUrl, size, cuthole?, instruction }`
 - `POST /api/admin/ai/generate-appearance-photo` `{ imageDataUrl, colour?, trim_color?, reflector_finish? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/edit-product-photo` `{ imageDataUrl, instruction, photoType? }`
+- `POST /api/admin/ai/stylize-product-photo` `{ imageDataUrl }` — optional Main A / B restyle; 400 if no catalog style photo is stored
 - `POST /api/admin/ai/generate-datasheet-label` `{ text, instruction?, imageDataUrl? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/generate-description-phrase` `{ guide, seriesName, typeName?, fields?, existing? }` → `{ phrase }`
 

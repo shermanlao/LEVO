@@ -50,7 +50,8 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `ImageCutboard` | Staff upload crop board. Starts at contain (whole photo visible); zoom and drag, then Apply. Use `useImageCutboard()` plus `IMAGE_FRAMES` from `image-frames.ts`. |
 | `SeriesFeaturedImageEditor` | Series admin: one source upload, then 16:9 / 4:5 / 1:1 crops. Each slot can upload or replace its own photo, or adjust the crop from the source. |
 | `AdminPhotoSlot` | Square admin photo cell (`aspect-square`). Hover shows a larger preview; click opens `ImageLightbox`. Used by size-pack and appearance photos. `AdminHoverPreview` wraps other admin images for the same hover enlarge. |
-| `SizePackPhotos` | Series size rows: square Main A/B and Size drawing upload. Size drawing has **Generate by AI** (crop Main A, then refine and Apply). Hover enlarge via `AdminPhotoSlot`. |
+| `SizePackPhotos` | Series size rows: square Main A/B and Size drawing upload. Upload still saves immediately. Size drawing has **Generate by AI**. Filled Main A/B can show optional **Match catalog style** when a style photo is set on `/admin/ai`. Hover enlarge via `AdminPhotoSlot`. |
+| `StyleReferenceUploader` | Shared `/admin/ai` style photo slot (size drawing and catalog photo). Crop at 1:1, then POST/DELETE the style endpoint. |
 | `AppearancePhotos` | Series Finish × Trim × Reflector photos, directly under Size. Square thumbs, Upload, Generate by AI (pending preview, Confirm to save), Generate missing, Generate all, Confirm all / Discard all, Remove. Unused leftover photos from cleared tags are listed separately. Hidden when those kinds are N/A and no unused photos remain. |
 | `WhyChooseIcon` | Homepage Why Choose SVG keyed by `energy` / `lifespan` / `design` |
 | `AdminPageHeader` | Admin title, actions, back link, optional logout |

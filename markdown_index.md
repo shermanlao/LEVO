@@ -19,8 +19,8 @@
 - [404 pages](docs/not-found-page.md) — LEVO-styled not-found page for missing catalog, project, and admin records
 - [Site branding](docs/site-branding.md) — LEVO wordmark, LIGHT EVOLUTION slogan, tab icon, and datasheet PDF chrome
 - [Photometric LDT](docs/photometric-ldt.md) — beam library, saved polar options, public LDT download (product detail and series list), polar drawing on the datasheet
-- [Product photo AI](docs/product-photo-ai.md) — size drawing generate/refine and main-photo AI edit
-- [Admin AI settings](docs/admin-ai-settings.md) — `/admin/ai` keys, routing, failover, usage, size-drawing prompts and style reference
+- [Product photo AI](docs/product-photo-ai.md) — size drawing generate/refine, optional catalog photo style on Main A / B
+- [Admin AI settings](docs/admin-ai-settings.md) — `/admin/ai` keys, routing, failover, usage, size-drawing prompts, size-drawing and catalog photo style references
 - [Catalog page route](docs/catalog-page-route.md) — shared `Products / …` and `Projects / …` breadcrumb on public product and project pages
 - [Frontend UI](docs/frontend-ui.md) — CSS tokens, Button/FormField/Card, and helpKey
 - [Image crop board](docs/image-cutboard.md) — contain-start cutboard; series featured image is one source plus 16:9 / 4:5 / 1:1 crops
