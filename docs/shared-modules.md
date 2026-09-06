@@ -50,7 +50,7 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `productMedia.extractStoredImageUrl` — image values on type/series/product writes
 - `photometric/persistProductLdt.ts` — stamp and store a product `.ldt` on create/update (`ldt_file`)
 - `photometric/writeProductLdtFile.ts` — write/resolve/delete `/uploads/product-ldt/{series}/{id}.ldt`
-- `seriesConfig.ts` — load/replace/merge `series_options`, batch `loadSeriesOptionsForIds` for list pages, resolve a series + query into a spec (options + size-pack photos), upsert size packs, upsert matching rows into `variant_option_catalog`
+- `seriesConfig.ts` — load/replace/merge `series_options`, batch `loadSeriesOptionsForIds` for list pages, resolve a series + query into a spec (options + size-pack photos), upsert size packs (optional `pack_id` keeps photos on that product when the label changes), `ensureSeriesSizePack` for staff upload before Save variants, upsert matching rows into `variant_option_catalog`
 - `variantCatalog.ts` — load/replace/upsert/backfill global option labels and SKU codes
 - `internalAuth.ts` — Express `X-Levo-Internal` check on non-public routes
 - `pdfResponse.ts` — shared `sendPdf` for datasheet / series / label downloads

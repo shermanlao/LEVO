@@ -303,6 +303,7 @@ export async function replaceSeriesOptions(seriesId: number, incoming: unknown):
         dimensions: optionText(rec.dimensions) || null,
         cutout_size: optionText(rec.cutout_size) || null,
         code: optionText(rec.code) || null,
+        pack_id: parsePackId(rec.pack_id),
       });
     index += 1;
   }
@@ -328,16 +329,27 @@ export async function replaceSeriesOptions(seriesId: number, incoming: unknown):
       sort += 1;
     }
   }
-  await upsertSeriesSizePacks(seriesId);
+  await upsertSeriesSizePacks(
+    seriesId,
+    parsed.filter((option) => option.kind === SIZE_KIND)
+  );
   return created;
 }
 
-export async function upsertSeriesSizePacks(seriesId: number): Promise<void> {
+function parsePackId(value: unknown): number | null {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+export async function upsertSeriesSizePacks(
+  seriesId: number,
+  incomingSizes?: SeriesOptionDto[]
+): Promise<void> {
   const series = await ProductSeries.findByPk(seriesId, {
     include: [{ model: ProductType, as: 'type' }],
   });
   if (!series) return;
-  const options = await loadSeriesOptions(seriesId);
+  const options = incomingSizes?.length ? incomingSizes : await loadSeriesOptions(seriesId);
   const sizes = options.filter((option) => option.kind === SIZE_KIND && option.value);
   if (!sizes.length) return;
 
@@ -347,9 +359,14 @@ export async function upsertSeriesSizePacks(seriesId: number): Promise<void> {
   const seriesSlug = String(series.get('slug') || 'series');
 
   for (const size of sizes) {
-    const existing = products.find((row) =>
-      productMatchesSize(row.get({ plain: true }) as Record<string, unknown>, size)
-    );
+    const packId = parsePackId(size.pack_id);
+    const existing =
+      (packId
+        ? products.find((row) => Number(row.get('id')) === packId)
+        : undefined) ||
+      products.find((row) =>
+        productMatchesSize(row.get({ plain: true }) as Record<string, unknown>, size)
+      );
     const name = `${seriesName} ${size.value}`.trim();
     const dimensions = optionText(size.dimensions) || size.value;
     const cutout = optionText(size.cutout_size) || null;
@@ -381,6 +398,53 @@ export async function upsertSeriesSizePacks(seriesId: number): Promise<void> {
     });
     products.push(created);
   }
+}
+
+export async function ensureSeriesSizePack(
+  seriesId: number,
+  input: { value?: string; dimensions?: string | null; cutout_size?: string | null }
+): Promise<{
+  id: number;
+  main_image_A: string;
+  main_image_B: string;
+  size_image: string;
+}> {
+  const value = optionText(input.value) || optionText(input.dimensions);
+  if (!value) {
+    throw new Error('Enter a size label, then upload photos.');
+  }
+  const dimensions = optionText(input.dimensions) || value;
+  const cutout = optionText(input.cutout_size) || null;
+  await upsertOption(seriesId, SIZE_KIND, value, {
+    dimensions,
+    cutout_size: cutout,
+  });
+  await upsertSeriesSizePacks(seriesId, [
+    {
+      kind: SIZE_KIND,
+      value,
+      sort_order: 0,
+      dimensions,
+      cutout_size: cutout,
+    },
+  ]);
+  const options = await loadSeriesOptions(seriesId);
+  const size =
+    options.find((option) => option.kind === SIZE_KIND && valuesEqual(SIZE_KIND, option.value, value)) ||
+    null;
+  if (!size) throw new Error('Could not create this size pack.');
+  const products = await Product.findAll({ where: { series_id: seriesId } });
+  const pack = products.find((row) =>
+    productMatchesSize(row.get({ plain: true }) as Record<string, unknown>, size)
+  );
+  if (!pack) throw new Error('Could not create this size pack.');
+  const plain = pack.get({ plain: true }) as Record<string, unknown>;
+  return {
+    id: Number(pack.get('id')),
+    main_image_A: optionText(plain.main_image_A),
+    main_image_B: optionText(plain.main_image_B),
+    size_image: optionText(plain.size_image),
+  };
 }
 
 async function upsertOption(

@@ -23,29 +23,38 @@ const FIELDS = [
   { key: 'size_image', label: 'Size drawing', helpKey: 'admin.product_series.size_drawing' },
 ] as const;
 
+type SizePackImages = { main_image_A?: string; main_image_B?: string; size_image?: string };
+
 type SizePackPhotosProps = {
   productId?: number;
+  seriesId: number;
   seriesSlug: string;
-  images: { main_image_A?: string; main_image_B?: string; size_image?: string };
+  images: SizePackImages;
+  sizeLabel?: string;
   size?: string;
   cuthole?: string;
   mounting?: string;
-  onChanged: () => void;
+  onChanged: (images?: SizePackImages) => void;
+  onPackCreated?: (productId: number) => void;
   onMainAUploaded?: (info: { productId: number; imagePath: string }) => void;
 };
 
 export default function SizePackPhotos({
   productId,
+  seriesId,
   seriesSlug,
   images,
+  sizeLabel = '',
   size = '',
   cuthole = '',
   mounting = '',
   onChanged,
+  onPackCreated,
   onMainAUploaded,
 }: SizePackPhotosProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [localPackId, setLocalPackId] = useState<number | undefined>(productId);
   const { requestCrop, cutboard } = useImageCutboard();
   const [focusOpen, setFocusOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
@@ -68,25 +77,46 @@ export default function SizePackPhotos({
     };
   }, []);
 
+  useEffect(() => {
+    setLocalPackId(productId);
+  }, [productId]);
+
   const mainPhotoUrl = toPublicImagePath(images.main_image_A);
   const stylePhotoUrl = styleField ? toPublicImagePath(images[styleField]) : null;
   const drawingSize = String(size || '').trim();
   const drawingCuthole = String(cuthole || '').trim();
+  const packLabel = String(sizeLabel || drawingSize).trim();
+  const activePackId = localPackId || productId;
 
-  if (!productId) {
-    return (
-      <p className="text-xs text-gray-500 md:col-span-12">
-        Save variants to create this size pack, then upload photos.
-      </p>
-    );
+  async function resolvePackId(): Promise<number> {
+    if (activePackId) return activePackId;
+    if (!packLabel) {
+      throw new Error('Enter a size label, then upload photos.');
+    }
+    const created = await adminFetchJson<{ data?: { id?: number } }>(`/product-series/${seriesId}/size-packs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        value: packLabel,
+        dimensions: drawingSize || packLabel,
+        cutout_size: drawingCuthole || null,
+      }),
+    });
+    if (!created.ok) throw new Error(created.error);
+    const id = Number(created.data?.data?.id);
+    if (!Number.isInteger(id) || id <= 0) throw new Error('Could not create this size pack.');
+    setLocalPackId(id);
+    onPackCreated?.(id);
+    return id;
   }
 
   async function upload(field: (typeof FIELDS)[number]['key'], file: File) {
     setBusy(field);
     setError(null);
     try {
+      const packId = await resolvePackId();
       const uploaded = await uploadAdminImage(file, {
-        productId: String(productId),
+        productId: String(packId),
         imageType: field,
         seriesSlug,
       });
@@ -100,15 +130,15 @@ export default function SizePackPhotos({
         },
         seriesSlug
       );
-      const saved = await adminFetchJson(`/products/${productId}`, {
+      const saved = await adminFetchJson(`/products/${packId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: path }),
       });
       if (!saved.ok) throw new Error(saved.error);
-      onChanged();
-      if (field === 'main_image_A' && productId) {
-        onMainAUploaded?.({ productId, imagePath: path });
+      onChanged({ [field]: path });
+      if (field === 'main_image_A') {
+        onMainAUploaded?.({ productId: packId, imagePath: path });
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
@@ -120,9 +150,10 @@ export default function SizePackPhotos({
   }
 
   async function remove(field: (typeof FIELDS)[number]['key']) {
+    if (!activePackId) return;
     setBusy(field);
     setError(null);
-    const saved = await adminFetchJson(`/products/${productId}`, {
+    const saved = await adminFetchJson(`/products/${activePackId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ [field]: '' }),
@@ -132,7 +163,7 @@ export default function SizePackPhotos({
       setError(saved.error);
       return;
     }
-    onChanged();
+    onChanged({ [field]: '' });
   }
 
   function takePhotoFile(field: (typeof FIELDS)[number]['key'], file: File) {

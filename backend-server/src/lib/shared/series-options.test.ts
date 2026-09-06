@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { MAX_CARTESIAN_COMBO_ROWS, cartesianComboRows, comboCount, groupOptionsByKind } from './series-options';
+import {
+  MAX_CARTESIAN_COMBO_ROWS,
+  cartesianComboRows,
+  comboCount,
+  groupOptionsByKind,
+} from './series-options';
 
 describe('series option cartesian', () => {
   it('counts visible selector combinations', () => {
@@ -21,5 +26,14 @@ describe('series option cartesian', () => {
     }
     const rows = cartesianComboRows(groupOptionsByKind(options));
     assert.ok(rows.length <= MAX_CARTESIAN_COMBO_ROWS);
+  });
+
+  it('keeps size pack_id when merging duplicate size labels', () => {
+    const grouped = groupOptionsByKind([
+      { kind: 'size', value: 'Ø90mm', sort_order: 0, dimensions: 'Ø90mm', pack_id: 12 },
+      { kind: 'size', value: 'Ø90mm', sort_order: 1, cutout_size: 'Ø80mm' },
+    ]);
+    assert.equal(grouped.size[0].pack_id, 12);
+    assert.equal(grouped.size[0].cutout_size, 'Ø80mm');
   });
 });

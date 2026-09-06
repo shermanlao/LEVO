@@ -27,6 +27,8 @@ export type SeriesOptionDto = {
   code?: string | null;
   /** Datasheet badge image from variant_option_catalog. */
   label_image?: string | null;
+  /** Existing size-pack product id; write-only, used when saving so photos stay on that pack. */
+  pack_id?: number | null;
 };
 
 export type VariantCatalogOption = {
@@ -221,6 +223,7 @@ function mergeOption(keep: SeriesOptionDto, extra: SeriesOptionDto): SeriesOptio
     system_lumen: keep.system_lumen ?? extra.system_lumen,
     dimensions: keep.dimensions || extra.dimensions,
     cutout_size: keep.cutout_size || extra.cutout_size,
+    pack_id: keep.pack_id ?? extra.pack_id,
   };
 }
 

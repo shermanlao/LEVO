@@ -119,6 +119,7 @@ function flattenDrafts(drafts: Record<string, DraftOption[]>): SeriesOptionDto[]
         dimensions: field.key === SIZE_KIND ? optionText(row.dimensions) || value : null,
         cutout_size: field.key === SIZE_KIND ? optionText(row.cutout_size) || null : null,
         code: optionText(row.code) || null,
+        pack_id: field.key === SIZE_KIND ? row.packId ?? null : null,
       });
       sort += 1;
     }
@@ -424,7 +425,7 @@ export default function SeriesVariantEditorPage() {
                     <h2 className="text-lg font-semibold">{variantKindLabel(field.key)}</h2>
                     {field.key === SIZE_KIND ? (
                       <Button
-                        helpKey="admin.product_series.option_add"
+                        helpKey="admin.product_series.size_add"
                         variant="secondary"
                         onClick={() =>
                           setDrafts((prev) => ({
@@ -485,19 +486,24 @@ export default function SeriesVariantEditorPage() {
                             </div>
                             <SizePackPhotos
                               productId={row.packId}
+                              seriesId={id}
                               seriesSlug={slug}
                               images={{
                                 main_image_A: row.main_image_A,
                                 main_image_B: row.main_image_B,
                                 size_image: row.size_image,
                               }}
+                              sizeLabel={optionText(row.value) || optionText(row.dimensions)}
                               size={optionText(row.dimensions) || optionText(row.value)}
                               cuthole={optionText(row.cutout_size)}
                               mounting={(drafts.mounting_type || [])
                                 .map((item) => optionText(item.value))
                                 .filter(Boolean)
                                 .join(', ')}
-                              onChanged={load}
+                              onPackCreated={(packId) => updateRow(field.key, index, { packId })}
+                              onChanged={(patch) => {
+                                if (patch) updateRow(field.key, index, patch);
+                              }}
                               onMainAUploaded={({ productId, imagePath }) => {
                                 setUploadedMainA(imagePath);
                                 setUploadedSourceId(productId);
