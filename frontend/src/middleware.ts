@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ADMIN_SESSION_COOKIE, verifySessionValue } from '@/lib/admin-session';
+import { redirectSameOrigin } from '@/lib/same-origin-redirect';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -8,20 +9,19 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === '/admin/login') {
     if (session) {
-      return NextResponse.redirect(new URL('/admin', request.url));
+      return redirectSameOrigin('/admin');
     }
     return NextResponse.next();
   }
 
   if (!session) {
-    const login = new URL('/admin/login', request.url);
-    login.searchParams.set('next', pathname);
-    return NextResponse.redirect(login);
+    const next = new URLSearchParams({ next: pathname });
+    return redirectSameOrigin('/admin/login', next.toString());
   }
 
   if (pathname === '/admin/users' || pathname.startsWith('/admin/users/')) {
     if (session.role !== 'admin') {
-      return NextResponse.redirect(new URL('/admin', request.url));
+      return redirectSameOrigin('/admin');
     }
   }
 

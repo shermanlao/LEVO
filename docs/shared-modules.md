@@ -20,7 +20,7 @@ LEVO keeps duplicated logic in one place instead of copying it across the Next.j
 | `production-secrets.ts` | Local default names, production fail-fast, `INTERNAL_API_HEADER` |
 | `safe-href.ts` | `safeHttpUrl` / `safePublicHref` for stored links |
 | `image-magic.ts` | JPEG/PNG/GIF/WebP magic-byte check |
-| `admin-session-cookie.ts` | HMAC cookie create/verify (`username.role.exp.epoch.sig`) and `safeAdminNextPath` |
+| `admin-session-cookie.ts` | HMAC cookie create/verify (`username.role.exp.epoch.sig`), `safeAdminNextPath`, and `cookieIsSecure` (`Secure` only for HTTPS `SITE_ORIGIN`) |
 | `admin-backend-path.ts` | Admin BFF path allowlist; public catalog GET/HEAD vs 405 |
 
 Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend wrappers (`productSpecs.ts`, `slugify.ts`, `publicCache.ts`) re-export plus backend-only extras (`uniqueSlug`, datasheet field labels).

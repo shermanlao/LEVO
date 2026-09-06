@@ -55,6 +55,7 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Upgrade $http_upgrade;
@@ -63,7 +64,7 @@ server {
 }
 ```
 
-Set `SITE_ORIGIN` in `/var/www/levo/backend-server/.env` to the public URL (for example `http://levo.example.com` or `https://levo.example.com` after TLS). Then `sudo systemctl restart levo-api`.
+Set `SITE_ORIGIN` in `/var/www/levo/backend-server/.env` **and** `/etc/levo/next.env` to the public URL (for example `http://187.7.21.12`, `http://levo.example.com`, or `https://levo.example.com` after TLS). Then `sudo systemctl restart levo-api levo-web`. Admin middleware redirects stay on that host; they must not use the Next.js loopback bind (`127.0.0.1:3000`).
 
 ## Step 3 — Add the other site
 
@@ -90,6 +91,7 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Upgrade $http_upgrade;

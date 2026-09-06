@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { safeAdminNextPath } from '@/lib/admin-session';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -9,7 +9,6 @@ import AlertBanner from '@/components/ui/AlertBanner';
 import { TextInput } from '@/components/ui/FormField';
 
 function AdminLoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,8 +30,7 @@ function AdminLoginForm() {
         throw new Error(data.error || 'Invalid email or password');
       }
       const next = safeAdminNextPath(searchParams.get('next'));
-      router.push(next);
-      router.refresh();
+      window.location.replace(next);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       if (message === 'Failed to fetch' || message === 'Load failed' || message.includes('NetworkError')) {

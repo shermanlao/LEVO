@@ -1,6 +1,7 @@
 export {
   ADMIN_SESSION_COOKIE,
   SESSION_COOKIE_OPTIONS,
+  cookieIsSecure,
   createSessionValue,
   safeAdminNextPath,
   verifySessionValue,

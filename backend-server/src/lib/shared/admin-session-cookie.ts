@@ -95,9 +95,22 @@ export function safeAdminNextPath(raw: string | null | undefined): string {
   return raw;
 }
 
+/** Secure cookies only when the public site is HTTPS (not NODE_ENV=production on http://IP). */
+export function cookieIsSecure(): boolean {
+  const flag = (process.env.COOKIE_SECURE || '').trim().toLowerCase();
+  if (flag === '1' || flag === 'true' || flag === 'yes') return true;
+  if (flag === '0' || flag === 'false' || flag === 'no') return false;
+  const origin = process.env.SITE_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || '';
+  if (origin.startsWith('https://')) return true;
+  if (origin.startsWith('http://')) return false;
+  return process.env.NODE_ENV === 'production';
+}
+
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  get secure() {
+    return cookieIsSecure();
+  },
   sameSite: 'lax' as const,
   path: '/',
   maxAge: SESSION_MS / 1000,

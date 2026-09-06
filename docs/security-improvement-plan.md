@@ -32,12 +32,13 @@ Express listens on `127.0.0.1:3333` only. Next **fallback** rewrites public read
 
 ## Production secrets
 
-Set these in `/var/www/levo/backend-server/.env` **and** in the Next.js (`levo-web`) environment before the first production start:
+Set these in `/var/www/levo/backend-server/.env` **and** in `/etc/levo/next.env` (`levo-web`) before the first production start:
 
 - `ADMIN_USERNAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` — used only when `admin_users` is empty. Production requires `ADMIN_EMAIL` and `ADMIN_PASSWORD` and will not seed `abc4321`. Login is by email.
 - `ADMIN_SESSION_SECRET` — HMAC cookie key (not `levo-dev-admin-session`)
 - `AI_SETTINGS_ENCRYPTION_KEY` — AES key for stored AI tokens (not `levo-local-ai-settings-key`)
 - `INTERNAL_API_SECRET` — Next → Express header `X-Levo-Internal` (not `levo-dev-internal`)
+- `SITE_ORIGIN` — public catalog URL (`http://187.7.21.12` today). Used for CORS, datasheet QR codes, metadata, and whether admin/visitor cookies are `Secure`. Do not leave this as `http://localhost:3000` on the VPS.
 
 After the first admin row exists, change passwords in User management. Do not put these values in git. Local `npm run dev` still uses the documented testing defaults.
 

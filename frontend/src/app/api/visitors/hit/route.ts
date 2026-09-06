@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { expressBaseCandidates } from '@/lib/api-config';
 import { internalApiHeaders } from '@/lib/internal-api';
-import { ADMIN_SESSION_COOKIE, verifySessionValue } from '@/lib/admin-session';
+import { ADMIN_SESSION_COOKIE, cookieIsSecure, verifySessionValue } from '@/lib/admin-session';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +38,7 @@ function sanitizePath(raw: string): string | null {
 function cookieOptions() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: cookieIsSecure(),
     sameSite: 'lax' as const,
     path: '/',
     maxAge: YEAR_SEC,

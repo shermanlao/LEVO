@@ -80,6 +80,9 @@ GitHub should reply that `shermanlao/LEVO` authenticated, with no shell access.
 | Deploy key | `/var/www/levo/.ssh/github_deploy` (private; not in git) |
 | Deploy script | `/usr/local/sbin/levo-deploy` (copy of `scripts/levo-deploy.sh`) |
 | Site | http://187.7.21.12 |
+| Next.js env | `/etc/levo/next.env` (`ADMIN_SESSION_SECRET`, `INTERNAL_API_SECRET`, `SITE_ORIGIN=http://187.7.21.12`) |
+
+Nginx must send `Host` and `X-Forwarded-Host` as the public host. Admin `/admin` redirects use a relative `Location` so the browser does not follow `http://localhost:3000`. After TLS, change `SITE_ORIGIN` to `https://…` (and optionally `COOKIE_SECURE=true`) so session cookies become `Secure`.
 
 To run **another** website on the same VPS (second domain, nginx block, ports), see [Several sites on the VPS](vps-multiple-sites.md).
 

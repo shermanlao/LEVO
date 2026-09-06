@@ -4,7 +4,7 @@ LEVO counts public page views in SQLite. There is no Cloudflare, Google Analytic
 
 ## Cookie
 
-`levo_vid` is a random UUID. httpOnly, `SameSite=Lax`, `Secure` in production, path `/`, about one year. It only distinguishes unique browsers. It is not the admin session and is not tied to a name or email.
+`levo_vid` is a random UUID. httpOnly, `SameSite=Lax`, path `/`, about one year. `Secure` only when the public site is HTTPS (`SITE_ORIGIN` / `COOKIE_SECURE`). It only distinguishes unique browsers. It is not the admin session and is not tied to a name or email.
 
 ## What is stored
 
