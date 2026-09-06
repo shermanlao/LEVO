@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ProductType } from '../models';
+import { ProductSeries, ProductType } from '../models';
 import ProductTypeClass from '../models/ProductType';
 import { asyncHandler, deleteSuccess, notFound } from '../lib/asyncHandler';
 import { setPublicListCache } from '../lib/publicCache';
@@ -7,7 +7,10 @@ import { strapiMedia } from '../lib/strapiSerialize';
 import { extractStoredImageUrl } from '../lib/productMedia';
 import { parseDatasheetLabels, stringifyDatasheetLabels } from '../lib/shared/datasheet-labels';
 
-function serializeProductType(row: InstanceType<typeof ProductTypeClass>) {
+function serializeProductType(
+  row: InstanceType<typeof ProductTypeClass>,
+  extras: { series_count?: number } = {}
+) {
   const p = row.get({ plain: true }) as {
     id: number;
     name: string;
@@ -24,8 +27,20 @@ function serializeProductType(row: InstanceType<typeof ProductTypeClass>) {
       slug: p.slug,
       featured_image: strapiMedia(p.featured_image),
       datasheet_labels: parseDatasheetLabels(p.datasheet_labels),
+      ...(extras.series_count !== undefined ? { series_count: extras.series_count } : {}),
     },
   };
+}
+
+async function seriesCountByTypeId(): Promise<Map<number, number>> {
+  const rows = await ProductSeries.findAll({ attributes: ['product_type_id'] });
+  const counts = new Map<number, number>();
+  for (const row of rows) {
+    const typeId = Number(row.get('product_type_id'));
+    if (!Number.isInteger(typeId) || typeId <= 0) continue;
+    counts.set(typeId, (counts.get(typeId) || 0) + 1);
+  }
+  return counts;
 }
 
 function typeWritePayload(body: Record<string, unknown>) {
@@ -42,9 +57,16 @@ function typeWritePayload(body: Record<string, unknown>) {
 }
 
 export const getAllProductTypes = asyncHandler(async (_req: Request, res: Response) => {
-  const productTypes = await ProductType.findAll();
+  const [productTypes, seriesCounts] = await Promise.all([
+    ProductType.findAll(),
+    seriesCountByTypeId(),
+  ]);
   setPublicListCache(res);
-  res.json({ data: productTypes.map(serializeProductType) });
+  res.json({
+    data: productTypes.map((row) =>
+      serializeProductType(row, { series_count: seriesCounts.get(Number(row.get('id'))) || 0 })
+    ),
+  });
 });
 
 export const getProductTypeById = asyncHandler(async (req: Request, res: Response) => {

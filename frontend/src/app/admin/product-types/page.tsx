@@ -11,8 +11,10 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
 import HelpButton from '@/components/admin/HelpButton';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { IMAGE_FRAMES, assignFileToInput, validateImageFile } from '@/lib/image-frames';
+import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 
 interface ProductType {
   id: number;
@@ -78,10 +80,7 @@ export default function ProductTypesAdminPage() {
     return storedProductImagePath(fileInfo) || '';
   };
 
-  const handleFeaturedImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const takeTypeImage = async (file: File, mode: 'create' | 'edit') => {
     const invalid = validateImageFile(file);
     if (invalid) {
       setError(invalid);
@@ -89,23 +88,25 @@ export default function ProductTypesAdminPage() {
     }
     const cropped = await requestCrop(file, IMAGE_FRAMES.catalog);
     if (!cropped) return;
-    assignFileToInput(featuredImageRef.current, cropped);
-    setFeaturedImagePreview(URL.createObjectURL(cropped));
+    if (mode === 'create') {
+      assignFileToInput(featuredImageRef.current, cropped);
+      setFeaturedImagePreview(URL.createObjectURL(cropped));
+      return;
+    }
+    assignFileToInput(editFeaturedImageRef.current, cropped);
+    setEditFeaturedImagePreview(URL.createObjectURL(cropped));
+  };
+
+  const handleFeaturedImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) await takeTypeImage(file, 'create');
   };
   
   const handleEditFeaturedImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
-    const invalid = validateImageFile(file);
-    if (invalid) {
-      setError(invalid);
-      return;
-    }
-    const cropped = await requestCrop(file, IMAGE_FRAMES.catalog);
-    if (!cropped) return;
-    assignFileToInput(editFeaturedImageRef.current, cropped);
-    setEditFeaturedImagePreview(URL.createObjectURL(cropped));
+    if (file) await takeTypeImage(file, 'edit');
   };
   
   const fetchProductTypes = async () => {
@@ -317,18 +318,28 @@ export default function ProductTypesAdminPage() {
                   {featuredImagePreview ? 'Replace image' : 'Upload image'}
                 </HelpButton>
                 <p className="text-xs text-gray-500 mt-1">16:9 crop, same as the public category card.</p>
-                {featuredImagePreview && (
-                  <AdminHoverPreview src={featuredImagePreview} className="mt-2 w-full max-w-xs">
-                  <div className={`relative w-full border border-gray-300 overflow-hidden ${IMAGE_FRAMES.catalog.className}`}>
-                    <Image 
-                      src={featuredImagePreview}
-                      alt="Featured image preview"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  </AdminHoverPreview>
-                )}
+                <AdminHoverPreview src={featuredImagePreview} className="mt-2 w-full max-w-xs">
+                  <ImageFileIntake
+                    clickToPick={!featuredImagePreview}
+                    helpKey="admin.product_types.featured_image"
+                    onFile={(file) => void takeTypeImage(file, 'create')}
+                  >
+                    <div className={`relative w-full border border-gray-300 overflow-hidden bg-gray-50 ${IMAGE_FRAMES.catalog.className}`}>
+                      {featuredImagePreview ? (
+                        <Image 
+                          src={featuredImagePreview}
+                          alt="Featured image preview"
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <span className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
+                          {IMAGE_INTAKE_HINT}
+                        </span>
+                      )}
+                    </div>
+                  </ImageFileIntake>
+                </AdminHoverPreview>
               </div>
             </div>
             
@@ -406,26 +417,37 @@ export default function ProductTypesAdminPage() {
                     : 'Upload image'}
                 </HelpButton>
                 <p className="text-xs text-gray-500 mt-1">16:9 crop, same as the public category card.</p>
-                {/* Show current featured image or preview of new upload */}
-                {(editFeaturedImagePreview || (editingType && extractImageUrl(editingType))) && (
-                  <AdminHoverPreview
-                    src={editFeaturedImagePreview || resolveImageUrl(extractImageUrl(editingType))}
-                    className="mt-2 w-full max-w-xs"
+                <AdminHoverPreview
+                  src={
+                    editFeaturedImagePreview ||
+                    (extractImageUrl(editingType) ? resolveImageUrl(extractImageUrl(editingType)) : null)
+                  }
+                  className="mt-2 w-full max-w-xs"
+                >
+                  <ImageFileIntake
+                    clickToPick={!editFeaturedImagePreview && !extractImageUrl(editingType)}
+                    helpKey="admin.product_types.featured_image"
+                    onFile={(file) => void takeTypeImage(file, 'edit')}
                   >
-                  <div className={`relative w-full border border-gray-300 overflow-hidden ${IMAGE_FRAMES.catalog.className}`}>
-                    <Image 
-                      src={editFeaturedImagePreview || 
-                           resolveImageUrl(extractImageUrl(editingType))}
-                      alt="Featured image"
-                      fill
-                      className="object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/images/placeholder.jpg';
-                      }}
-                    />
-                  </div>
-                  </AdminHoverPreview>
-                )}
+                    <div className={`relative w-full border border-gray-300 overflow-hidden bg-gray-50 ${IMAGE_FRAMES.catalog.className}`}>
+                      {editFeaturedImagePreview || extractImageUrl(editingType) ? (
+                        <Image 
+                          src={editFeaturedImagePreview || resolveImageUrl(extractImageUrl(editingType))}
+                          alt="Featured image"
+                          fill
+                          className="object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/placeholder.jpg';
+                          }}
+                        />
+                      ) : (
+                        <span className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
+                          {IMAGE_INTAKE_HINT}
+                        </span>
+                      )}
+                    </div>
+                  </ImageFileIntake>
+                </AdminHoverPreview>
               </div>
             </div>
             

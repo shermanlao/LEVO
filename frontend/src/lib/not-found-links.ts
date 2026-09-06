@@ -1,12 +1,13 @@
 import { getProductTypes } from '@/lib/sqlite-api';
 import { asStrapiList } from '@/lib/strapi-entity';
+import { catalogTypeIsBrowsable } from '@/lib/catalog-filters';
 import type { NotFoundLink } from '@/components/layout/NotFoundView';
 
 export async function getNotFoundCategoryLinks(): Promise<NotFoundLink[]> {
   try {
     const response = await getProductTypes();
-    return asStrapiList<{ name?: string; slug?: string }>(response?.data)
-      .filter((row) => row.attributes?.slug && row.attributes?.name)
+    return asStrapiList<{ name?: string; slug?: string; series_count?: number }>(response?.data)
+      .filter((row) => row.attributes?.slug && row.attributes?.name && catalogTypeIsBrowsable(row))
       .map((row) => ({
         href: `/products/${row.attributes.slug}`,
         label: String(row.attributes.name),

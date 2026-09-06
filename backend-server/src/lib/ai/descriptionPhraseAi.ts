@@ -1,5 +1,5 @@
 import { listFailoverCredentials, getParsingHints, type ResolvedImageAiCredentials } from './resolveCredentials';
-import { recordAiTokenUsage } from './aiUsage';
+import { parseUsageFromXaiResponse, recordAiTokenUsage } from './aiUsage';
 import { PHRASE_PLACEHOLDER_FIELDS } from '../shared/description-phrase';
 
 export type PhraseFieldHint = {
@@ -30,15 +30,9 @@ function parseUsage(parsed: unknown): {
   promptTokens: number | null;
   completionTokens: number | null;
   totalTokens: number | null;
+  costUsd: number | null;
 } {
-  const usage = (parsed as {
-    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-  })?.usage;
-  return {
-    promptTokens: typeof usage?.prompt_tokens === 'number' ? usage.prompt_tokens : null,
-    completionTokens: typeof usage?.completion_tokens === 'number' ? usage.completion_tokens : null,
-    totalTokens: typeof usage?.total_tokens === 'number' ? usage.total_tokens : null,
-  };
+  return parseUsageFromXaiResponse(parsed);
 }
 
 function cleanPhrase(raw: string): string {
@@ -128,6 +122,7 @@ async function completeWithProvider(
       promptTokens: usage.promptTokens,
       completionTokens: usage.completionTokens,
       totalTokens: usage.totalTokens,
+      costUsd: usage.costUsd,
     }
   );
   if (!res.ok) {

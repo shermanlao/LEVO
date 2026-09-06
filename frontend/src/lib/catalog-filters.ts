@@ -168,3 +168,9 @@ export function hasFilterChoices(options: CatalogFilterOptions): boolean {
     options.dimming.length > 0
   );
 }
+
+export function catalogTypeIsBrowsable(type: { attributes?: { series_count?: number } }): boolean {
+  const count = type.attributes?.series_count;
+  if (count == null) return true;
+  return Number(count) > 0;
+}

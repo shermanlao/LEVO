@@ -2,6 +2,7 @@
  * Canonical placeholder frames for public cards and the matching admin crop board.
  * Uploaders crop to these ratios so the stored file fills the same box everywhere.
  */
+import { isImageFile } from '@/lib/image-file-intake';
 export type ImageFrameKey =
   | 'catalog'
   | 'seriesPage'
@@ -156,7 +157,7 @@ export function projectUploadFrame(imageType: string): ImageFrame {
 }
 
 export function validateImageFile(file: File, maxBytes = 5 * 1024 * 1024): string | null {
-  if (!file.type.startsWith('image/')) return 'Please select an image file';
+  if (!isImageFile(file)) return 'Please select an image file';
   if (file.size > maxBytes) return 'File size must be less than 5MB';
   return null;
 }

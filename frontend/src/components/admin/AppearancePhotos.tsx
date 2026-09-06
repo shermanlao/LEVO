@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
 import { storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
 import { dataUrlToFile, imageUrlToDataUrl } from '@/lib/sizeDrawingCropClient';
@@ -278,6 +279,17 @@ export default function AppearancePhotos({
     }
   }
 
+  function takeComboFile(combo: AppearanceCombo, file: File) {
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    void requestCrop(file, IMAGE_FRAMES.product).then((cropped) => {
+      if (cropped) void uploadCombo(combo, cropped);
+    });
+  }
+
   async function removeCombo(combo: AppearanceCombo, photo?: AppearancePhotoDto | null) {
     const key = appearanceComboKey(combo);
     setBusyKey(key);
@@ -390,7 +402,15 @@ export default function AppearancePhotos({
             const busy = busyKey === key;
             return (
               <div key={key} className="flex flex-wrap items-start gap-3 border border-gray-100 rounded p-3">
-                <AdminPhotoSlot src={src} alt={appearanceComboLabel(combo)} compact />
+                <ImageFileIntake
+                  enabled={busyKey == null}
+                  clickToPick={!src}
+                  helpKey="admin.product_series.appearance_upload"
+                  className="inline-block"
+                  onFile={(file) => takeComboFile(combo, file)}
+                >
+                  <AdminPhotoSlot src={src} alt={appearanceComboLabel(combo)} compact />
+                </ImageFileIntake>
                 <div className="min-w-[12rem] flex-1">
                   <div className="flex items-center justify-between mb-2 gap-2">
                     <span className="text-sm font-medium text-gray-700">{appearanceComboLabel(combo)}</span>
@@ -429,15 +449,7 @@ export default function AppearancePhotos({
                         onChange={(event) => {
                           const file = event.target.files?.[0];
                           event.target.value = '';
-                          if (!file) return;
-                          const invalid = validateImageFile(file);
-                          if (invalid) {
-                            setError(invalid);
-                            return;
-                          }
-                          void requestCrop(file, IMAGE_FRAMES.product).then((cropped) => {
-                            if (cropped) void uploadCombo(combo, cropped);
-                          });
+                          if (file) takeComboFile(combo, file);
                         }}
                       />
                     </label>

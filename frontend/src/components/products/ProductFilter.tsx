@@ -34,6 +34,7 @@ export default function ProductFilter({
 
   return (
     <div className="space-y-6">
+      {options.wattage.length > 0 ? (
       <div>
         <h3 className="text-lg font-semibold mb-3">Wattage</h3>
         <select
@@ -49,6 +50,7 @@ export default function ProductFilter({
           ))}
         </select>
       </div>
+      ) : null}
 
       {(options.size || []).length > 0 ? (
       <div>
@@ -68,6 +70,7 @@ export default function ProductFilter({
       </div>
       ) : null}
 
+      {options.cct.length > 0 ? (
       <div>
         <h3 className="text-lg font-semibold mb-3">Color Temperature</h3>
         <select
@@ -83,7 +86,9 @@ export default function ProductFilter({
           ))}
         </select>
       </div>
+      ) : null}
 
+      {options.beam_angle.length > 0 ? (
       <div>
         <h3 className="text-lg font-semibold mb-3">Beam Angle</h3>
         <select
@@ -99,7 +104,9 @@ export default function ProductFilter({
           ))}
         </select>
       </div>
+      ) : null}
 
+      {options.dimming.length > 0 ? (
       <div>
         <h3 className="text-lg font-semibold mb-3">Dimming</h3>
         <select
@@ -115,6 +122,7 @@ export default function ProductFilter({
           ))}
         </select>
       </div>
+      ) : null}
     </div>
   );
 } 

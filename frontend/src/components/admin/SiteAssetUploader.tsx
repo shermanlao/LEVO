@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
 import Button from '@/components/ui/Button';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { SITE_SLOT_FRAMES, validateImageFile } from '@/lib/image-frames';
+import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 
 type Slot = 'header' | 'pdf' | 'icon' | 'hero' | 'og';
 
@@ -40,18 +42,7 @@ export default function SiteAssetUploader({
     setRefreshKey(Date.now());
   }, [imagePath]);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
-      return;
-    }
+  async function takeFile(file: File) {
     const invalid = validateImageFile(file);
     if (invalid) {
       setError(invalid);
@@ -88,6 +79,12 @@ export default function SiteAssetUploader({
     }
   }
 
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) await takeFile(file);
+  }
+
   async function handleRemove() {
     setRemoving(true);
     setError(null);
@@ -113,6 +110,12 @@ export default function SiteAssetUploader({
       <p className="admin-field-label">{label}</p>
       <p className="text-sm text-gray-500 mb-2">{hint}</p>
       <div className="border rounded-lg overflow-hidden bg-white max-w-xs">
+        <ImageFileIntake
+          enabled={!uploading && !removing}
+          clickToPick={!src}
+          helpKey={uploadHelpKey}
+          onFile={(file) => void takeFile(file)}
+        >
         <AdminHoverPreview src={src} className="block">
         <div className={`${SITE_SLOT_FRAMES[slot].className} bg-gray-100 flex items-center justify-center`}>
           {src ? (
@@ -123,10 +126,11 @@ export default function SiteAssetUploader({
               className={`${slot === 'hero' || slot === 'og' ? 'object-cover' : 'object-contain p-2'} w-full h-full`}
             />
           ) : (
-            <p className="text-sm text-gray-500">Using built-in default</p>
+            <p className="text-sm text-gray-500 text-center px-3">{IMAGE_INTAKE_HINT}</p>
           )}
         </div>
         </AdminHoverPreview>
+        </ImageFileIntake>
         <div className="p-3 flex gap-2">
           <Button
             helpKey={uploadHelpKey}

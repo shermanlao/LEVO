@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { projectUploadFrame, validateImageFile } from '@/lib/image-frames';
+import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 
 interface ProjectImageUploaderProps {
   projectId: string;
@@ -55,10 +57,8 @@ const ProjectImageUploader: React.FC<ProjectImageUploaderProps> = ({
     }
   }, [imagePath]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !isEditMode) return;
-    
+  const takeFile = async (file: File) => {
+    if (!isEditMode) return;
     const invalid = validateImageFile(file);
     if (invalid) {
       alert(invalid);
@@ -101,6 +101,12 @@ const ProjectImageUploader: React.FC<ProjectImageUploaderProps> = ({
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) await takeFile(file);
+  };
+
   // Handle image removal
   const handleRemove = () => {
     if (!isEditMode) {
@@ -138,6 +144,12 @@ const ProjectImageUploader: React.FC<ProjectImageUploaderProps> = ({
       </div>
       
       {/* Image Preview */}
+      <ImageFileIntake
+        enabled={isEditMode && !isUploading}
+        clickToPick={!preview || imageError}
+        helpKey={imageType === 'thumbnail' ? 'admin.projects.thumbnail_upload' : 'admin.projects.section_image_upload'}
+        onFile={(file) => void takeFile(file)}
+      >
       <AdminHoverPreview src={preview && !imageError ? preview : null} className="block">
       <div className={`${frame.className} relative overflow-hidden bg-gray-100 flex items-center justify-center`}>
         {preview && !imageError ? (
@@ -157,7 +169,7 @@ const ProjectImageUploader: React.FC<ProjectImageUploaderProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <p className="mt-2 text-sm text-gray-500">
-              {imageError ? 'Failed to load image' : 'No image uploaded'}
+              {imageError ? 'Failed to load image' : IMAGE_INTAKE_HINT}
             </p>
             {imageError && preview && (
               <p className="mt-1 text-xs text-red-500">Path: {preview}</p>
@@ -166,6 +178,7 @@ const ProjectImageUploader: React.FC<ProjectImageUploaderProps> = ({
         )}
       </div>
       </AdminHoverPreview>
+      </ImageFileIntake>
       
       {/* File Name */}
       {fileName && (

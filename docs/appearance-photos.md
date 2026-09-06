@@ -32,7 +32,7 @@ Empty tags still mean “not configured yet.”
 6. **Generate all** generates every combination in one pass as pending previews. It regenerates AI photos and skips staff uploads. Confirm to save
 7. Photos left over from tags you later cleared (for example Finish White after switching Finish to N/A) appear under **Unused photos**. They are hidden from the family datasheet until you Remove them or restore those tags
 
-The Appearance photos card sits directly under Size. Placeholders are square, matching product photos. Staff uploads open the shared crop board at that 1:1 frame.
+The Appearance photos card sits directly under Size. Placeholders are square, matching product photos. Staff can drop a photo, paste from the clipboard while the placeholder is hovered, or choose a file. Uploads open the shared crop board at that 1:1 frame.
 
 Fewer than two appearance combinations skips AI (the size Main A is enough).
 

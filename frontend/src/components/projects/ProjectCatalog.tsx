@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import RobustImage from '@/components/ui/robust-image';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
+import { projectFilterCategories } from '@/lib/project-categories';
 
 export type ProjectListItem = {
   id: number | string;
@@ -20,8 +21,6 @@ export type ProjectListItem = {
   };
 };
 
-const CATEGORIES = ['All', 'Culture', 'Office', 'Residential', 'Retail', 'Hospitality'];
-
 export default function ProjectCatalog({
   projects,
   hideFilters = false,
@@ -29,32 +28,36 @@ export default function ProjectCatalog({
   projects: ProjectListItem[];
   hideFilters?: boolean;
 }) {
+  const availableCategories = projectFilterCategories(projects);
+  const categories = ['All', ...availableCategories];
+  const showFilters = !hideFilters && availableCategories.length > 1;
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const activeCategory = availableCategories.includes(selectedCategory) ? selectedCategory : 'All';
   const filtered =
-    selectedCategory === 'All'
+    activeCategory === 'All'
       ? projects
-      : projects.filter((project) => project.attributes.category === selectedCategory);
+      : projects.filter((project) => project.attributes.category === activeCategory);
 
   return (
     <>
-      {hideFilters ? null : (
-      <div className="flex flex-wrap gap-2 mb-8">
-        {CATEGORIES.map((category) => (
-          <button
-            key={category}
-            type="button"
-            className={`px-4 py-2 rounded-md font-medium transition-colors duration-150 ${
-              selectedCategory === category
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
-            }`}
-            onClick={() => setSelectedCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-      )}
+      {showFilters ? (
+        <div className="flex flex-wrap gap-2 mb-8">
+          {categories.map((category) => (
+            <button
+              key={category}
+              type="button"
+              className={`px-4 py-2 rounded-md font-medium transition-colors duration-150 ${
+                activeCategory === category
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+              }`}
+              onClick={() => setSelectedCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {filtered.length === 0 ? (
         <div className="text-center py-12">

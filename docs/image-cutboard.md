@@ -2,6 +2,14 @@
 
 Staff image uploads open a shared **cutboard** so the saved file matches the public placeholder. The board starts at **contain** (the whole photo is visible). Zoom in and drag until the fixture fills the frame, then **Apply crop**. Empty bars in the frame mean it is not filled yet.
 
+Every admin image placeholder accepts a photo three ways before the cutboard opens:
+
+1. **Drop** a photo onto the placeholder
+2. **Paste** from the clipboard while the placeholder is hovered or focused (`Ctrl+V` / `Cmd+V`)
+3. **Choose a file** from this device (click an empty placeholder, or use Upload)
+
+Shared intake lives in [`frontend/src/lib/image-file-intake.ts`](../frontend/src/lib/image-file-intake.ts) and [`ImageFileIntake`](../frontend/src/components/ui/ImageFileIntake.tsx).
+
 The component is `ImageCutboard` plus `useImageCutboard()` in [`frontend/src/components/ui/ImageCutboard.tsx`](../frontend/src/components/ui/ImageCutboard.tsx). Frame sizes live in [`frontend/src/lib/image-frames.ts`](../frontend/src/lib/image-frames.ts). Canvas crop math is in [`frontend/src/lib/image-cutboard.ts`](../frontend/src/lib/image-cutboard.ts). Zoom 1 is contain; Apply still writes the framed pixels (white fill on JPEG empty bars).
 
 ## Frames

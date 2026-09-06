@@ -5,6 +5,7 @@ import { asStrapiList } from '@/lib/strapi-entity';
 import { toPublicImagePath } from '@/lib/image-utils';
 import PageRoute from '@/components/layout/PageRoute';
 import { productRouteItems } from '@/components/layout/pageRouteItems';
+import { catalogTypeIsBrowsable } from '@/lib/catalog-filters';
 import { devLog } from '@/lib/dev-log';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { ProductType } from '@/types/product';
@@ -30,7 +31,8 @@ export default async function ProductCategoriesPage() {
     // Log full API response for debugging
     devLog('API Response Structure:', JSON.stringify(productTypesResponse).slice(0, 500) + '...');
     
-    productTypes = asStrapiList(productTypesResponse?.data) as ProductType[];
+    const allTypes = asStrapiList(productTypesResponse?.data) as ProductType[];
+    productTypes = allTypes.filter(catalogTypeIsBrowsable);
     
     devLog('ProductCategoriesPage - Successfully fetched product types. Count:', productTypes.length);
     
@@ -48,7 +50,10 @@ export default async function ProductCategoriesPage() {
     });
     
     if (productTypes.length === 0) {
-      loadError = 'No product categories found in the database.';
+      loadError =
+        allTypes.length === 0
+          ? 'No product categories found in the database.'
+          : 'No product categories with series are available yet.';
     }
   } catch (error) {
     console.error('Error loading product categories:', error);

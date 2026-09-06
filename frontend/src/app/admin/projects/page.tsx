@@ -6,6 +6,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
+import { PROJECT_CATEGORY_ORDER } from '@/lib/project-categories';
 
 interface Project {
   id: string;
@@ -173,7 +174,7 @@ export default function ProjectsAdminPage() {
     }
   };
 
-  const categories = ['Culture', 'Office', 'Residential', 'Retail', 'Hospitality'];
+  const categories = PROJECT_CATEGORY_ORDER;
 
   return (
     <div>

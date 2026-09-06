@@ -47,6 +47,7 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `EntityDatasheetLabelEditor` | Series variants page: pick extra datasheet squares from the Variant catalog as tags (filled = on this series). Create new icons on `/admin/variant-options`. |
 | `DescriptionPhraseEditor` | Series variants page: phrase template textarea, `{{spec}}` token chips, guide words, and Generate by AI. |
 | `ImageLightbox` | Click-to-enlarge overlay with zoom. Admin thumbs that use `/uploads` skip Next image optimization. |
+| `ImageFileIntake` | Admin image placeholder intake: drop a photo, paste from the clipboard while hovered/focused, or choose a file. Wraps the preview box; empty boxes also open the file picker on click. |
 | `ImageCutboard` | Staff upload crop board. Starts at contain (whole photo visible); zoom and drag, then Apply. Use `useImageCutboard()` plus `IMAGE_FRAMES` from `image-frames.ts`. |
 | `SeriesFeaturedImageEditor` | Series admin: one source upload, then 16:9 / 4:5 / 1:1 crops. Each slot can upload or replace its own photo, or adjust the crop from the source. |
 | `AdminPhotoSlot` | Square admin photo cell (`aspect-square`). Hover shows a larger preview; click opens `ImageLightbox`. Used by size-pack and appearance photos. `AdminHoverPreview` wraps other admin images for the same hover enlarge. |

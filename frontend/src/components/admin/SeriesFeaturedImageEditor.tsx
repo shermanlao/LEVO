@@ -5,6 +5,8 @@ import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
 import ImageCutboard from '@/components/ui/ImageCutboard';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
+import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
 import { extractImageSrc, storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
 import {
@@ -235,14 +237,26 @@ export default function SeriesFeaturedImageEditor({
         </p>
       </div>
 
-      {sourceUrl ? (
-        <AdminHoverPreview src={sourceUrl} className="mb-4 w-40">
+      <AdminHoverPreview src={sourceUrl || null} className="mb-4 w-40">
+        <ImageFileIntake
+          enabled={!busy}
+          clickToPick={!sourceUrl}
+          helpKey="admin.product_series.featured_image"
+          className="w-40"
+          onFile={(file) => void handleSourceFile(file)}
+        >
           <div className="relative w-40 h-28 border rounded overflow-hidden bg-gray-50">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={sourceUrl} alt="Source photo" className="absolute inset-0 h-full w-full object-contain" />
+            {sourceUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={sourceUrl} alt="Source photo" className="absolute inset-0 h-full w-full object-contain" />
+            ) : (
+              <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 p-2 text-center">
+                {IMAGE_INTAKE_HINT}
+              </span>
+            )}
           </div>
-        </AdminHoverPreview>
-      ) : null}
+        </ImageFileIntake>
+      </AdminHoverPreview>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {SERIES_FEATURED_SLOTS.map((slot) => {
@@ -252,22 +266,26 @@ export default function SeriesFeaturedImageEditor({
               <p className="text-sm font-medium text-gray-800">{slot.title}</p>
               <p className="text-xs text-gray-500 mb-2">{slot.hint}</p>
               <AdminHoverPreview src={src || null} className="block mb-2">
-                <div className={`relative w-full overflow-hidden bg-gray-100 ${slot.frame.className}`}>
-                  {src ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={src} alt={slot.title} className="absolute inset-0 h-full w-full object-cover" />
-                  ) : (
-                    <HelpButton
-                      helpKey="admin.product_series.featured_replace"
-                      type="button"
-                      className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 hover:bg-gray-50 p-0 border-0 bg-transparent font-normal"
-                      disabled={busy}
-                      onClick={() => openReplace(slot.slot)}
-                    >
-                      Upload a photo
-                    </HelpButton>
-                  )}
-                </div>
+                <ImageFileIntake
+                  enabled={!busy}
+                  clickToPick={!src}
+                  helpKey="admin.product_series.featured_replace"
+                  onFile={(file) => {
+                    replaceSlotRef.current = slot.slot;
+                    handleReplaceFile(file);
+                  }}
+                >
+                  <div className={`relative w-full overflow-hidden bg-gray-100 ${slot.frame.className}`}>
+                    {src ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={src} alt={slot.title} className="absolute inset-0 h-full w-full object-cover" />
+                    ) : (
+                      <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 p-2 text-center">
+                        {IMAGE_INTAKE_HINT}
+                      </span>
+                    )}
+                  </div>
+                </ImageFileIntake>
               </AdminHoverPreview>
               <div className="flex flex-wrap gap-2">
                 <Button

@@ -17,6 +17,7 @@ export interface ProductType {
     name: string;
     description: string;
     slug: string;
+    series_count?: number;
     featured_image: {
       data: Media | null;
     };

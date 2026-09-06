@@ -12,7 +12,7 @@ SQLite `site_contacts` remains the public singleton (`GET /api/contact`). New co
 - **Resources** — title and body for the public `/warranty`, `/certifications`, and `/technical` pages (`resource_warranty_title` / `resource_warranty_body`, and the same pair for certifications and technical). Footer label for the third link stays **Technical Underneath**.
 - **SEO** — `seo_title`, `seo_description`, `og_image`
 
-Empty logo/hero/icon paths use the built-in LEVO files (`/images/levo-logo-mark.png`, `/hero-image.jpg`, `frontend/src/app/icon.svg`). Uploads write to `/images/site/{slot}.{ext}`. Each slot opens the crop board at its public frame (wordmark 3:1, icon 1:1, hero 3:2, Open Graph 1.91:1).
+Empty logo/hero/icon paths use the built-in LEVO files (`/images/levo-logo-mark.png`, `/hero-image.jpg`, `frontend/src/app/icon.svg`). Uploads write to `/images/site/{slot}.{ext}`. Each slot accepts drop, clipboard paste, or a chosen file, then opens the crop board at its public frame (wordmark 3:1, icon 1:1, hero 3:2, Open Graph 1.91:1).
 
 Featured products stay on `/admin/products` (`is_featured`). Featured projects use `projects.is_featured` on `/admin/projects`. The homepage hides the projects section when none are featured.
 

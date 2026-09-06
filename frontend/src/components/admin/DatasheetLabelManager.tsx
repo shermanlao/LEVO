@@ -8,8 +8,10 @@ import { SelectField, TextInput } from '@/components/ui/FormField';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
 import { imageUrlToDataUrl } from '@/lib/sizeDrawingCropClient';
 import { storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
+import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 import {
   CUSTOM_DATASHEET_LABEL_KIND,
   DATASHEET_LABEL_SLOTS,
@@ -101,6 +103,17 @@ export default function DatasheetLabelManager({ catalog, onChanged }: DatasheetL
     });
     if (!saved.ok) throw new Error(saved.error);
     onChanged();
+  }
+
+  function takeLabelFile(slot: Slot, file: File) {
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    void requestCrop(file, IMAGE_FRAMES.label).then((cropped) => {
+      if (cropped) void uploadFile(slot, cropped);
+    });
   }
 
   async function uploadFile(slot: Slot, file: File) {
@@ -223,18 +236,26 @@ export default function DatasheetLabelManager({ catalog, onChanged }: DatasheetL
                   </Button>
                 ) : null}
               </div>
-              <div className="relative h-24 bg-gray-50 rounded mb-2 overflow-hidden flex items-center justify-center">
-                {src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={src} alt="" className="h-8 w-8 object-contain" />
-                ) : text ? (
-                  <span className="flex h-8 w-8 items-center justify-center bg-black px-0.5 text-center text-[7px] font-bold leading-tight text-white">
-                    {text}
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-400">No label</span>
-                )}
-              </div>
+              <ImageFileIntake
+                enabled={busy == null}
+                clickToPick
+                helpKey="admin.variant_options.label_upload"
+                className="mb-2"
+                onFile={(file) => takeLabelFile(slot, file)}
+              >
+                <div className="relative h-24 bg-gray-50 rounded overflow-hidden flex items-center justify-center">
+                  {src ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={src} alt="" className="h-8 w-8 object-contain" />
+                  ) : text ? (
+                    <span className="flex h-8 w-8 items-center justify-center bg-black px-0.5 text-center text-[7px] font-bold leading-tight text-white">
+                      {text}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400 text-center px-2">{IMAGE_INTAKE_HINT}</span>
+                  )}
+                </div>
+              </ImageFileIntake>
               {!slot.text ? (
                 <TextInput
                   label="Option"
@@ -259,15 +280,7 @@ export default function DatasheetLabelManager({ catalog, onChanged }: DatasheetL
                     onChange={(event) => {
                       const file = event.target.files?.[0];
                       event.target.value = '';
-                      if (!file) return;
-                      const invalid = validateImageFile(file);
-                      if (invalid) {
-                        setError(invalid);
-                        return;
-                      }
-                      void requestCrop(file, IMAGE_FRAMES.label).then((cropped) => {
-                        if (cropped) uploadFile(slot, cropped);
-                      });
+                      if (file) takeLabelFile(slot, file);
                     }}
                   />
                 </label>

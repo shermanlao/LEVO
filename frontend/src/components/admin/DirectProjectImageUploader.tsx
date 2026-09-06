@@ -3,8 +3,10 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
+import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 
 interface DirectProjectImageUploaderProps {
   projectId: string;
@@ -33,10 +35,7 @@ export default function DirectProjectImageUploader({
   const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const takeFile = async (file: File) => {
     const invalid = validateImageFile(file);
     if (invalid) {
       setErrorMessage(invalid);
@@ -99,6 +98,12 @@ export default function DirectProjectImageUploader({
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) await takeFile(file);
+  };
+
   const handleImageError = () => {
     console.error(`Failed to load image: ${previewUrl}`);
     
@@ -110,6 +115,12 @@ export default function DirectProjectImageUploader({
     <>
     <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
       {/* Image Preview */}
+      <ImageFileIntake
+        enabled={!uploading}
+        clickToPick={!previewUrl || imageError}
+        helpKey="admin.projects.section_image_upload"
+        onFile={(file) => void takeFile(file)}
+      >
       <AdminHoverPreview src={previewUrl && !imageError ? previewUrl : null} className="block">
       <div className={`${IMAGE_FRAMES.projectSection.className} relative bg-gray-100`}>
         {previewUrl && !imageError ? (
@@ -128,7 +139,7 @@ export default function DirectProjectImageUploader({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <p className="mt-2 text-sm text-gray-500">
-                {imageError ? 'Failed to load image' : 'No image uploaded'}
+                {imageError ? 'Failed to load image' : IMAGE_INTAKE_HINT}
               </p>
               {imageError && previewUrl && (
                 <p className="mt-1 text-xs text-red-500">Path: {previewUrl}</p>
@@ -138,6 +149,7 @@ export default function DirectProjectImageUploader({
         )}
       </div>
       </AdminHoverPreview>
+      </ImageFileIntake>
       
       {/* Upload Button */}
       <div className="p-3 border-t">

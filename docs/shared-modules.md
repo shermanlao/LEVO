@@ -33,9 +33,11 @@ Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend w
 - `admin-nav.ts` — Catalog / Projects / Settings / Users sections for the admin header menus and dashboard shortcut cards
 - `image-utils.ts` — the only image URL builder (`toPublicImagePath`, `shouldSkipImageOptimize`, `productImageUrl`, `resolveSeriesImageUrl`, `uniqueSeriesPhotoUrls`, plus `seriesFeaturedCatalogUrl` / `seriesFeaturedPageUrl` / `seriesFeaturedDatasheetUrl`)
 - `image-frames.ts` — placeholder aspect ratios, `SERIES_FEATURED_SLOTS`, and `validateImageFile` / `assignFileToInput` for the upload crop board
+- `image-file-intake.ts` — `IMAGE_INTAKE_HINT`, `isImageFile`, and extractors for drag / clipboard / file-picker photos used by `ImageFileIntake`
 - `image-cutboard.ts` — canvas crop of a zoomed/panned image into a framed File (zoom 1 = contain)
 - `strapi-entity.ts` — `{ id, attributes }` unwrap + `catalogSeriesHref` / `catalogProductHref`
-- `catalog-filters.ts` — wattage / size / CCT / beam / dimming options from series tags (ascending numeric/natural order); category pages filter series, not SKUs
+- `catalog-filters.ts` — wattage / size / CCT / beam / dimming options from series tags (ascending numeric/natural order); category pages filter series, not SKUs; `catalogTypeIsBrowsable` hides public types with `series_count === 0`
+- `project-categories.ts` — preferred project category order and `projectFilterCategories()` for public `/projects` pills
 
 Do not add a second catalog client. Admin pages call `/api/admin/backend` through `ADMIN_BACKEND_BASE` in `api-config.ts`.
 
@@ -52,4 +54,6 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `variantCatalog.ts` — load/replace/upsert/backfill global option labels and SKU codes
 - `internalAuth.ts` — Express `X-Levo-Internal` check on non-public routes
 - `pdfResponse.ts` — shared `sendPdf` for datasheet / series / label downloads
+- `ai/aiStyleImage.ts` — size-drawing and catalog photo style files under `/images/ai/`
+- `ai/aiUsage.ts` — `/admin/ai` usage: xAI billed ticks (÷ 10¹⁰), Google image token estimates, rewrite of old ticks÷1e6 rows
 - List `GET /api/product-series` uses a light serializer (one catalog load, batched options, no appearance photos). Detail `by-slug` / `:id` stays full.

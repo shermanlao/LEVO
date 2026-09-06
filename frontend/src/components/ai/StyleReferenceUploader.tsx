@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import HelpButton from '@/components/admin/HelpButton';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
+import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 
 type Props = {
   imagePath: string | null;
@@ -46,10 +48,7 @@ export default function StyleReferenceUploader({
     setRefreshKey(Date.now());
   }, [imagePath]);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  async function takeFile(file: File) {
     const invalid = validateImageFile(file);
     if (invalid) {
       setError(invalid);
@@ -86,6 +85,12 @@ export default function StyleReferenceUploader({
     }
   }
 
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) await takeFile(file);
+  }
+
   async function handleRemove() {
     if (!window.confirm(removeConfirm)) return;
     setRemoving(true);
@@ -114,6 +119,12 @@ export default function StyleReferenceUploader({
         <div className="p-3 bg-gray-50 border-b">
           <h3 className="font-medium text-gray-800">{title}</h3>
         </div>
+        <ImageFileIntake
+          enabled={!uploading && !removing}
+          clickToPick={!src}
+          helpKey={uploadHelpKey}
+          onFile={(file) => void takeFile(file)}
+        >
         <div className="aspect-square relative overflow-hidden bg-gray-100 flex items-center justify-center">
           {src ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -128,10 +139,11 @@ export default function StyleReferenceUploader({
                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              <p className="mt-2 text-sm text-gray-500">No image uploaded</p>
+              <p className="mt-2 text-sm text-gray-500">{IMAGE_INTAKE_HINT}</p>
             </div>
           )}
         </div>
+        </ImageFileIntake>
         <div className="p-3 flex gap-2">
           <HelpButton
             helpKey={uploadHelpKey}

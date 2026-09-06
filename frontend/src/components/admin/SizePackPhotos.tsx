@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
+import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import ProductPhotoStyleDialog from '@/components/ai/ProductPhotoStyleDialog';
 import SizeDrawingAiDialog from '@/components/ai/SizeDrawingAiDialog';
 import SizeDrawingFocusDialog from '@/components/ai/SizeDrawingFocusDialog';
@@ -134,6 +135,17 @@ export default function SizePackPhotos({
     onChanged();
   }
 
+  function takePhotoFile(field: (typeof FIELDS)[number]['key'], file: File) {
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    void requestCrop(file, IMAGE_FRAMES.product).then((cropped) => {
+      if (cropped) void upload(field, cropped).catch(() => {});
+    });
+  }
+
   function startSizeAi() {
     const missing = getSizeDrawingMissingFields({
       mainPhoto: mainPhotoUrl,
@@ -161,7 +173,15 @@ export default function SizePackPhotos({
                 ?
               </HelpButton>
             </div>
-            <AdminPhotoSlot src={src} alt={field.label} className="mb-2" />
+            <ImageFileIntake
+              enabled={busy == null}
+              clickToPick={!src}
+              helpKey={field.helpKey}
+              className="mb-2"
+              onFile={(file) => takePhotoFile(field.key, file)}
+            >
+              <AdminPhotoSlot src={src} alt={field.label} />
+            </ImageFileIntake>
             <div className="flex flex-wrap items-center gap-2">
               <label className="btn-secondary text-xs py-1 px-2 cursor-pointer">
                 {busy === field.key ? 'Uploading…' : 'Upload'}
@@ -174,15 +194,7 @@ export default function SizePackPhotos({
                   onChange={(event) => {
                     const file = event.target.files?.[0];
                     event.target.value = '';
-                    if (!file) return;
-                    const invalid = validateImageFile(file);
-                    if (invalid) {
-                      setError(invalid);
-                      return;
-                    }
-                    void requestCrop(file, IMAGE_FRAMES.product).then((cropped) => {
-                      if (cropped) void upload(field.key, cropped).catch(() => {});
-                    });
+                    if (file) takePhotoFile(field.key, file);
                   }}
                 />
               </label>

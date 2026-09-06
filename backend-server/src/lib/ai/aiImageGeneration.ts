@@ -1,8 +1,8 @@
 import type { ResolvedImageAiCredentials } from './resolveCredentials';
 import { listFailoverCredentials } from './resolveCredentials';
 import {
-  parseCostUsdFromXaiImageResponse,
   parseUsageFromGoogleGenerateContent,
+  parseUsageFromXaiResponse,
   recordAiTokenUsage,
   type AiUsageContext,
 } from './aiUsage';
@@ -114,10 +114,17 @@ async function generateWithXai(
     }
   }
 
-  const billedCost = parsed ? parseCostUsdFromXaiImageResponse(parsed) : null;
+  const usage = parsed ? parseUsageFromXaiResponse(parsed) : null;
   await recordAiTokenUsage(
     { ...usageCtx, provider: 'xai', modelId },
-    { success: res.ok, httpStatus: res.status, costUsd: billedCost }
+    {
+      success: res.ok,
+      httpStatus: res.status,
+      promptTokens: usage?.promptTokens,
+      completionTokens: usage?.completionTokens,
+      totalTokens: usage?.totalTokens,
+      costUsd: usage?.costUsd,
+    }
   );
 
   if (!res.ok) {
@@ -198,6 +205,7 @@ async function generateWithGoogle(
       promptTokens: usage?.promptTokens,
       completionTokens: usage?.completionTokens,
       totalTokens: usage?.totalTokens,
+      costUsd: usage?.costUsd,
     }
   );
 

@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
+import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 
 type AdminPhotoSlotProps = {
   src?: string | null;
@@ -40,7 +41,9 @@ export default function AdminPhotoSlot({
         {src ? (
           <ImageLightbox src={src} alt={alt} preserveAspectRatio unoptimized />
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-gray-400">No photo</div>
+          <div className="h-full flex items-center justify-center text-xs text-gray-400 text-center px-2">
+            {IMAGE_INTAKE_HINT}
+          </div>
         )}
       </div>
       {src && hover ? <HoverEnlarge src={src} /> : null}

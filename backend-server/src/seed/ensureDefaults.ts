@@ -204,7 +204,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.settings.logo_header_upload',
     title: 'Upload header logo',
-    body: 'Wordmark shown in the public header and reused in the footer. PNG with a transparent background works best.',
+    body: 'Wordmark shown in the public header and reused in the footer. PNG with a transparent background works best. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',
   },
   {
     helpKey: 'admin.settings.logo_header_remove',
@@ -214,7 +214,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.settings.logo_pdf_upload',
     title: 'Upload PDF logo',
-    body: 'Wordmark drawn on datasheet, installation, and label PDFs. Falls back to the header logo if empty.',
+    body: 'Wordmark drawn on datasheet, installation, and label PDFs. Falls back to the header logo if empty. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',
   },
   {
     helpKey: 'admin.settings.logo_pdf_remove',
@@ -224,7 +224,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.settings.logo_icon_upload',
     title: 'Upload tab icon',
-    body: 'Square icon for the browser tab. Falls back to the built-in L mark if empty.',
+    body: 'Square icon for the browser tab. Falls back to the built-in L mark if empty. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',
   },
   {
     helpKey: 'admin.settings.logo_icon_remove',
@@ -234,7 +234,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.settings.hero_image_upload',
     title: 'Upload hero image',
-    body: 'Photo on the homepage hero. The crop board uses the same 3:2 frame as the homepage. Falls back to the built-in hero image if empty.',
+    body: 'Photo on the homepage hero. The crop board uses the same 3:2 frame as the homepage. Falls back to the built-in hero image if empty. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',
   },
   {
     helpKey: 'admin.settings.hero_image_remove',
@@ -244,7 +244,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.settings.og_image_upload',
     title: 'Upload Open Graph image',
-    body: 'Image used when the site is shared on social networks. Optional.',
+    body: 'Image used when the site is shared on social networks. Optional. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',
   },
   {
     helpKey: 'admin.settings.og_image_remove',
@@ -329,7 +329,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.featured_image',
     title: 'Series source photo',
-    body: 'Upload the full series photo. The crop board then walks through three frames from that source: catalog 16:9, series page 4:5, and family datasheet 1:1. Replacing the source starts those three crops again. Any slot can also Upload / Replace photo with a different file. This is not a product photo.',
+    body: 'Upload the full series photo. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board then walks through three frames from that source: catalog 16:9, series page 4:5, and family datasheet 1:1. Replacing the source starts those three crops again. Any slot can also Upload / Replace photo with a different file. This is not a product photo.',
   },
   {
     helpKey: 'admin.product_series.featured_catalog',
@@ -349,7 +349,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.featured_replace',
     title: 'Upload or replace this photo',
-    body: 'Choose a different file for this frame only — catalog, series page, or datasheet. The shared source photo stays the same. After you pick a file, crop it to this slot.',
+    body: 'Choose a different file for this frame only — catalog, series page, or datasheet. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The shared source photo stays the same. After you pick a file, crop it to this slot.',
   },
   {
     helpKey: 'admin.product_series.featured_different',
@@ -359,7 +359,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_types.featured_image',
     title: 'Category photo',
-    body: 'Upload the category card image used on /products. The crop board uses the same 16:9 frame as the public category cards.',
+    body: 'Upload the category card image used on /products. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same 16:9 frame as the public category cards.',
   },
   {
     helpKey: 'admin.image_cutboard.apply',
@@ -489,7 +489,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.ai.size_drawing_style_upload',
     title: 'Upload style reference',
-    body: 'Upload a 2D size drawing to copy line style, dimension arrows, and white background when generating size photos. The product crop still supplies the fixture outline.',
+    body: 'Upload a 2D size drawing to copy line style, dimension arrows, and white background when generating size photos. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The product crop still supplies the fixture outline.',
   },
   {
     helpKey: 'admin.ai.size_drawing_style_remove',
@@ -499,7 +499,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.ai.product_photo_style_upload',
     title: 'Upload catalog photo style',
-    body: 'Upload one finished catalog photo. Match catalog style on Main A or Main B copies its lighting, background, and color grade. Upload of vendor photos still saves the original.',
+    body: 'Upload one finished catalog photo. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. Match catalog style on Main A or Main B copies its lighting, background, and color grade. Upload of vendor photos still saves the original.',
   },
   {
     helpKey: 'admin.ai.product_photo_style_remove',
@@ -804,7 +804,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_types.label_upload',
     title: 'Upload label',
-    body: 'Upload a PNG or JPEG for this product-type datasheet square.',
+    body: 'Upload a PNG or JPEG for this product-type datasheet square. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',
   },
   {
     helpKey: 'admin.product_types.label_ai',
@@ -880,6 +880,26 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.projects.back_list',
     title: 'Back to projects',
     body: 'Return to the projects list.',
+  },
+  {
+    helpKey: 'admin.projects.thumbnail_upload',
+    title: 'Upload project thumbnail',
+    body: 'Listing photo for this project. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same 16:9 frame as the public cards.',
+  },
+  {
+    helpKey: 'admin.projects.section_image_upload',
+    title: 'Upload section image',
+    body: 'Gallery photo for this project section. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same 3:2 frame as the public gallery.',
+  },
+  {
+    helpKey: 'admin.products.image_upload',
+    title: 'Upload product image',
+    body: 'Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same square frame as the public product photo.',
+  },
+  {
+    helpKey: 'admin.image_upload.placeholder',
+    title: 'Add a photo',
+    body: 'Every image placeholder accepts a photo three ways: drop a file onto the box, paste from the clipboard while the box is hovered or focused, or choose a file from this device. The crop board then matches the public frame.',
   },
   {
     helpKey: 'catalog.category.filter_toggle',
@@ -1009,17 +1029,17 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_photo_a',
     title: 'Size main photo A',
-    body: 'Main photo for this series size. Used on the public option table and datasheet. The crop board uses the same square frame as the product photo slots.',
+    body: 'Main photo for this series size. Used on the public option table and datasheet. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same square frame as the product photo slots.',
   },
   {
     helpKey: 'admin.product_series.size_photo_b',
     title: 'Size main photo B',
-    body: 'Optional second photo for this series size.',
+    body: 'Optional second photo for this series size. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',
   },
   {
     helpKey: 'admin.product_series.size_drawing',
     title: 'Size drawing',
-    body: 'Dimension drawing for this series size. Upload a file or Generate by AI from Main A. Used on datasheets and the option preview.',
+    body: 'Dimension drawing for this series size. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. You can also Generate by AI from Main A. Used on datasheets and the option preview.',
   },
   {
     helpKey: 'admin.product_series.size_drawing_ai',
@@ -1089,7 +1109,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_upload',
     title: 'Upload appearance photo',
-    body: 'Replace this combination with a real product photo. The crop board uses the same square frame as the appearance slot. Staff uploads are not overwritten by Generate missing or Generate all.',
+    body: 'Replace this combination with a real product photo. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same square frame as the appearance slot. Staff uploads are not overwritten by Generate missing or Generate all.',
   },
   {
     helpKey: 'admin.product_series.appearance_remove',
@@ -1199,7 +1219,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.variant_options.label_upload',
     title: 'Upload label',
-    body: 'Replace this datasheet square with a PNG or JPEG. Used on the PDF and the series preview dialog.',
+    body: 'Replace this datasheet square with a PNG or JPEG. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. Used on the PDF and the series preview dialog.',
   },
   {
     helpKey: 'admin.variant_options.label_ai',
