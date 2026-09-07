@@ -2,10 +2,11 @@ export type AdminNavLink = {
   href: string;
   label: string;
   helpKey: string;
+  variant?: 'primary' | 'ghost';
 };
 
 export type AdminNavSection = {
-  id: 'catalog' | 'projects' | 'settings' | 'users';
+  id: 'catalog' | 'projects' | 'settings' | 'ai' | 'users';
   label: string;
   description?: string;
   helpKey: string;
@@ -28,7 +29,6 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     secondaryLinks: [
       { href: '/admin/external-catalog', label: 'Partner catalog (LightX)', helpKey: 'admin.dash.link.lightx' },
       { href: '/admin/ldt-library', label: 'LDT library', helpKey: 'admin.dash.link.ldt' },
-      { href: '/admin/ai', label: 'AI settings', helpKey: 'admin.dash.link.ai' },
     ],
   },
   {
@@ -47,6 +47,20 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     helpKey: 'admin.nav.settings',
     links: [
       { href: '/admin/settings', label: 'Site settings', helpKey: 'admin.dash.link.settings' },
+    ],
+  },
+  {
+    id: 'ai',
+    label: 'AI',
+    description: 'Keys, catalog photo style, and usage.',
+    helpKey: 'admin.nav.ai',
+    links: [
+      {
+        href: '/admin/ai',
+        label: 'Open AI settings',
+        helpKey: 'admin.dash.link.ai',
+        variant: 'primary',
+      },
     ],
   },
   {

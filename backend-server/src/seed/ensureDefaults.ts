@@ -179,7 +179,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.dash.link.ai',
     title: 'AI settings',
-    body: 'Provider keys, routing, and usage for size drawings and photo edit.',
+    body: 'Open /admin/ai for provider keys, catalog photo style, and usage. Image features need a usable xAI or Google key — Saved is not enough if the stored key cannot be decrypted.',
   },
   {
     helpKey: 'admin.dash.link.variant_options',
@@ -654,7 +654,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.nav.catalog',
     title: 'Catalog',
-    body: 'Product types, series, variants, partner catalog, LDT library, and AI settings.',
+    body: 'Product types, series, variants, partner catalog, and LDT library.',
   },
   {
     helpKey: 'admin.nav.projects',
@@ -665,6 +665,11 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.nav.settings',
     title: 'Settings',
     body: 'Brand, homepage, contact, and SEO for the public site.',
+  },
+  {
+    helpKey: 'admin.nav.ai',
+    title: 'AI',
+    body: 'Open AI settings for provider keys, catalog photo style, and usage.',
   },
   {
     helpKey: 'admin.nav.users',

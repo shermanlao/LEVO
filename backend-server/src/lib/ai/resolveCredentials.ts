@@ -134,7 +134,28 @@ export async function resolveImageAiCredentials(
   feature?: string
 ): Promise<ResolvedImageAiCredentials | null> {
   const list = await listFailoverCredentials(feature);
-  return list[0] || null;
+  return (
+    list.find((creds) => {
+      const id = normalizeImageAiProviderId(creds.provider);
+      return id === 'xai' || id === 'google';
+    }) || null
+  );
+}
+
+export async function requireImageAiCredentials(feature?: string): Promise<ResolvedImageAiCredentials> {
+  const creds = await resolveImageAiCredentials(feature);
+  if (creds) return creds;
+  const row = await getOrCreateAiSettings();
+  const map = parseEncryptedProviderKeysMap(row.get('encrypted_provider_keys'));
+  const storedBroken = Boolean(map.xai || map.google);
+  if (storedBroken) {
+    throw new Error(
+      'A saved xAI or Google key is stored but cannot be read. Paste the key again on AI settings and click Test connection.'
+    );
+  }
+  throw new Error(
+    'AI is not configured. Add an xAI or Google API key on AI settings, then click Test connection.'
+  );
 }
 
 export async function getParsingHints(): Promise<string> {

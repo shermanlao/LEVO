@@ -1,5 +1,5 @@
 import { generateOrEditImage, SIZE_DRAWING_IMAGE_PART_LABELS } from './aiImageGeneration';
-import { getOrCreateAiSettings, getParsingHints, getSizeDrawingPromptTemplates, resolveImageAiCredentials } from './resolveCredentials';
+import { getOrCreateAiSettings, getParsingHints, getSizeDrawingPromptTemplates, requireImageAiCredentials } from './resolveCredentials';
 import { fillPromptTemplate, SIZE_DRAWING_STYLE_LOCK, SIZE_DRAWING_VIEW_LOCK, sizeDrawingPromptVars } from './sizeDrawingPrompts';
 import { readSizeDrawingStyleDataUrl } from './sizeDrawingStyleImage';
 
@@ -12,8 +12,7 @@ export async function generateSizeDrawing(opts: {
   if (!opts.size?.trim()) throw new Error('Size dimensions are required');
   if (!opts.imageDataUrl?.startsWith('data:')) throw new Error('Cropped image data URL is required');
 
-  const creds = await resolveImageAiCredentials('size_drawing_generate');
-  if (!creds) throw new Error('AI is not configured');
+  const creds = await requireImageAiCredentials('size_drawing_generate');
   const hints = await getParsingHints();
   const templates = await getSizeDrawingPromptTemplates();
   const row = await getOrCreateAiSettings();

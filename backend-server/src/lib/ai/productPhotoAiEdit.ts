@@ -1,5 +1,5 @@
 import { generateOrEditImage } from './aiImageGeneration';
-import { getParsingHints, resolveImageAiCredentials } from './resolveCredentials';
+import { getParsingHints, requireImageAiCredentials } from './resolveCredentials';
 
 function buildProductPhotoEditPrompt(opts: {
   instruction: string;
@@ -32,8 +32,7 @@ export async function editProductPhoto(opts: {
 }): Promise<{ imageDataUrl: string; mimeType: string }> {
   if (!opts.instruction?.trim()) throw new Error('Edit instruction is required');
   if (!opts.imageDataUrl?.startsWith('data:')) throw new Error('Image data URL is required');
-  const creds = await resolveImageAiCredentials('product_photo_edit');
-  if (!creds) throw new Error('AI is not configured');
+  const creds = await requireImageAiCredentials('product_photo_edit');
   const hints = await getParsingHints();
   const result = await generateOrEditImage({
     creds,

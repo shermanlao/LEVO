@@ -16,6 +16,8 @@ SQLite table `ai_provider_settings` (singleton):
 
 Env `AI_API_KEY` + `AI_PROVIDER` override the matching provider when set. Optional: `AI_API_BASE_URL`, `AI_MODEL_ID`.
 
+**Saved** on a key field means ciphertext (or an env override) exists. Image features still need a key that decrypts with the current `AI_SETTINGS_ENCRYPTION_KEY`. If that encryption secret changed, the form can say Saved while Match catalog style returns that the saved key cannot be read — paste the xAI or Google key again and click **Test connection**. The dashboard **AI** card opens this page.
+
 ## Failover
 
 Feature primary → org default → `xai` → `openai` → `openrouter` → `google` (skip missing keys). **Size drawing, photo edit, and datasheet labels still only execute on xAI Imagine or Google Gemini Image.** Description phrases use chat completions and can run on any configured provider.

@@ -9,6 +9,7 @@ import {
   clearEncryptedProviderKey,
   parseEncryptedProviderKeysMap,
   providerKeyPresence,
+  providerKeyUsable,
   setEncryptedProviderKey,
 } from '../lib/ai/aiProviderKeys';
 import { hasImageAiApiKeyInEnv, getImageAiProviderFromEnv } from '../lib/ai/imageAiEnv';
@@ -67,6 +68,10 @@ function serializeSettings() {
         ? String(row.get('product_photo_style_image'))
         : null,
       key_presence: providerKeyPresence(map, {
+        envProvider,
+        hasEnvKey: hasImageAiApiKeyInEnv(),
+      }),
+      key_usable: providerKeyUsable(map, {
         envProvider,
         hasEnvKey: hasImageAiApiKeyInEnv(),
       }),
@@ -157,7 +162,7 @@ export const testAiSettings = async (req: Request, res: Response) => {
       return res.status(400).json({
         ok: false,
         error:
-          'No API key for the default provider. Paste the xAI (or Google) key in the form, then click Test connection.',
+          'No usable xAI or Google API key. If the form says Saved, paste the key again (the stored copy cannot be read), then click Test connection.',
       });
     }
     const result = await testAiConnection(creds);

@@ -3,7 +3,7 @@ import {
   generateOrEditImage,
   PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS,
 } from './aiImageGeneration';
-import { getOrCreateAiSettings, getParsingHints, resolveImageAiCredentials } from './resolveCredentials';
+import { getOrCreateAiSettings, getParsingHints, requireImageAiCredentials } from './resolveCredentials';
 import { readProductPhotoStyleDataUrl } from './aiStyleImage';
 
 function buildProductPhotoStylePrompt(hints?: string): string {
@@ -26,8 +26,7 @@ export async function stylizeProductPhoto(opts: {
   imageUrl?: string;
 }): Promise<{ imageDataUrl: string; mimeType: string }> {
   const sourceImageDataUrl = await resolveAiSourceImageDataUrl(opts);
-  const creds = await resolveImageAiCredentials('product_photo_edit');
-  if (!creds) throw new Error('AI is not configured');
+  const creds = await requireImageAiCredentials('product_photo_edit');
   const row = await getOrCreateAiSettings();
   const styleRaw = readProductPhotoStyleDataUrl(String(row.get('product_photo_style_image') || ''));
   if (!styleRaw) throw new Error('Catalog photo style reference is required');

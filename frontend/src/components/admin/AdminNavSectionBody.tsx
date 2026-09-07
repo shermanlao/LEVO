@@ -18,7 +18,12 @@ export default function AdminNavSectionBody({
       <ul className="space-y-2">
         {section.links.map((link) => (
           <li key={link.href}>
-            <Button helpKey={link.helpKey} variant="ghost" href={link.href} className={LINK_CLASS}>
+            <Button
+              helpKey={link.helpKey}
+              variant={link.variant || 'ghost'}
+              href={link.href}
+              className={link.variant === 'primary' ? '' : LINK_CLASS}
+            >
               {link.label}
             </Button>
           </li>

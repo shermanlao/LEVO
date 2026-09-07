@@ -1,5 +1,5 @@
 import { generateOrEditImage } from './aiImageGeneration';
-import { getParsingHints, resolveImageAiCredentials } from './resolveCredentials';
+import { getParsingHints, requireImageAiCredentials } from './resolveCredentials';
 import { appearancePromptInstruction, normalizeAppearanceCombo } from '../shared/appearance-photos';
 
 export async function generateAppearancePhoto(opts: {
@@ -16,8 +16,7 @@ export async function generateAppearancePhoto(opts: {
   });
   const instruction = appearancePromptInstruction(combo);
   if (!instruction) throw new Error('Finish, trim, or reflector is required');
-  const creds = await resolveImageAiCredentials('appearance_photo_generate');
-  if (!creds) throw new Error('AI is not configured');
+  const creds = await requireImageAiCredentials('appearance_photo_generate');
   const hints = await getParsingHints();
   const result = await generateOrEditImage({
     creds,

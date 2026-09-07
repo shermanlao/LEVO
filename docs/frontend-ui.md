@@ -56,8 +56,8 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `AppearancePhotos` | Series Finish × Trim × Reflector photos, directly under Size. Square thumbs, Upload, Generate by AI (pending preview, Confirm to save), Generate missing, Generate all, Confirm all / Discard all, Remove. Unused leftover photos from cleared tags are listed separately. Hidden when those kinds are N/A and no unused photos remain. |
 | `WhyChooseIcon` | Homepage Why Choose SVG keyed by `energy` / `lifespan` / `design` |
 | `AdminPageHeader` | Admin title, actions, back link, optional logout |
-| `SiteNav` | Header links. On `/admin` (not login): Home plus Catalog / Projects / Settings / Users hover menus from `admin-nav.ts`. Public pages keep Products / Projects / Contact Us. `HeaderAuthButton` sits at the end of the row: **Login** (`catalog.header.login` → `/admin/login`) when signed out, **Log out** (`admin.logout`) when signed in. Hidden on `/admin/login`. |
-| `AdminNavSectionBody` | Shared Catalog / Projects / Settings / Users link lists for the dashboard cards and header hover panels |
+| `SiteNav` | Header links. On `/admin` (not login): Home plus Catalog / Projects / Settings / AI / Users hover menus from `admin-nav.ts`. Public pages keep Products / Projects / Contact Us. `HeaderAuthButton` sits at the end of the row: **Login** (`catalog.header.login` → `/admin/login`) when signed out, **Log out** (`admin.logout`) when signed in. Hidden on `/admin/login`. |
+| `AdminNavSectionBody` | Shared Catalog / Projects / Settings / AI / Users link lists for the dashboard cards and header hover panels |
 | `StatTile` | Dashboard number + label; optional `href` + `helpKey` |
 | `OptionTag` | Catalog option chip on series variants. Outline = available; filled black = selected. Requires `helpKey`. |
 | `SpecificationsEditor` | Series/product key-value specs |

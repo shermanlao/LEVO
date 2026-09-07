@@ -10,6 +10,7 @@ export type AiSettings = {
   size_drawing_style_image: string | null;
   product_photo_style_image: string | null;
   key_presence: Record<string, boolean>;
+  key_usable: Record<string, boolean>;
   env_key_overrides: boolean;
   env_provider: string | null;
   feature_model_routing: Record<string, { provider?: string; modelId?: string }>;

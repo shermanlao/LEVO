@@ -30,7 +30,7 @@ Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend w
 - `sqlite-api.ts` — server catalog/projects/contact reads; `getFeaturedSeries`; `getDatasheetUrl` / `getInstallationUrl` / `getLdtUrl` / `getSeriesDatasheetUrl` / `getSeriesFamilyDatasheetUrl` / `getSeriesInstallationUrl` / `getSeriesLdtUrl` / `getSeriesPolarUrl` / `getProductLabelUrl` / `getGeneralLabelUrl` for catalog and admin downloads
 - `admin-backend.ts` — session-gated BFF proxy to Express (`requireAdminSession` / `requireAdminRole`), plus `createPublicCatalogProxy` / `createAdminProxy`
 - `admin-fetch.ts` — browser `adminFetchJson` / `uploadAdminImage`
-- `admin-nav.ts` — Catalog / Projects / Settings / Users sections for the admin header menus and dashboard shortcut cards
+- `admin-nav.ts` — Catalog / Projects / Settings / AI / Users sections for the admin header menus and dashboard shortcut cards
 - `image-utils.ts` — the only image URL builder (`toPublicImagePath`, `shouldSkipImageOptimize`, `productImageUrl`, `resolveSeriesImageUrl`, `uniqueSeriesPhotoUrls`, plus `seriesFeaturedCatalogUrl` / `seriesFeaturedPageUrl` / `seriesFeaturedDatasheetUrl`)
 - `image-frames.ts` — placeholder aspect ratios, `SERIES_FEATURED_SLOTS`, and `validateImageFile` / `assignFileToInput` for the upload crop board
 - `image-file-intake.ts` — `IMAGE_INTAKE_HINT`, `isImageFile`, and extractors for drag / clipboard / file-picker photos used by `ImageFileIntake`

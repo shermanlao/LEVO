@@ -145,6 +145,13 @@ export default function AiSettingsPage() {
       <AdminPageHeader title="AI settings" showLogout />
       {error ? <AlertBanner>{error}</AlertBanner> : null}
       {message ? <AlertBanner variant="success">{message}</AlertBanner> : null}
+      {settings &&
+      ['xai', 'google'].some((id) => settings.key_presence[id] && settings.key_usable && !settings.key_usable[id]) ? (
+        <AlertBanner variant="warning">
+          A saved xAI or Google key is stored but cannot be read. Paste the key again below and click
+          Test connection.
+        </AlertBanner>
+      ) : null}
       <div className="bg-white shadow-md rounded p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Usage and spending</h2>

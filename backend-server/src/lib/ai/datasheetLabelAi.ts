@@ -1,5 +1,5 @@
 import { generateOrEditImage } from './aiImageGeneration';
-import { getParsingHints, resolveImageAiCredentials } from './resolveCredentials';
+import { getParsingHints, requireImageAiCredentials } from './resolveCredentials';
 
 function buildDatasheetLabelPrompt(opts: {
   text: string;
@@ -31,8 +31,7 @@ export async function generateDatasheetLabel(opts: {
 }): Promise<{ imageDataUrl: string; mimeType: string }> {
   if (!opts.text?.trim()) throw new Error('Label text is required');
   const source = opts.imageDataUrl?.startsWith('data:') ? opts.imageDataUrl : null;
-  const creds = await resolveImageAiCredentials('datasheet_label_generate');
-  if (!creds) throw new Error('AI is not configured');
+  const creds = await requireImageAiCredentials('datasheet_label_generate');
   const hints = await getParsingHints();
   const result = await generateOrEditImage({
     creds,

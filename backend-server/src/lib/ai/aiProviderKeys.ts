@@ -42,6 +42,21 @@ export function providerKeyPresence(
   return presence;
 }
 
+export function providerKeyUsable(
+  map: EncryptedProviderKeysMap,
+  opts?: { envProvider?: string | null; hasEnvKey?: boolean }
+): ProviderKeyPresence {
+  const usable = {} as ProviderKeyPresence;
+  for (const id of AI_PROVIDER_KEY_IDS) {
+    usable[id] = Boolean(decryptProviderKey(map, id));
+  }
+  if (opts?.hasEnvKey && opts.envProvider) {
+    const id = normalizeImageAiProviderId(opts.envProvider);
+    if (isAiProviderKeyId(id)) usable[id] = true;
+  }
+  return usable;
+}
+
 export function decryptProviderKey(
   map: EncryptedProviderKeysMap,
   provider: string

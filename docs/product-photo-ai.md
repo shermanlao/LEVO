@@ -27,7 +27,7 @@ On `/admin/product-series/[id]`, size-pack **Main A** and **Main B** stage the c
 
 1. Sends a JPEG (longest edge 1600) plus the stored path to `POST /api/admin/ai/stylize-product-photo`. The API also shrinks the catalog style reference before calling xAI or Google.
 2. Shows a preview. **Apply** replaces the slot. **Reset** or Close keeps the original upload
-3. Failures show the provider message (not a generic “Server error”). Check `/admin/ai` if the catalog style photo is missing.
+3. Failures show the provider message (not a generic “Server error”). “Saved key cannot be read” means the xAI/Google key on `/admin/ai` is stored but cannot be decrypted — paste it again and Test connection. A missing catalog style photo is a separate 400.
 
 The model copies lighting, background, contrast, and color grade. It must keep this fixture, finish, and viewpoint — not flatten to a size drawing. Appearance, featured, and project slots are unchanged.
 
