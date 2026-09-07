@@ -62,6 +62,16 @@ export function assignXaiEditImages(body: Record<string, unknown>, urls: string[
   }
 }
 
+/** Default extras-first keeps size-drawing style as IMAGE_0. Style match uses source-first so xAI edits the product, not the reference. */
+export function orderedEditImageUrls(
+  sourceImageDataUrl: string | null,
+  extraImageDataUrls: string[],
+  sourceFirst = false
+): string[] {
+  const source = sourceImageDataUrl ? [sourceImageDataUrl] : [];
+  return sourceFirst ? [...source, ...extraImageDataUrls] : [...extraImageDataUrls, ...source];
+}
+
 function dataUrlToParts(dataUrl: string): { mimeType: string; base64: string } {
   return parseImageDataUrl(dataUrl);
 }
@@ -90,13 +100,11 @@ async function generateWithXai(
   prompt: string,
   sourceImageDataUrl: string | null,
   extraImageDataUrls: string[],
-  usageCtx: AiUsageContext
+  usageCtx: AiUsageContext,
+  sourceFirst: boolean
 ): Promise<GeneratedImageResult> {
   const modelId = XAI_IMAGE_MODEL;
-  const imageUrls = [
-    ...extraImageDataUrls,
-    ...(sourceImageDataUrl ? [sourceImageDataUrl] : []),
-  ];
+  const imageUrls = orderedEditImageUrls(sourceImageDataUrl, extraImageDataUrls, sourceFirst);
   const endpoint = imageUrls.length
     ? `${creds.baseUrl.replace(/\/$/, '')}/images/edits`
     : `${creds.baseUrl.replace(/\/$/, '')}/images/generations`;
@@ -166,19 +174,23 @@ async function generateWithGoogle(
   sourceImageDataUrl: string | null,
   extraImageDataUrls: string[],
   usageCtx: AiUsageContext,
-  imagePartLabels: ImagePartLabels
+  imagePartLabels: ImagePartLabels,
+  sourceFirst: boolean
 ): Promise<GeneratedImageResult> {
   const modelId = GOOGLE_IMAGE_MODEL;
   const url = `${googleNativeBaseUrl(creds)}/models/${modelId}:generateContent`;
   const parts: Array<Record<string, unknown>> = [{ text: prompt }];
-  extraImageDataUrls.forEach((dataUrl, index) => {
-    const { mimeType, base64 } = dataUrlToParts(dataUrl);
-    parts.push({
-      text: index === 0 ? imagePartLabels.extraFirst : imagePartLabels.extraOther(index),
+  const pushExtra = () => {
+    extraImageDataUrls.forEach((dataUrl, index) => {
+      const { mimeType, base64 } = dataUrlToParts(dataUrl);
+      parts.push({
+        text: index === 0 ? imagePartLabels.extraFirst : imagePartLabels.extraOther(index),
+      });
+      parts.push({ inline_data: { mime_type: mimeType, data: base64 } });
     });
-    parts.push({ inline_data: { mime_type: mimeType, data: base64 } });
-  });
-  if (sourceImageDataUrl) {
+  };
+  const pushSource = () => {
+    if (!sourceImageDataUrl) return;
     const { mimeType, base64 } = dataUrlToParts(sourceImageDataUrl);
     parts.push({
       text: extraImageDataUrls.length
@@ -186,6 +198,13 @@ async function generateWithGoogle(
         : imagePartLabels.sourceOnly,
     });
     parts.push({ inline_data: { mime_type: mimeType, data: base64 } });
+  };
+  if (sourceFirst) {
+    pushSource();
+    pushExtra();
+  } else {
+    pushExtra();
+    pushSource();
   }
 
   const res = await fetch(url, {
@@ -261,7 +280,8 @@ async function generateWithProvider(
   sourceImageDataUrl: string | null,
   extraImageDataUrls: string[],
   usageCtx: AiUsageContext,
-  imagePartLabels: ImagePartLabels
+  imagePartLabels: ImagePartLabels,
+  sourceFirst: boolean
 ): Promise<GeneratedImageResult> {
   const provider = normalizeImageAiProviderId(creds.provider);
   if (provider === 'google') {
@@ -271,11 +291,19 @@ async function generateWithProvider(
       sourceImageDataUrl,
       extraImageDataUrls,
       usageCtx,
-      imagePartLabels
+      imagePartLabels,
+      sourceFirst
     );
   }
   if (provider === 'xai') {
-    return generateWithXai(creds, prompt, sourceImageDataUrl, extraImageDataUrls, usageCtx);
+    return generateWithXai(
+      creds,
+      prompt,
+      sourceImageDataUrl,
+      extraImageDataUrls,
+      usageCtx,
+      sourceFirst
+    );
   }
   throw new Error(
     `Image generation supports xAI Imagine or Google Gemini Image. Current provider "${provider}" is not supported.`
@@ -288,11 +316,13 @@ export async function generateOrEditImage(opts: {
   sourceImageDataUrl?: string | null;
   extraImageDataUrls?: string[];
   imagePartLabels?: ImagePartLabels;
+  sourceFirst?: boolean;
   usageCtx: AiUsageContext;
 }): Promise<GeneratedImageResult> {
   const source = opts.sourceImageDataUrl ?? null;
   const extra = (opts.extraImageDataUrls || []).filter((url) => url.startsWith('data:'));
   const imagePartLabels = opts.imagePartLabels || SIZE_DRAWING_IMAGE_PART_LABELS;
+  const sourceFirst = Boolean(opts.sourceFirst);
   const tried = new Set<string>();
   const queue: ResolvedImageAiCredentials[] = [opts.creds];
   let lastError: unknown = null;
@@ -313,7 +343,8 @@ export async function generateOrEditImage(opts: {
         source,
         extra,
         opts.usageCtx,
-        imagePartLabels
+        imagePartLabels,
+        sourceFirst
       );
     } catch (err) {
       lastError = err;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { assignXaiEditImages } from './aiImageGeneration';
+import { assignXaiEditImages, orderedEditImageUrls } from './aiImageGeneration';
 
 describe('assignXaiEditImages', () => {
   it('omits image fields when there are no source photos', () => {
@@ -17,10 +17,26 @@ describe('assignXaiEditImages', () => {
     assert.equal(body.images, undefined);
   });
 
-  it('sends style plus product as image strings, not maps', () => {
+  it('sends two photos as image strings, not maps', () => {
     const body: Record<string, unknown> = {};
-    assignXaiEditImages(body, ['data:image/jpeg;base64,style', 'data:image/jpeg;base64,product']);
-    assert.deepEqual(body.image, ['data:image/jpeg;base64,style', 'data:image/jpeg;base64,product']);
+    assignXaiEditImages(body, ['data:image/jpeg;base64,product', 'data:image/jpeg;base64,style']);
+    assert.deepEqual(body.image, [
+      'data:image/jpeg;base64,product',
+      'data:image/jpeg;base64,style',
+    ]);
     assert.equal(body.images, undefined);
+  });
+});
+
+describe('orderedEditImageUrls', () => {
+  it('keeps size-drawing extras first by default', () => {
+    assert.deepEqual(orderedEditImageUrls('data:product', ['data:style']), ['data:style', 'data:product']);
+  });
+
+  it('puts the product first for catalog style match', () => {
+    assert.deepEqual(orderedEditImageUrls('data:product', ['data:style'], true), [
+      'data:product',
+      'data:style',
+    ]);
   });
 });
