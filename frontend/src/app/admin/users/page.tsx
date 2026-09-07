@@ -13,6 +13,13 @@ import {
   isAdminRole,
   type AdminRole,
 } from '@shared/admin-roles';
+import { invalidateAdminMe } from '@/lib/use-admin-me';
+
+function sessionExpired(status: number): boolean {
+  if (status !== 401) return false;
+  window.location.href = '/admin/login?next=/admin/users';
+  return true;
+}
 
 type StaffUser = {
   id: number;
@@ -68,6 +75,7 @@ export default function AdminUsersPage() {
     setError(null);
     try {
       const response = await fetch('/api/admin/users', { cache: 'no-store' });
+      if (sessionExpired(response.status)) return;
       if (response.status === 403) {
         window.location.href = '/admin';
         return;
@@ -110,6 +118,7 @@ export default function AdminUsersPage() {
           role: newUser.role,
         }),
       });
+      if (sessionExpired(response.status)) return;
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(json.error || 'Could not create user');
@@ -165,10 +174,12 @@ export default function AdminUsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (sessionExpired(response.status)) return;
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(json.error || 'Could not save user');
       }
+      invalidateAdminMe();
       setEditingId(null);
       setEditUser(EMPTY_FORM);
       setSuccess('User saved.');
@@ -186,6 +197,7 @@ export default function AdminUsersPage() {
     setSuccess(null);
     try {
       const response = await fetch(`/api/admin/users/${user.id}`, { method: 'DELETE' });
+      if (sessionExpired(response.status)) return;
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(json.error || 'Could not delete user');

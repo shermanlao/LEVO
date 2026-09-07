@@ -41,6 +41,14 @@ type LiveSession = {
 
 const liveSessionCache = new Map<string, { live: LiveSession; until: number }>();
 
+export function invalidateLiveSession(username?: string) {
+  if (username) {
+    liveSessionCache.delete(username);
+    return;
+  }
+  liveSessionCache.clear();
+}
+
 async function lookupLiveSession(username: string): Promise<LiveSession | null> {
   const now = Date.now();
   const cached = liveSessionCache.get(username);

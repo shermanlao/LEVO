@@ -27,6 +27,7 @@ export function serializeAdminUser(row: AdminUser) {
     division: string | null;
     role: AdminRole;
     active: boolean;
+    session_epoch?: number;
     created_at: Date | null;
     updated_at: Date | null;
   };
@@ -40,6 +41,7 @@ export function serializeAdminUser(row: AdminUser) {
     division: p.division || '',
     role: migrateStoredRole(p.role),
     active: Boolean(p.active),
+    session_epoch: Number(p.session_epoch) || 0,
     created_at: p.created_at,
     updated_at: p.updated_at,
   };
