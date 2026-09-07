@@ -5,7 +5,6 @@ import {
   getProductSeriesById,
   getProductSeriesBySlug,
   createProductSeries,
-  ensureProductSeriesSizePack,
   updateProductSeries,
   deleteProductSeries
 } from '../controllers/productSeriesController';
@@ -23,7 +22,6 @@ router.get('/by-slug/:slug', getProductSeriesBySlug);
 router.get('/:id/appearance-photos', listSeriesAppearancePhotos);
 router.put('/:id/appearance-photos', upsertSeriesAppearancePhoto);
 router.delete('/:id/appearance-photos', deleteSeriesAppearancePhoto);
-router.post('/:id/size-packs', ensureProductSeriesSizePack);
 router.get('/:id', getProductSeriesById);
 router.post('/', createProductSeries);
 router.put('/:id', updateProductSeries);

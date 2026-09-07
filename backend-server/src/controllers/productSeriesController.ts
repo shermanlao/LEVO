@@ -12,14 +12,7 @@ import {
   stringifyDatasheetLabels,
 } from '../lib/shared/datasheet-labels';
 import { allocateProductCodeForTypeId } from '../lib/productCode';
-import {
-  loadSeriesOptions,
-  loadSeriesOptionsForIds,
-  loadAppearancePhotos,
-  replaceSeriesOptions,
-  ensureSeriesSizePack,
-} from '../lib/seriesConfig';
-import { errorMessage } from '../lib/errors';
+import { loadSeriesOptions, loadSeriesOptionsForIds, loadAppearancePhotos, replaceSeriesOptions } from '../lib/seriesConfig';
 import { rewriteLegacyLumenPlaceholders } from '../lib/shared/description-phrase';
 import { loadVariantCatalog, type VariantCatalogOption } from '../lib/variantCatalog';
 import type { SeriesOptionDto } from '../lib/shared/series-options';
@@ -246,23 +239,6 @@ export const createProductSeries = asyncHandler(async (req: Request, res: Respon
     include: SERIES_INCLUDE,
   });
   res.status(201).json({ data: await serializeProductSeries(series || created) });
-});
-
-export const ensureProductSeriesSizePack = asyncHandler(async (req: Request, res: Response) => {
-  const seriesId = Number(req.params.id);
-  if (!Number.isInteger(seriesId) || seriesId <= 0) return notFound(res, 'Product series');
-  const series = await ProductSeries.findByPk(seriesId);
-  if (!series) return notFound(res, 'Product series');
-  try {
-    const pack = await ensureSeriesSizePack(seriesId, {
-      value: req.body?.value,
-      dimensions: req.body?.dimensions,
-      cutout_size: req.body?.cutout_size,
-    });
-    res.status(201).json({ data: pack });
-  } catch (error) {
-    res.status(500).json({ error: errorMessage(error) });
-  }
 });
 
 export const updateProductSeries = asyncHandler(async (req: Request, res: Response) => {

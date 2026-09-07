@@ -304,6 +304,9 @@ export async function replaceSeriesOptions(seriesId: number, incoming: unknown):
         cutout_size: optionText(rec.cutout_size) || null,
         code: optionText(rec.code) || null,
         pack_id: parsePackId(rec.pack_id),
+        main_image_A: optionText(rec.main_image_A) || null,
+        main_image_B: optionText(rec.main_image_B) || null,
+        size_image: optionText(rec.size_image) || null,
       });
     index += 1;
   }
@@ -370,6 +373,7 @@ export async function upsertSeriesSizePacks(
     const name = `${seriesName} ${size.value}`.trim();
     const dimensions = optionText(size.dimensions) || size.value;
     const cutout = optionText(size.cutout_size) || null;
+    const images = sizeImagePatch(size);
     if (existing) {
       await existing.update({
         name,
@@ -377,6 +381,7 @@ export async function upsertSeriesSizePacks(
         cutout_size: cutout || existing.get('cutout_size') || null,
         series_id: seriesId,
         product_type_id: typeId || existing.get('product_type_id') || null,
+        ...images,
         updated_at: new Date(),
       });
       continue;
@@ -393,6 +398,7 @@ export async function upsertSeriesSizePacks(
       product_type_id: typeId,
       dimensions,
       cutout_size: cutout,
+      ...images,
       created_at: new Date(),
       updated_at: new Date(),
     });
@@ -400,86 +406,12 @@ export async function upsertSeriesSizePacks(
   }
 }
 
-function serializeSizePack(pack: Product): {
-  id: number;
-  main_image_A: string;
-  main_image_B: string;
-  size_image: string;
-} {
-  const plain = pack.get({ plain: true }) as Record<string, unknown>;
-  return {
-    id: Number(pack.get('id')),
-    main_image_A: optionText(plain.main_image_A),
-    main_image_B: optionText(plain.main_image_B),
-    size_image: optionText(plain.size_image),
-  };
-}
-
-async function createDraftSizePack(seriesId: number): Promise<Product> {
-  const series = await ProductSeries.findByPk(seriesId, {
-    include: [{ model: ProductType, as: 'type' }],
-  });
-  if (!series) throw new Error('Could not create this size pack.');
-  const seriesName = String(series.get('name') || 'Series');
-  const seriesSlug = String(series.get('slug') || 'series');
-  const typeId = Number(series.get('product_type_id')) || null;
-  const slug = await uniqueSlug(`${seriesSlug}-new-size`, async (candidate) => {
-    const hit = await Product.findOne({ where: { slug: candidate } });
-    return Boolean(hit);
-  });
-  return Product.create({
-    name: `${seriesName} new size`,
-    slug,
-    description: '',
-    series_id: seriesId,
-    product_type_id: typeId,
-    dimensions: null,
-    cutout_size: null,
-    created_at: new Date(),
-    updated_at: new Date(),
-  });
-}
-
-export async function ensureSeriesSizePack(
-  seriesId: number,
-  input: { value?: string; dimensions?: string | null; cutout_size?: string | null }
-): Promise<{
-  id: number;
-  main_image_A: string;
-  main_image_B: string;
-  size_image: string;
-}> {
-  const value = optionText(input.value) || optionText(input.dimensions);
-  if (!value) {
-    const draft = await createDraftSizePack(seriesId);
-    return serializeSizePack(draft);
-  }
-  const dimensions = optionText(input.dimensions) || value;
-  const cutout = optionText(input.cutout_size) || null;
-  await upsertOption(seriesId, SIZE_KIND, value, {
-    dimensions,
-    cutout_size: cutout,
-  });
-  await upsertSeriesSizePacks(seriesId, [
-    {
-      kind: SIZE_KIND,
-      value,
-      sort_order: 0,
-      dimensions,
-      cutout_size: cutout,
-    },
-  ]);
-  const options = await loadSeriesOptions(seriesId);
-  const size =
-    options.find((option) => option.kind === SIZE_KIND && valuesEqual(SIZE_KIND, option.value, value)) ||
-    null;
-  if (!size) throw new Error('Could not create this size pack.');
-  const products = await Product.findAll({ where: { series_id: seriesId } });
-  const pack = products.find((row) =>
-    productMatchesSize(row.get({ plain: true }) as Record<string, unknown>, size)
-  );
-  if (!pack) throw new Error('Could not create this size pack.');
-  return serializeSizePack(pack);
+function sizeImagePatch(size: SeriesOptionDto): Record<string, string | null> {
+  const patch: Record<string, string | null> = {};
+  if (size.main_image_A !== undefined) patch.main_image_A = optionText(size.main_image_A) || null;
+  if (size.main_image_B !== undefined) patch.main_image_B = optionText(size.main_image_B) || null;
+  if (size.size_image !== undefined) patch.size_image = optionText(size.size_image) || null;
+  return patch;
 }
 
 async function upsertOption(

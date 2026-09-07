@@ -994,7 +994,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_add',
     title: 'Add size',
-    body: 'Add a size row with Main A, Main B, and Size drawing uploads. Photos can be uploaded before the label. Save variants when the size text is ready so the pack appears on the series page.',
+    body: 'Add a size row with Label, Dimensions, Cutout, and Main A / Main B / Size drawing. Photos stay on this form until you click Save variants.',
   },
   {
     helpKey: 'admin.product_series.option_remove',
@@ -1004,7 +1004,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.save_variants',
     title: 'Save variants',
-    body: 'Write the option lists and LDT shape for this series.',
+    body: 'Write the option lists, size text, size-pack photos, and LDT shape for this series.',
   },
   {
     helpKey: 'admin.product_series.ldt_family',
@@ -1034,17 +1034,17 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_photo_a',
     title: 'Size main photo A',
-    body: 'Main photo for this series size. Used on the public option table and datasheet. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same square frame as the product photo slots.',
+    body: 'Main photo for this series size. Used on the public option table and datasheet. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same square frame as the product photo slots. Click Save variants to store it on the size pack.',
   },
   {
     helpKey: 'admin.product_series.size_photo_b',
     title: 'Size main photo B',
-    body: 'Optional second photo for this series size. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',
+    body: 'Optional second photo for this series size. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. Click Save variants to store it on the size pack.',
   },
   {
     helpKey: 'admin.product_series.size_drawing',
     title: 'Size drawing',
-    body: 'Dimension drawing for this series size. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. You can also Generate by AI from Main A. Used on datasheets and the option preview.',
+    body: 'Dimension drawing for this series size. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. You can also Generate by AI from Main A. Click Save variants to store it on the size pack. Used on datasheets and the option preview.',
   },
   {
     helpKey: 'admin.product_series.size_drawing_ai',
@@ -1069,7 +1069,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_drawing_ai_apply',
     title: 'Apply drawing',
-    body: 'Save the generated size drawing onto this size pack. Used on datasheets and the option preview.',
+    body: 'Put the generated size drawing on this size row. Click Save variants to store it on the size pack. Used on datasheets and the option preview.',
   },
   {
     helpKey: 'admin.product_series.appearance_photos',

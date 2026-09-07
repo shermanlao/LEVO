@@ -29,6 +29,10 @@ export type SeriesOptionDto = {
   label_image?: string | null;
   /** Existing size-pack product id; write-only, used when saving so photos stay on that pack. */
   pack_id?: number | null;
+  /** Size-pack photos; write-only on Save variants. */
+  main_image_A?: string | null;
+  main_image_B?: string | null;
+  size_image?: string | null;
 };
 
 export type VariantCatalogOption = {
@@ -224,6 +228,9 @@ function mergeOption(keep: SeriesOptionDto, extra: SeriesOptionDto): SeriesOptio
     dimensions: keep.dimensions || extra.dimensions,
     cutout_size: keep.cutout_size || extra.cutout_size,
     pack_id: keep.pack_id ?? extra.pack_id,
+    main_image_A: keep.main_image_A || extra.main_image_A,
+    main_image_B: keep.main_image_B || extra.main_image_B,
+    size_image: keep.size_image || extra.size_image,
   };
 }
 

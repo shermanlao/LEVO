@@ -120,6 +120,9 @@ function flattenDrafts(drafts: Record<string, DraftOption[]>): SeriesOptionDto[]
         cutout_size: field.key === SIZE_KIND ? optionText(row.cutout_size) || null : null,
         code: optionText(row.code) || null,
         pack_id: field.key === SIZE_KIND ? row.packId ?? null : null,
+        main_image_A: field.key === SIZE_KIND ? optionText(row.main_image_A) || null : null,
+        main_image_B: field.key === SIZE_KIND ? optionText(row.main_image_B) || null : null,
+        size_image: field.key === SIZE_KIND ? optionText(row.size_image) || null : null,
       });
       sort += 1;
     }
@@ -486,24 +489,19 @@ export default function SeriesVariantEditorPage() {
                             </div>
                             <SizePackPhotos
                               productId={row.packId}
-                              seriesId={id}
                               seriesSlug={slug}
                               images={{
                                 main_image_A: row.main_image_A,
                                 main_image_B: row.main_image_B,
                                 size_image: row.size_image,
                               }}
-                              sizeLabel={optionText(row.value) || optionText(row.dimensions)}
                               size={optionText(row.dimensions) || optionText(row.value)}
                               cuthole={optionText(row.cutout_size)}
                               mounting={(drafts.mounting_type || [])
                                 .map((item) => optionText(item.value))
                                 .filter(Boolean)
                                 .join(', ')}
-                              onPackCreated={(packId) => updateRow(field.key, index, { packId })}
-                              onChanged={(patch) => {
-                                if (patch) updateRow(field.key, index, patch);
-                              }}
+                              onChanged={(patch) => updateRow(field.key, index, patch)}
                               onMainAUploaded={({ productId, imagePath }) => {
                                 setUploadedMainA(imagePath);
                                 setUploadedSourceId(productId);

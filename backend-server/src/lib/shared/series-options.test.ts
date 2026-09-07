@@ -28,12 +28,21 @@ describe('series option cartesian', () => {
     assert.ok(rows.length <= MAX_CARTESIAN_COMBO_ROWS);
   });
 
-  it('keeps size pack_id when merging duplicate size labels', () => {
+  it('keeps size pack_id and photos when merging duplicate size labels', () => {
     const grouped = groupOptionsByKind([
-      { kind: 'size', value: 'Ø90mm', sort_order: 0, dimensions: 'Ø90mm', pack_id: 12 },
-      { kind: 'size', value: 'Ø90mm', sort_order: 1, cutout_size: 'Ø80mm' },
+      {
+        kind: 'size',
+        value: 'Ø90mm',
+        sort_order: 0,
+        dimensions: 'Ø90mm',
+        pack_id: 12,
+        main_image_A: '/uploads/a.jpg',
+      },
+      { kind: 'size', value: 'Ø90mm', sort_order: 1, cutout_size: 'Ø80mm', size_image: '/uploads/d.png' },
     ]);
     assert.equal(grouped.size[0].pack_id, 12);
     assert.equal(grouped.size[0].cutout_size, 'Ø80mm');
+    assert.equal(grouped.size[0].main_image_A, '/uploads/a.jpg');
+    assert.equal(grouped.size[0].size_image, '/uploads/d.png');
   });
 });
