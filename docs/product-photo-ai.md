@@ -1,6 +1,6 @@
 # Product photo AI
 
-On `/admin/product-series/[id]`, each size pack can generate a **size drawing** from Main A. **Add size** shows Main A, Main B, and Size drawing immediately; the first upload creates the size pack even if Label is still empty. Configure keys at `/admin/ai`.
+On `/admin/product-series/[id]`, each size pack can generate a **size drawing** from Main A. **Add size** shows Main A, Main B, and Size drawing immediately. Upload, AI Apply, and Remove only stage the slot on the form; **Save variants** writes those paths onto the size pack. Configure keys at `/admin/ai`.
 
 ## Size drawing
 
@@ -23,10 +23,11 @@ On the same series page, **Generate missing** / **Generate all** (and upload of 
 
 Upload one house-style product photo on `/admin/ai` (**Catalog photo style**). That file is optional.
 
-On `/admin/product-series/[id]`, size-pack **Main A** and **Main B** still save the cropped vendor file immediately. When a catalog style photo is set, a **Match catalog style** button appears on filled Main A / Main B slots. Staff can ignore it. The button:
+On `/admin/product-series/[id]`, size-pack **Main A** and **Main B** stage the cropped vendor file on the form. **Save variants** writes those paths. When a catalog style photo is set, a **Match catalog style** button appears on filled Main A / Main B slots. Staff can ignore it. The button:
 
-1. Sends the saved slot photo plus the style reference to `POST /api/admin/ai/stylize-product-photo`
+1. Sends a JPEG (longest edge 1600) plus the stored path to `POST /api/admin/ai/stylize-product-photo`. The API also shrinks the catalog style reference before calling xAI or Google.
 2. Shows a preview. **Apply** replaces the slot. **Reset** or Close keeps the original upload
+3. Failures show the provider message (not a generic “Server error”). Check `/admin/ai` if the catalog style photo is missing.
 
 The model copies lighting, background, contrast, and color grade. It must keep this fixture, finish, and viewpoint — not flatten to a size drawing. Appearance, featured, and project slots are unchanged.
 
@@ -49,8 +50,8 @@ On `/admin/variant-options`, each datasheet square (IP, warranty, voltage, or a 
 - `POST /api/admin/ai/refine-size-drawing` `{ imageDataUrl, size, cuthole?, instruction }`
 - `POST /api/admin/ai/generate-appearance-photo` `{ imageDataUrl, colour?, trim_color?, reflector_finish? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/edit-product-photo` `{ imageDataUrl, instruction, photoType? }`
-- `POST /api/admin/ai/stylize-product-photo` `{ imageDataUrl }` — optional Main A / B restyle; 400 if no catalog style photo is stored
+- `POST /api/admin/ai/stylize-product-photo` `{ imageDataUrl, imageUrl? }` — optional Main A / B restyle. Send a data URL and/or a local `/images/` or `/uploads/` path. 400 if no catalog style photo is stored.
 - `POST /api/admin/ai/generate-datasheet-label` `{ text, instruction?, imageDataUrl? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/generate-description-phrase` `{ guide, seriesName, typeName?, fields?, existing? }` → `{ phrase }`
 
-Apply uses the existing `/api/upload` path so files stay under `frontend/public/images/products/` (series folder when a `seriesSlug` is sent). Size drawings store the path on the product row; datasheet labels store paths on `variant_option_catalog.label_image`.
+Apply uses the existing `/api/upload` path so files stay under `frontend/public/images/products/` (series folder when a `seriesSlug` is sent). Size-pack slots keep that path on the form until **Save variants** writes it on the product row. Datasheet labels store paths on `variant_option_catalog.label_image` when Apply is used on Variant.

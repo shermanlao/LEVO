@@ -1,11 +1,29 @@
 import { Request, Response } from 'express';
-import { errorMessage, clientError } from '../lib/errors';
+import { errorMessage } from '../lib/errors';
 import { generateSizeDrawing } from '../lib/ai/sizeDrawingAiAssist';
 import { generateAppearancePhoto } from '../lib/ai/appearancePhotoAi';
 import { editProductPhoto } from '../lib/ai/productPhotoAiEdit';
 import { stylizeProductPhoto } from '../lib/ai/productPhotoStyleAi';
 import { generateDatasheetLabel } from '../lib/ai/datasheetLabelAi';
 import { generateDescriptionPhrase } from '../lib/ai/descriptionPhraseAi';
+
+function respondAiFailure(res: Response, error: unknown) {
+  const raw = errorMessage(error);
+  console.error('[ai]', raw);
+  const message = raw.replace(/Bearer\s+\S+/gi, 'Bearer [redacted]').slice(0, 400);
+  if (/not configured/i.test(message)) {
+    return res.status(503).json({ error: message });
+  }
+  if (/required|Expected a base64|not a valid JPEG|Invalid data URL/i.test(message)) {
+    return res.status(400).json({ error: message });
+  }
+  const status = /xAI|Google|Imagine|Nano Banana|provider|exhausted|fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND/i.test(
+    message
+  )
+    ? 502
+    : 500;
+  return res.status(status).json({ error: message || 'Style match failed' });
+}
 
 export const postGenerateSizeDrawing = async (req: Request, res: Response) => {
   try {
@@ -17,9 +35,7 @@ export const postGenerateSizeDrawing = async (req: Request, res: Response) => {
     const result = await generateSizeDrawing({ imageDataUrl: imageDataUrl || '', size: size || '', cuthole });
     res.json(result);
   } catch (error) {
-    const message = errorMessage(error);
-    const status = /not configured/i.test(message) ? 503 : /required/i.test(message) ? 400 : 500;
-    res.status(status).json({ error: status >= 500 ? clientError(error) : message });
+    respondAiFailure(res, error);
   }
 };
 
@@ -39,9 +55,7 @@ export const postRefineSizeDrawing = async (req: Request, res: Response) => {
     });
     res.json(result);
   } catch (error) {
-    const message = errorMessage(error);
-    const status = /not configured/i.test(message) ? 503 : /required/i.test(message) ? 400 : 500;
-    res.status(status).json({ error: status >= 500 ? clientError(error) : message });
+    respondAiFailure(res, error);
   }
 };
 
@@ -59,9 +73,7 @@ export const postGenerateDatasheetLabel = async (req: Request, res: Response) =>
     });
     res.json(result);
   } catch (error) {
-    const message = errorMessage(error);
-    const status = /not configured/i.test(message) ? 503 : /required/i.test(message) ? 400 : 500;
-    res.status(status).json({ error: status >= 500 ? clientError(error) : message });
+    respondAiFailure(res, error);
   }
 };
 
@@ -81,21 +93,17 @@ export const postGenerateAppearancePhoto = async (req: Request, res: Response) =
     });
     res.json(result);
   } catch (error) {
-    const message = errorMessage(error);
-    const status = /not configured/i.test(message) ? 503 : /required/i.test(message) ? 400 : 500;
-    res.status(status).json({ error: status >= 500 ? clientError(error) : message });
+    respondAiFailure(res, error);
   }
 };
 
 export const postStylizeProductPhoto = async (req: Request, res: Response) => {
   try {
-    const { imageDataUrl } = (req.body || {}) as { imageDataUrl?: string };
-    const result = await stylizeProductPhoto({ imageDataUrl: imageDataUrl || '' });
+    const { imageDataUrl, imageUrl } = (req.body || {}) as { imageDataUrl?: string; imageUrl?: string };
+    const result = await stylizeProductPhoto({ imageDataUrl, imageUrl });
     res.json(result);
   } catch (error) {
-    const message = errorMessage(error);
-    const status = /not configured/i.test(message) ? 503 : /required/i.test(message) ? 400 : 500;
-    res.status(status).json({ error: status >= 500 ? clientError(error) : message });
+    respondAiFailure(res, error);
   }
 };
 
@@ -113,9 +121,7 @@ export const postEditProductPhoto = async (req: Request, res: Response) => {
     });
     res.json(result);
   } catch (error) {
-    const message = errorMessage(error);
-    const status = /not configured/i.test(message) ? 503 : /required/i.test(message) ? 400 : 500;
-    res.status(status).json({ error: status >= 500 ? clientError(error) : message });
+    respondAiFailure(res, error);
   }
 };
 
@@ -143,8 +149,6 @@ export const postGenerateDescriptionPhrase = async (req: Request, res: Response)
     });
     res.json(result);
   } catch (error) {
-    const message = errorMessage(error);
-    const status = /not configured/i.test(message) ? 503 : /required/i.test(message) ? 400 : 500;
-    res.status(status).json({ error: status >= 500 ? clientError(error) : message });
+    respondAiFailure(res, error);
   }
 };

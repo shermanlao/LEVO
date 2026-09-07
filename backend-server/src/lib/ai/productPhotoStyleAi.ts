@@ -1,3 +1,4 @@
+import { compactAiImageDataUrl, resolveAiSourceImageDataUrl } from './aiImageDataUrl';
 import {
   generateOrEditImage,
   PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS,
@@ -21,19 +22,21 @@ function buildProductPhotoStylePrompt(hints?: string): string {
 }
 
 export async function stylizeProductPhoto(opts: {
-  imageDataUrl: string;
+  imageDataUrl?: string;
+  imageUrl?: string;
 }): Promise<{ imageDataUrl: string; mimeType: string }> {
-  if (!opts.imageDataUrl?.startsWith('data:')) throw new Error('Image data URL is required');
+  const sourceImageDataUrl = await resolveAiSourceImageDataUrl(opts);
   const creds = await resolveImageAiCredentials('product_photo_edit');
   if (!creds) throw new Error('AI is not configured');
   const row = await getOrCreateAiSettings();
-  const styleImageDataUrl = readProductPhotoStyleDataUrl(String(row.get('product_photo_style_image') || ''));
-  if (!styleImageDataUrl) throw new Error('Catalog photo style reference is required');
+  const styleRaw = readProductPhotoStyleDataUrl(String(row.get('product_photo_style_image') || ''));
+  if (!styleRaw) throw new Error('Catalog photo style reference is required');
+  const styleImageDataUrl = await compactAiImageDataUrl(styleRaw);
   const hints = await getParsingHints();
   const result = await generateOrEditImage({
     creds,
     prompt: buildProductPhotoStylePrompt(hints),
-    sourceImageDataUrl: opts.imageDataUrl,
+    sourceImageDataUrl,
     extraImageDataUrls: [styleImageDataUrl],
     imagePartLabels: PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS,
     usageCtx: {

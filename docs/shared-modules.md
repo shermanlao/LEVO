@@ -50,10 +50,11 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `productMedia.extractStoredImageUrl` — image values on type/series/product writes
 - `photometric/persistProductLdt.ts` — stamp and store a product `.ldt` on create/update (`ldt_file`)
 - `photometric/writeProductLdtFile.ts` — write/resolve/delete `/uploads/product-ldt/{series}/{id}.ldt`
-- `seriesConfig.ts` — load/replace/merge `series_options`, batch `loadSeriesOptionsForIds` for list pages, resolve a series + query into a spec (options + size-pack photos), upsert size packs (optional `pack_id` keeps photos on that product when the label changes), `ensureSeriesSizePack` for staff upload before Save variants (creates a draft pack when Label is empty), upsert matching rows into `variant_option_catalog`
+- `seriesConfig.ts` — load/replace/merge `series_options`, batch `loadSeriesOptionsForIds` for list pages, resolve a series + query into a spec (options + size-pack photos), upsert size packs (optional `pack_id` keeps photos on that product when the label changes; `main_image_A` / `main_image_B` / `size_image` on a size option write those columns on Save variants), upsert matching rows into `variant_option_catalog`
 - `variantCatalog.ts` — load/replace/upsert/backfill global option labels and SKU codes
 - `internalAuth.ts` — Express `X-Levo-Internal` check on non-public routes
 - `pdfResponse.ts` — shared `sendPdf` for datasheet / series / label downloads
 - `ai/aiStyleImage.ts` — size-drawing and catalog photo style files under `/images/ai/`
+- `ai/aiImageDataUrl.ts` — parse/compact AI image data URLs (JPEG, max edge 1600) and read a local public product photo from disk
 - `ai/aiUsage.ts` — `/admin/ai` usage: xAI billed ticks (÷ 10¹⁰), Google image token estimates, rewrite of old ticks÷1e6 rows
 - List `GET /api/product-series` uses a light serializer (one catalog load, batched options, no appearance photos). Detail `by-slug` / `:id` stays full.

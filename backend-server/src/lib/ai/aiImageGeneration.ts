@@ -1,3 +1,4 @@
+import { parseImageDataUrl } from './aiImageDataUrl';
 import type { ResolvedImageAiCredentials } from './resolveCredentials';
 import { listFailoverCredentials } from './resolveCredentials';
 import {
@@ -41,11 +42,7 @@ const XAI_IMAGE_MODEL = 'grok-imagine-image-quality';
 const GOOGLE_IMAGE_MODEL = 'gemini-3.1-flash-image';
 
 function dataUrlToParts(dataUrl: string): { mimeType: string; base64: string } {
-  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-  if (!match) {
-    throw new Error('Expected a base64 data URL for the image');
-  }
-  return { mimeType: match[1], base64: match[2] };
+  return parseImageDataUrl(dataUrl);
 }
 
 function bufferToDataUrl(buffer: Buffer, mimeType: string): string {

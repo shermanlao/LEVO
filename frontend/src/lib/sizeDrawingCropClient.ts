@@ -15,6 +15,25 @@ export async function imageUrlToDataUrl(imageUrl: string): Promise<string> {
   });
 }
 
+export async function imageUrlToJpegDataUrl(
+  imageUrl: string,
+  maxEdge = 1600,
+  quality = 0.85
+): Promise<string> {
+  const dataUrl = await imageUrlToDataUrl(imageUrl);
+  const img = await loadImageElement(dataUrl);
+  const scale = Math.min(1, maxEdge / Math.max(img.naturalWidth, img.naturalHeight, 1));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas unavailable');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
 export async function cropImageUrlToDataUrl(
   imageUrl: string,
   bbox: NormalizedBbox,
@@ -37,10 +56,11 @@ export async function cropImageUrlToDataUrl(
 }
 
 export function dataUrlToFile(dataUrl: string, filename: string): File {
-  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  const match = dataUrl.trim().match(/^data:([^;,]+)(?:;charset=[^;,]+)?;base64,(.+)$/i);
   if (!match) throw new Error('Invalid data URL');
-  const bytes = atob(match[2]);
+  const bytes = atob(match[2].replace(/\s/g, ''));
   const arr = new Uint8Array(bytes.length);
   for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-  return new File([arr], filename, { type: match[1] });
+  const mime = match[1].trim().toLowerCase() === 'image/jpg' ? 'image/jpeg' : match[1].trim();
+  return new File([arr], filename, { type: mime });
 }

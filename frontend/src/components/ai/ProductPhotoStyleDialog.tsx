@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import HelpButton from '@/components/admin/HelpButton';
 import AiImageWorkbenchDialog from './AiImageWorkbenchDialog';
-import { dataUrlToFile, imageUrlToDataUrl } from '@/lib/sizeDrawingCropClient';
+import { dataUrlToFile, imageUrlToJpegDataUrl } from '@/lib/sizeDrawingCropClient';
 
 type Props = {
   open: boolean;
@@ -26,45 +26,41 @@ export default function ProductPhotoStyleDialog({
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
 
-  async function stylize(source: string) {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/admin/ai/stylize-product-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageDataUrl: source }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Style match failed');
-      setPreview(data.imageDataUrl);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Style match failed');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setOriginal(null);
-    setPreview(null);
+    setOriginal(imageUrl);
+    setPreview(imageUrl);
     setError(null);
-    imageUrlToDataUrl(imageUrl)
-      .then((dataUrl) => {
+    setLoading(true);
+
+    void (async () => {
+      try {
+        const imageDataUrl = await imageUrlToJpegDataUrl(imageUrl);
         if (cancelled) return;
-        setOriginal(dataUrl);
-        setPreview(dataUrl);
-        void stylize(dataUrl);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load photo');
-      });
+        const res = await fetch('/api/admin/ai/stylize-product-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageDataUrl,
+            imageUrl: imageUrl.startsWith('data:') ? undefined : imageUrl,
+          }),
+        });
+        const data = await res.json().catch(() => ({} as { error?: string; imageDataUrl?: string }));
+        if (cancelled) return;
+        if (!res.ok) throw new Error(data.error || 'Style match failed');
+        if (!data.imageDataUrl) throw new Error('Style match returned no image');
+        setPreview(data.imageDataUrl);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Style match failed');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, imageUrl]);
 
   if (!open) return null;
@@ -98,7 +94,9 @@ export default function ProductPhotoStyleDialog({
               if (!preview) return;
               setApplying(true);
               try {
-                await onApply(dataUrlToFile(preview, `${photoType}.png`));
+                await onApply(
+                  dataUrlToFile(preview, `${photoType}${preview.startsWith('data:image/jpeg') ? '.jpg' : '.png'}`)
+                );
                 onClose();
               } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to apply');

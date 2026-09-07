@@ -9,7 +9,7 @@
     "build": "tsc",
     "seed": "ts-node src/seed.ts",
     "db:copy-sqlite-to-pg": "ts-node src/scripts/copySqliteToPostgres.ts",
-    "test": "node -r ts-node/register/transpile-only --test src/lib/shared/*.test.ts src/lib/ssrf.test.ts src/lib/ai/aiUsage.test.ts"
+    "test": "node -r ts-node/register/transpile-only --test src/lib/shared/*.test.ts src/lib/ssrf.test.ts src/lib/ai/aiUsage.test.ts src/lib/ai/aiImageDataUrl.test.ts"
   },
   "dependencies": {
     "compression": "^1.8.1",
