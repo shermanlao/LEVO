@@ -261,9 +261,7 @@ export const ensureProductSeriesSizePack = asyncHandler(async (req: Request, res
     });
     res.status(201).json({ data: pack });
   } catch (error) {
-    const message = errorMessage(error);
-    const status = /label/i.test(message) ? 400 : 500;
-    res.status(status).json({ error: message });
+    res.status(500).json({ error: errorMessage(error) });
   }
 });
 

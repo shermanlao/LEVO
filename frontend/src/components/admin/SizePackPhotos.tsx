@@ -90,15 +90,12 @@ export default function SizePackPhotos({
 
   async function resolvePackId(): Promise<number> {
     if (activePackId) return activePackId;
-    if (!packLabel) {
-      throw new Error('Enter a size label, then upload photos.');
-    }
     const created = await adminFetchJson<{ data?: { id?: number } }>(`/product-series/${seriesId}/size-packs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        value: packLabel,
-        dimensions: drawingSize || packLabel,
+        value: packLabel || null,
+        dimensions: drawingSize || packLabel || null,
         cutout_size: drawingCuthole || null,
       }),
     });

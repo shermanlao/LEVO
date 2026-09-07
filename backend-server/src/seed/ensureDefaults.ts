@@ -994,7 +994,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_add',
     title: 'Add size',
-    body: 'Add a size row with Main A, Main B, and Size drawing uploads. Enter a label, then upload photos. You do not need to save variants first.',
+    body: 'Add a size row with Main A, Main B, and Size drawing uploads. Photos can be uploaded before the label. Save variants when the size text is ready so the pack appears on the series page.',
   },
   {
     helpKey: 'admin.product_series.option_remove',

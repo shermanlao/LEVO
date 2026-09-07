@@ -43,7 +43,7 @@ The datasheet model code is the series `product_code`. The printed SKU is `compo
 
 - `/admin/products` — redirects to `/admin/product-series`
 - `/admin/product-series` — list; click a row (or **Variants**) to open `/admin/product-series/[id]`; **Edit** / **Delete** stay on the list
-- `/admin/product-series/[id]` — option tags (Finish / Trim / Reflector include **N/A**), size rows with photos (Main A/B plus **Generate by AI** on Size drawing). **Add size** shows the three photo slots immediately; the first upload creates that size pack (enter a Label first). **appearance photos** (generate from Main A, Confirm to save), **phrase template**, model code, featured flag, **datasheet labels** (picked from Variant extras), LDT shape, and **Import from partner** (type and series locked)
+- `/admin/product-series/[id]` — option tags (Finish / Trim / Reflector include **N/A**), size rows with photos (Main A/B plus **Generate by AI** on Size drawing). **Add size** shows the three photo slots immediately; the first upload creates that size pack (a draft if Label is still empty). Fill Label and **Save variants** so the size appears on the public series page. **appearance photos** (generate from Main A, Confirm to save), **phrase template**, model code, featured flag, **datasheet labels** (picked from Variant extras), LDT shape, and **Import from partner** (type and series locked)
 - `/admin/product-types` — category name, slug, description, and featured image (no datasheet labels on this page)
 - `/admin/variant-options` — global option labels, SKU codes, IP / warranty / voltage datasheet badge artwork, and extra icons (CE, DALI). See [variant-options.md](variant-options.md).
 

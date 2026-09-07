@@ -400,6 +400,46 @@ export async function upsertSeriesSizePacks(
   }
 }
 
+function serializeSizePack(pack: Product): {
+  id: number;
+  main_image_A: string;
+  main_image_B: string;
+  size_image: string;
+} {
+  const plain = pack.get({ plain: true }) as Record<string, unknown>;
+  return {
+    id: Number(pack.get('id')),
+    main_image_A: optionText(plain.main_image_A),
+    main_image_B: optionText(plain.main_image_B),
+    size_image: optionText(plain.size_image),
+  };
+}
+
+async function createDraftSizePack(seriesId: number): Promise<Product> {
+  const series = await ProductSeries.findByPk(seriesId, {
+    include: [{ model: ProductType, as: 'type' }],
+  });
+  if (!series) throw new Error('Could not create this size pack.');
+  const seriesName = String(series.get('name') || 'Series');
+  const seriesSlug = String(series.get('slug') || 'series');
+  const typeId = Number(series.get('product_type_id')) || null;
+  const slug = await uniqueSlug(`${seriesSlug}-new-size`, async (candidate) => {
+    const hit = await Product.findOne({ where: { slug: candidate } });
+    return Boolean(hit);
+  });
+  return Product.create({
+    name: `${seriesName} new size`,
+    slug,
+    description: '',
+    series_id: seriesId,
+    product_type_id: typeId,
+    dimensions: null,
+    cutout_size: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
+}
+
 export async function ensureSeriesSizePack(
   seriesId: number,
   input: { value?: string; dimensions?: string | null; cutout_size?: string | null }
@@ -411,7 +451,8 @@ export async function ensureSeriesSizePack(
 }> {
   const value = optionText(input.value) || optionText(input.dimensions);
   if (!value) {
-    throw new Error('Enter a size label, then upload photos.');
+    const draft = await createDraftSizePack(seriesId);
+    return serializeSizePack(draft);
   }
   const dimensions = optionText(input.dimensions) || value;
   const cutout = optionText(input.cutout_size) || null;
@@ -438,13 +479,7 @@ export async function ensureSeriesSizePack(
     productMatchesSize(row.get({ plain: true }) as Record<string, unknown>, size)
   );
   if (!pack) throw new Error('Could not create this size pack.');
-  const plain = pack.get({ plain: true }) as Record<string, unknown>;
-  return {
-    id: Number(pack.get('id')),
-    main_image_A: optionText(plain.main_image_A),
-    main_image_B: optionText(plain.main_image_B),
-    size_image: optionText(plain.size_image),
-  };
+  return serializeSizePack(pack);
 }
 
 async function upsertOption(

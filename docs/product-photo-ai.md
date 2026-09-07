@@ -1,6 +1,6 @@
 # Product photo AI
 
-On `/admin/product-series/[id]`, each size pack can generate a **size drawing** from Main A. **Add size** shows Main A, Main B, and Size drawing immediately; the first upload creates the size pack (enter a Label first). Configure keys at `/admin/ai`.
+On `/admin/product-series/[id]`, each size pack can generate a **size drawing** from Main A. **Add size** shows Main A, Main B, and Size drawing immediately; the first upload creates the size pack even if Label is still empty. Configure keys at `/admin/ai`.
 
 ## Size drawing
 
