@@ -5,6 +5,7 @@ import { HelpLink } from '@/components/admin/HelpButton';
 import BrandSlogan from '@/components/layout/BrandSlogan';
 import { BrandLogoMark, LEVO_LOGO_SRC } from '@/components/layout/Logo';
 import { safeHttpUrl } from '@/lib/safe-http-url';
+import { visibleContactFields } from '@/lib/site-contact-display';
 
 const LINK_CLASS = 'hover:text-gray-600';
 const ICON_CLASS = 'h-5 w-5';
@@ -86,22 +87,43 @@ export default function Footer({ contact }: { contact: SiteContact | null }) {
   const safeMedia = media
     .map((item) => ({ ...item, href: safeHttpUrl(item.href) || '' }))
     .filter((item) => item.href);
+  const contactLines = visibleContactFields(contact)
+    .filter((item) => item.key !== 'hours')
+    .map((item) => ({
+      ...item,
+      href: item.key === 'website' ? safeHttpUrl(item.value) || '' : item.href,
+    }))
+    .filter((item) => item.key !== 'website' || item.href);
 
   return (
     <footer className="site-chrome border-t mt-16 py-8">
       <div className="container mx-auto px-4">
-        <div className={`grid grid-cols-1 md:grid-cols-3 gap-8${safeMedia.length ? ' lg:grid-cols-4' : ''}`}>
-          <div>
-            <h3 className="text-lg font-bold mb-4">Contact Us</h3>
-            {contact ? (
-              <>
-                <p>Email: {contact.email}</p>
-                <p>Phone: {contact.phone}</p>
-              </>
-            ) : (
-              <p>Contact details are unavailable.</p>
-            )}
-          </div>
+        <div
+          className={`grid grid-cols-1 md:grid-cols-3 gap-8${
+            safeMedia.length && contactLines.length ? ' lg:grid-cols-4' : ''
+          }`}
+        >
+          {contactLines.length ? (
+            <div>
+              <h3 className="text-lg font-bold mb-4">Contact Us</h3>
+              {contactLines.map((item) => (
+                <p key={item.key}>
+                  {item.label}:{' '}
+                  {item.href ? (
+                    <a
+                      href={item.href}
+                      className={LINK_CLASS}
+                      {...(item.key === 'website' ? { target: '_blank', rel: 'noreferrer' } : {})}
+                    >
+                      {item.value}
+                    </a>
+                  ) : (
+                    item.value
+                  )}
+                </p>
+              ))}
+            </div>
+          ) : null}
           <div>
             <h3 className="text-lg font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">

@@ -40,6 +40,7 @@ class SiteContact extends Model {
   declare seo_title: string | null;
   declare seo_description: string | null;
   declare og_image: string | null;
+  declare public_under_construction: boolean;
 }
 
 SiteContact.init(
@@ -82,6 +83,7 @@ SiteContact.init(
     seo_title: { type: DataTypes.STRING, allowNull: true },
     seo_description: { type: DataTypes.TEXT, allowNull: true },
     og_image: { type: DataTypes.STRING, allowNull: true },
+    public_under_construction: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   },
   {
     sequelize,

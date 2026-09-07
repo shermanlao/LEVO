@@ -202,6 +202,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Public catalog origin used in datasheet QR codes (https://www.example.com). Leave empty while developing so QR codes stay on localhost.',
   },
   {
+    helpKey: 'admin.settings.under_construction',
+    title: 'UNDER CONSTRUCTION for visitors',
+    body: 'When checked, signed-out visitors only see the header, footer, and UNDER CONSTRUCTION. Sign in to preview the real catalog. Uncheck this when the public site goes live.',
+  },
+  {
     helpKey: 'admin.settings.logo_header_upload',
     title: 'Upload header logo',
     body: 'Wordmark shown in the public header and reused in the footer. PNG with a transparent background works best. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device.',

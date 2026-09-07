@@ -18,6 +18,7 @@
 - [Security improvement plan](docs/security-improvement-plan.md) — auth boundary, uploads, XSS/SSRF, and production secret cutover
 - [404 pages](docs/not-found-page.md) — LEVO-styled not-found page for missing catalog, project, and admin records
 - [Site branding](docs/site-branding.md) — LEVO wordmark, LIGHT EVOLUTION slogan, tab icon, and datasheet PDF chrome
+- [Email signature](docs/email-signature.md) — company-only HTML signature for Gmail, Outlook, and Apple Mail
 - [Photometric LDT](docs/photometric-ldt.md) — beam library, saved polar options, public LDT download (product detail and series list), polar drawing on the datasheet
 - [Product photo AI](docs/product-photo-ai.md) — size drawing generate/refine, optional catalog photo style on Main A / B
 - [Admin AI settings](docs/admin-ai-settings.md) — `/admin/ai` keys, routing, failover, usage, size-drawing prompts, size-drawing and catalog photo style references
@@ -29,6 +30,7 @@
 - [PostgreSQL](docs/postgresql.md) — SQLite for local development, Postgres for production, copy script, and env vars
 - [VPS GitHub deploy](docs/vps-github.md) — ask Cursor to push/deploy, or run `levo-deploy`; how the VPS deploy key was set up
 - [Several sites on the VPS](docs/vps-multiple-sites.md) — extra domains, nginx server blocks, ports, and Postgres
+- [Hostinger domain](docs/hostinger-domain.md) — point `levolight.com` DNS at the VPS and set `SITE_ORIGIN`
 - [PostgreSQL backups](docs/vps-postgres-backup.md) — daily dumps, SSH tunnel bind for pgAdmin, monitor and restore
 
 ## Run locally

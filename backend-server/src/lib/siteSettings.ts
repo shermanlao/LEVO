@@ -199,6 +199,7 @@ export type SerializedSiteSettings = {
   seo_title: string;
   seo_description: string;
   og_image: string;
+  public_under_construction: boolean;
 };
 
 export function serializeSiteSettings(row: SiteContact): SerializedSiteSettings {
@@ -241,6 +242,7 @@ export function serializeSiteSettings(row: SiteContact): SerializedSiteSettings 
     seo_title: text(p.seo_title, DEFAULT_SEO_TITLE),
     seo_description: text(p.seo_description, DEFAULT_SEO_DESCRIPTION),
     og_image: text(p.og_image),
+    public_under_construction: p.public_under_construction !== false,
   };
 }
 
@@ -275,6 +277,7 @@ export async function getOrCreateSiteContact(): Promise<SiteContact> {
     resource_technical_body: DEFAULT_RESOURCE_TECHNICAL_BODY,
     seo_title: DEFAULT_SEO_TITLE,
     seo_description: DEFAULT_SEO_DESCRIPTION,
+    public_under_construction: true,
   });
 }
 
@@ -385,5 +388,12 @@ export async function ensureSiteSettingsColumns(): Promise<void> {
     if (!table[name]) {
       await qi.addColumn('site_contacts', name, { type: spec.type, allowNull: true });
     }
+  }
+  if (!table.public_under_construction) {
+    await qi.addColumn('site_contacts', 'public_under_construction', {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    });
   }
 }

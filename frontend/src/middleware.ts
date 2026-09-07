@@ -4,6 +4,14 @@ import { redirectSameOrigin } from '@/lib/same-origin-redirect';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-levo-pathname', pathname);
+  const pass = () => NextResponse.next({ request: { headers: requestHeaders } });
+
+  if (!pathname.startsWith('/admin')) {
+    return pass();
+  }
+
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
   const session = await verifySessionValue(token);
 
@@ -11,7 +19,7 @@ export async function middleware(request: NextRequest) {
     if (session) {
       return redirectSameOrigin(request, '/admin');
     }
-    return NextResponse.next();
+    return pass();
   }
 
   if (!session) {
@@ -25,9 +33,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return pass();
 }
 
 export const config = {
-  matcher: ['/admin', '/admin/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.png|icon.svg|apple-icon.png).*)'],
 };

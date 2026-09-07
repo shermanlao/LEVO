@@ -163,6 +163,7 @@ export type SiteContact = {
   seo_title?: string;
   seo_description?: string;
   og_image?: string;
+  public_under_construction?: boolean;
 };
 
 export const getSiteContact = cache(async function getSiteContact(): Promise<SiteContact> {

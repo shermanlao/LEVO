@@ -41,7 +41,8 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `CatalogFunnelToggle` | Funnel on the breadcrumb row for small screens. Category uses `catalog.category.filter_toggle`; series uses `catalog.series.filter_toggle`. Hidden from `lg` up. |
 | `BrandSlogan` | `components/layout` — tracked uppercase slogan from `site_contacts.slogan` |
 | `BrandLogoMark` | `components/layout/Logo.tsx` — header/footer wordmark painted with `currentColor` |
-| `Footer` | Same-row columns: Contact Us, Quick Links, **Resources** (Warranty / Certifications / Technical Underneath, stacked like Quick Links), and **Media** icons when URLs are set (Facebook, Instagram, Threads, Pinterest; hide empty). Then logo/copyright. Resource and social links use `HelpLink`. |
+| `Footer` | Same-row columns: Contact Us (email / phone / address / website only when filled), Quick Links, **Resources** (Warranty / Certifications / Technical Underneath, stacked like Quick Links), and **Media** icons when URLs are set (Facebook, Instagram, Threads, Pinterest; hide empty). Then logo/copyright. Resource and social links use `HelpLink`. |
+| `UnderConstruction` | Public-page body while `public_under_construction` is on and the visitor is not signed in. Header and footer stay. |
 | `ResourcePage` | Shared public view for `/warranty`, `/certifications`, `/technical`: `Home / …` breadcrumb, heading and body from `site_contacts`. |
 | `DatasheetLabelManager` | Variant options page: IP / warranty / voltage datasheet squares and extra icons (CE, DALI). Upload or Generate by AI. Artwork is stored on the catalog option. |
 | `EntityDatasheetLabelEditor` | Series variants page: pick extra datasheet squares from the Variant catalog as tags (filled = on this series). Create new icons on `/admin/variant-options`. |

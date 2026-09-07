@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { cookies, headers } from "next/headers";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import BackToTop from "@/components/layout/BackToTop";
 import VisitorBeacon from "@/components/layout/VisitorBeacon";
+import UnderConstruction from "@/components/layout/UnderConstruction";
 import { getSiteContact, type SiteContact } from "@/lib/sqlite-api";
+import { ADMIN_SESSION_COOKIE, verifySessionValue } from "@/lib/admin-session";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,6 +64,12 @@ export default async function RootLayout({
     console.error('RootLayout - Failed to load contact details:', error);
   }
 
+  const pathname = (await headers()).get('x-levo-pathname') || '';
+  const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
+  const staffSession = await verifySessionValue(token);
+  const constructionOn = contact ? contact.public_under_construction !== false : true;
+  const hidePublicCatalog = constructionOn && !staffSession && !pathname.startsWith('/admin');
+
   return (
     <html lang="en">
       <body className={inter.className}>
@@ -71,7 +80,7 @@ export default async function RootLayout({
           companyShortName={contact?.company_short_name}
         />
         <main className="container mx-auto py-4 px-4">
-          {children}
+          {hidePublicCatalog ? <UnderConstruction /> : children}
         </main>
         <Footer contact={contact} />
         <BackToTop />

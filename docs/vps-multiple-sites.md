@@ -33,8 +33,9 @@ Do not open `3000`, `3333`, or `5432` on the firewall.
 At your domain registrar:
 
 ```
-A    levo.example.com      187.7.21.12
-A    other.example.com     187.7.21.12
+A    levolight.com          187.7.21.12
+A    www.levolight.com      187.7.21.12
+A    other.example.com      187.7.21.12
 ```
 
 Wait until `ping other.example.com` resolves to the VPS. You can still test LEVO at `http://187.7.21.12` until you change `default_server`.
@@ -47,7 +48,7 @@ Edit `/etc/nginx/sites-available/levo`. Use the LEVO hostname and **keep** `defa
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    server_name levo.example.com 187.7.21.12 _;
+    server_name levolight.com www.levolight.com 187.7.21.12 _;
     client_max_body_size 32m;
 
     location / {

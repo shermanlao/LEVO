@@ -42,7 +42,7 @@ export const getSiteSettings = asyncHandler(async (_req: Request, res: Response)
 export const updateSiteSettings = asyncHandler(async (req: Request, res: Response) => {
   const row = await getOrCreateSiteContact();
   const body = (req.body || {}) as Record<string, unknown>;
-  const patch: Record<string, string | null> = {};
+  const patch: Record<string, string | boolean | null> = {};
 
   const stringFields = [
     'heading',
@@ -108,6 +108,9 @@ export const updateSiteSettings = asyncHandler(async (req: Request, res: Respons
 
   if (body.why_cards !== undefined) {
     patch.why_cards = JSON.stringify(parseWhyCards(body.why_cards));
+  }
+  if (body.public_under_construction !== undefined) {
+    patch.public_under_construction = Boolean(body.public_under_construction);
   }
 
   if (Object.keys(patch).length) {

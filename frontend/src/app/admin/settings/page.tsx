@@ -54,6 +54,7 @@ function emptySettings(): SiteContact {
     seo_title: '',
     seo_description: '',
     og_image: '',
+    public_under_construction: true,
   };
 }
 
@@ -145,6 +146,29 @@ export default function AdminSiteSettingsPage() {
         <p className="text-gray-500">Loading settings…</p>
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
+          <Card>
+            <h2 className="text-xl font-bold mb-2">Public site</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              While this is on, signed-out visitors see header, footer, and UNDER CONSTRUCTION. Staff who
+              are signed in see the full catalog.
+            </p>
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                className="mt-1"
+                data-help-key="admin.settings.under_construction"
+                checked={Boolean(form.public_under_construction)}
+                onChange={(e) => patch({ public_under_construction: e.target.checked })}
+              />
+              <span>
+                <span className="font-medium">UNDER CONSTRUCTION for visitors</span>
+                <span className="block text-sm text-gray-500">
+                  Turn this off when levolight.com is ready for the public.
+                </span>
+              </span>
+            </label>
+          </Card>
+
           <Card>
             <h2 className="text-xl font-bold mb-2">Brand</h2>
             <p className="text-sm text-gray-500 mb-4">
@@ -294,7 +318,8 @@ export default function AdminSiteSettingsPage() {
           <Card>
             <h2 className="text-xl font-bold mb-2">Contact and footer</h2>
             <p className="text-sm text-gray-500 mb-4">
-              Shown on Contact Us, the footer, and datasheet PDF footers. Empty social links are hidden.
+              Shown on Contact Us, the footer, and datasheet PDF footers. Empty contact or social
+              fields are hidden on the public site.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <TextInput
