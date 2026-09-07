@@ -84,7 +84,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.logout',
     title: 'Log out',
-    body: 'End the staff session. The header Login button comes back so you can sign in again.',
+    body: 'End the staff session. The header login icon comes back so you can sign in again.',
   },
   {
     helpKey: 'admin.users.open',
@@ -534,7 +534,12 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'catalog.header.login',
     title: 'Login',
-    body: 'Open the staff login page. After you sign in, this control becomes Log out.',
+    body: 'Open the staff login page. After you sign in, this control becomes a logout icon and an Admin tag.',
+  },
+  {
+    helpKey: 'catalog.header.admin',
+    title: 'Admin',
+    body: 'Open the admin dashboard. This tag stays in the header while you are signed in.',
   },
   {
     helpKey: 'catalog.breadcrumb.products',
