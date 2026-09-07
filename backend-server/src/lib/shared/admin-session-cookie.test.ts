@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   cookieIsSecure,
+  adminLoginHref,
   createSessionValue,
   safeAdminNextPath,
   verifySessionValue,
@@ -30,6 +31,11 @@ describe('HMAC admin session', () => {
     assert.equal(safeAdminNextPath('/admin/users'), '/admin/users');
     assert.equal(safeAdminNextPath('https://evil.example/admin'), '/admin');
     assert.equal(safeAdminNextPath('/admin/../etc'), '/admin');
+  });
+
+  it('builds a login href with a safe next path', () => {
+    assert.equal(adminLoginHref('/admin/users'), '/admin/login?next=%2Fadmin%2Fusers');
+    assert.equal(adminLoginHref('https://evil.example/admin'), '/admin/login?next=%2Fadmin');
   });
 
   it('marks cookies Secure only for HTTPS public origins', () => {

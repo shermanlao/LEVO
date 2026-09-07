@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import StatTile from '@/components/ui/StatTile';
 import { visibleAdminNavSections } from '@/lib/admin-nav';
+import { adminLoginHref } from '@/lib/admin-session';
 import { isAdminRole, type AdminPageKey, type AdminRole } from '@shared/admin-roles';
 
 type Me = { username: string; role: AdminRole; pages: AdminPageKey[] };
@@ -50,6 +51,10 @@ export default function AdminPage() {
 
     fetch('/api/admin/dashboard', { cache: 'no-store' })
       .then(async (response) => {
+        if (response.status === 401) {
+          window.location.replace(adminLoginHref('/admin'));
+          return null;
+        }
         const json = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(json.error || `Dashboard failed (${response.status})`);
@@ -57,6 +62,7 @@ export default function AdminPage() {
         return json as DashboardStats;
       })
       .then((data) => {
+        if (!data) return;
         setStats(data);
         setApiStatus('connected');
         setErrorDetails('');

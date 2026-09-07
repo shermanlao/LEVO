@@ -96,6 +96,11 @@ export function safeAdminNextPath(raw: string | null | undefined): string {
   return raw;
 }
 
+export function adminLoginHref(nextPath?: string | null): string {
+  const next = safeAdminNextPath(nextPath);
+  return `/admin/login?next=${encodeURIComponent(next)}`;
+}
+
 /** Secure cookies only when the public site is HTTPS (not NODE_ENV=production on http://IP). */
 export function cookieIsSecure(): boolean {
   const flag = (process.env.COOKIE_SECURE || '').trim().toLowerCase();

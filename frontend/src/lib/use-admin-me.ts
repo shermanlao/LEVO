@@ -9,8 +9,12 @@ export type AdminMe = {
   pages: AdminPageKey[];
 };
 
-let inflight: Promise<AdminMe | null> | null = null;
-let cached: { me: AdminMe | null; at: number } | null = null;
+export type AdminMeSession = 'unknown' | 'ok' | 'unauthorized' | 'unreachable';
+
+type FetchResult = { me: AdminMe | null; session: Exclude<AdminMeSession, 'unknown'> };
+
+let inflight: Promise<FetchResult> | null = null;
+let cached: { result: FetchResult; at: number } | null = null;
 const TTL_MS = 15_000;
 
 export function invalidateAdminMe() {
@@ -18,26 +22,29 @@ export function invalidateAdminMe() {
   inflight = null;
 }
 
-async function fetchAdminMe(): Promise<AdminMe | null> {
-  if (cached && Date.now() - cached.at < TTL_MS) return cached.me;
+async function fetchAdminMe(): Promise<FetchResult> {
+  if (cached && Date.now() - cached.at < TTL_MS) return cached.result;
   if (inflight) return inflight;
   inflight = fetch('/api/admin/me', { cache: 'no-store' })
-    .then(async (response) => {
-      if (!response.ok) return null;
+    .then(async (response): Promise<FetchResult> => {
+      if (response.status === 401) return { me: null, session: 'unauthorized' };
+      if (!response.ok) return { me: null, session: 'unreachable' };
       const json = (await response.json().catch(() => null)) as Partial<AdminMe> | null;
-      if (!json?.username || !isAdminRole(json.role)) return null;
+      if (!json?.username || !isAdminRole(json.role)) return { me: null, session: 'unauthorized' };
       const pages = uniquePageKeys(json.pages);
-      const me: AdminMe = {
-        username: json.username,
-        role: json.role,
-        pages: pages.length ? pages : defaultPagesForRole(json.role),
+      return {
+        me: {
+          username: json.username,
+          role: json.role,
+          pages: pages.length ? pages : defaultPagesForRole(json.role),
+        },
+        session: 'ok',
       };
-      return me;
     })
-    .catch(() => null)
-    .then((me) => {
-      cached = { me, at: Date.now() };
-      return me;
+    .catch((): FetchResult => ({ me: null, session: 'unreachable' }))
+    .then((result) => {
+      cached = { result, at: Date.now() };
+      return result;
     })
     .finally(() => {
       inflight = null;
@@ -46,14 +53,16 @@ async function fetchAdminMe(): Promise<AdminMe | null> {
 }
 
 export function useAdminMe() {
-  const [me, setMe] = useState<AdminMe | null>(cached?.me ?? null);
+  const [me, setMe] = useState<AdminMe | null>(cached?.result.me ?? null);
+  const [session, setSession] = useState<AdminMeSession>(cached ? cached.result.session : 'unknown');
   const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
     let cancelled = false;
     fetchAdminMe().then((value) => {
       if (!cancelled) {
-        setMe(value);
+        setMe(value.me);
+        setSession(value.session);
         setLoading(false);
       }
     });
@@ -62,5 +71,5 @@ export function useAdminMe() {
     };
   }, []);
 
-  return { me, loading };
+  return { me, loading, session };
 }

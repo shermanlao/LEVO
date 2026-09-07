@@ -48,7 +48,7 @@ Header menus and dashboard cards hide pages the role does not have. The same mat
 | Role | Yes | `system`, `admin`, or `operation` |
 | Active | Yes | Disabled accounts cannot sign in |
 
-Passwords are stored as scrypt hashes. The session cookie is still `username.role.exp.epoch.sig`. Changing password, username, email, role, or active increments `session_epoch` so other browsers are signed out. Saving your own account issues a fresh cookie so the next action (for example Add user) still works.
+Passwords are stored as scrypt hashes. The session cookie is still `username.role.exp.epoch.sig`. Changing password, username, email, role, or active increments `session_epoch` so other browsers are signed out. Saving your own account issues a fresh cookie so the next action (for example Add user) still works. If a tab still has the old cookie, `/api/admin/me` and user APIs return 401 and the UI sends you to `/admin/login` — sign in again; that is not an API outage.
 
 ## First admin
 

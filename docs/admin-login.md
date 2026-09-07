@@ -17,6 +17,8 @@ The cookie is `Secure` only when the public site is HTTPS (`SITE_ORIGIN` / `NEXT
 
 Roles: **system**, **admin**, and **operation**, plus a role × page matrix. See [Admin users](admin-users.md). The dashboard layout and counts are in [Admin dashboard](admin-dashboard.md). Public visitor counts use a first-party cookie; see [Visitor analytics](visitor-analytics.md).
 
+If you change your own role or password, other tabs need a fresh cookie. A stale cookie still passes the Next.js path check, but `/api/admin/me` returns 401. Admin pages then send you back to `/admin/login` instead of showing **API: Not running**. Sign in again; do not treat that as a crashed API.
+
 ## Dashboard catalog layers
 
 On `/admin`, catalog shortcuts are ordered by hierarchy:

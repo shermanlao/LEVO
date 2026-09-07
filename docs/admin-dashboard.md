@@ -12,4 +12,6 @@
 
 Counts come from `GET /api/admin/dashboard` (session required). Next proxies to Express `GET /api/dashboard`. Staff and admin can load it; the user count is included only for admin.
 
+A 401 (expired or stale session cookie) sends the browser to `/admin/login?next=/admin`. The red **API server is not running** banner is only for a down or unreachable API (network / 502), not for Unauthorized. `AdminPageGate` does the same redirect on any `/admin` page except login.
+
 Visitors are first-party public page views, not Cloudflare. Signed-in admin sessions are not counted. See [visitor-analytics.md](visitor-analytics.md).

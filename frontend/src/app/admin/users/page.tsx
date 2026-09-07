@@ -13,11 +13,12 @@ import {
   isAdminRole,
   type AdminRole,
 } from '@shared/admin-roles';
+import { adminLoginHref } from '@/lib/admin-session';
 import { invalidateAdminMe } from '@/lib/use-admin-me';
 
 function sessionExpired(status: number): boolean {
   if (status !== 401) return false;
-  window.location.href = '/admin/login?next=/admin/users';
+  window.location.replace(adminLoginHref('/admin/users'));
   return true;
 }
 
