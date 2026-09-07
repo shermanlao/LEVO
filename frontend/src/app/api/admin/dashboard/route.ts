@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readAdminSession, requireAdminSession, forwardToExpress } from '@/lib/admin-backend';
+import { getLiveAdminAccess, requireAdminSession, forwardToExpress } from '@/lib/admin-backend';
+import { roleCanOpenPage } from '@shared/admin-roles';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const unauthorized = await requireAdminSession(request);
   if (unauthorized) return unauthorized;
-  const session = await readAdminSession(request);
-  const includeUsers = session?.role === 'admin' ? '1' : '0';
+  const access = await getLiveAdminAccess(request);
+  const includeUsers = access && roleCanOpenPage(access.role, 'users', access.pages) ? '1' : '0';
   return forwardToExpress(request, `/api/dashboard?includeUsers=${includeUsers}`);
 }
 

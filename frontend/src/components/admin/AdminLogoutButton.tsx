@@ -2,12 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import HelpButton from '@/components/admin/HelpButton';
+import { invalidateAdminMe } from '@/lib/use-admin-me';
 
 export default function AdminLogoutButton() {
   const router = useRouter();
 
   async function logout() {
     await fetch('/api/admin/logout', { method: 'POST' });
+    invalidateAdminMe();
     router.push('/admin/login');
     router.refresh();
   }

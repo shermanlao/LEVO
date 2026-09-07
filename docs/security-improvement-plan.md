@@ -27,7 +27,7 @@ Express listens on `127.0.0.1:3333` only. Next **fallback** rewrites public read
 - Rate limits trust nginx `X-Real-IP` only (not the first `X-Forwarded-For` hop)
 - Root `error.tsx` / `global-error.tsx`; production 500s do not send stacks
 - Login `next` path allowlisted to `/admin/...`
-- Staff directory in the app database; user APIs require `role === 'admin'`; last active admin cannot be removed
+- Staff directory in the app database; user APIs require the Users page (`system` or `admin`); last active system or admin cannot be removed; page APIs check `admin_role_permissions`
 - First-party visitor hits (`levo_vid`) go through Next `POST /api/visitors/hit`; dashboard counts require an admin session
 
 ## Production secrets

@@ -17,6 +17,8 @@ import {
   normalizeEmail,
   resolveSeedAdminEmail,
 } from '../lib/adminUserFields';
+import { migrateStoredRole } from '../lib/shared/admin-roles';
+import { ensureDefaultRolePages } from '../lib/adminPageAccess';
 import {
   allocateNextProductCode,
   isLevoSku,
@@ -89,12 +91,12 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.users.open',
     title: 'User management',
-    body: 'Open the staff directory. Only the admin role can create, edit, or remove accounts.',
+    body: 'Open the staff directory. System and admin can create, edit, or remove accounts and set page access.',
   },
   {
     helpKey: 'admin.users.add',
     title: 'Add user',
-    body: 'Create a staff account. Email is the login. Username is the short display name. Staff can manage the catalog; only admin can manage users.',
+    body: 'Create a staff account. Email is the login. Username is the short display name. Choose system, admin, or operation.',
   },
   {
     helpKey: 'admin.users.save',
@@ -109,7 +111,27 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.users.delete',
     title: 'Delete user',
-    body: 'Remove this login. The last remaining admin cannot be deleted.',
+    body: 'Remove this login. The last remaining system or admin user cannot be deleted.',
+  },
+  {
+    helpKey: 'admin.users.access',
+    title: 'Page access',
+    body: 'Open the role × page matrix. Grant or remove admin pages for system, admin, and operation.',
+  },
+  {
+    helpKey: 'admin.users.access.save',
+    title: 'Save page access',
+    body: 'Write the role page matrix. System always keeps Users and Page access. Operation cannot receive those pages.',
+  },
+  {
+    helpKey: 'admin.users.access.reset',
+    title: 'Reset page access',
+    body: 'Restore the default page matrix: system and admin get every page; operation gets catalog, projects, and related tools.',
+  },
+  {
+    helpKey: 'admin.users.access.toggle',
+    title: 'Toggle page',
+    body: 'Allow or deny this admin page for the role. Locked cells cannot be changed.',
   },
   {
     helpKey: 'admin.dash.stat.products',
@@ -684,7 +706,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.nav.users',
     title: 'Users',
-    body: 'Open the staff directory. Only the admin role can manage accounts.',
+    body: 'Open the staff directory and page-access settings. System and admin can manage accounts.',
   },
   {
     helpKey: 'admin.product_types.add',
@@ -1484,6 +1506,16 @@ export async function ensureAdminUserColumns(): Promise<void> {
   await ensureIndex(
     'CREATE UNIQUE INDEX IF NOT EXISTS admin_users_email_unique ON admin_users (email)'
   );
+
+  for (const user of users) {
+    const nextRole = migrateStoredRole(user.role);
+    if (nextRole !== user.role) {
+      await user.update({
+        role: nextRole,
+        session_epoch: (Number(user.session_epoch) || 0) + 1,
+      });
+    }
+  }
 }
 
 export async function ensureDefaultAdminUser(): Promise<void> {
@@ -1507,10 +1539,24 @@ export async function ensureDefaultAdminUser(): Promise<void> {
     username,
     email: email && isValidEmail(email) ? email : resolveSeedAdminEmail(),
     password_hash: hashPassword(password || 'abc4321'),
-    role: 'admin',
+    role: 'system',
     active: true,
     session_epoch: 0,
   });
+}
+
+export async function ensureAdminRolePermissions(): Promise<void> {
+  await ensureTable('admin_role_permissions', {
+    id: integerId,
+    role: { type: DataTypes.STRING, allowNull: false },
+    page_key: { type: DataTypes.STRING, allowNull: false },
+    created_at: { type: DataTypes.DATE, allowNull: true },
+    updated_at: { type: DataTypes.DATE, allowNull: true },
+  });
+  await ensureIndex(
+    'CREATE UNIQUE INDEX IF NOT EXISTS admin_role_permissions_role_page ON admin_role_permissions (role, page_key)'
+  );
+  await ensureDefaultRolePages();
 }
 
 export async function ensureProductExternalColumns(): Promise<void> {

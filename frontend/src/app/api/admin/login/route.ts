@@ -3,15 +3,11 @@ import {
   ADMIN_SESSION_COOKIE,
   SESSION_COOKIE_OPTIONS,
   createSessionValue,
-  type AdminRole,
 } from '@/lib/admin-session';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { expressBaseCandidates } from '@/lib/api-config';
 import { internalApiHeaders } from '@/lib/internal-api';
-
-function isRole(value: unknown): value is AdminRole {
-  return value === 'admin' || value === 'staff';
-}
+import { isAdminRole } from '@shared/admin-roles';
 
 async function verifyWithExpress(
   email: string,
@@ -77,7 +73,7 @@ export async function POST(request: NextRequest) {
       { status: 502 }
     );
   }
-  if (result.status !== 200 || !result.json.username || !isRole(result.json.role)) {
+  if (result.status !== 200 || !result.json.username || !isAdminRole(result.json.role)) {
     return NextResponse.json(
       { error: result.json.error || 'Invalid email or password' },
       { status: 401 }

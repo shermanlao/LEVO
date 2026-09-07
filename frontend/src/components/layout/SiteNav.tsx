@@ -8,7 +8,8 @@ import MobileNav from '@/components/layout/MobileNav';
 import AdminNavSectionBody from '@/components/admin/AdminNavSectionBody';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
 import Card from '@/components/ui/Card';
-import { ADMIN_NAV_SECTIONS, isAdminChromePath, type AdminNavSection } from '@/lib/admin-nav';
+import { isAdminChromePath, visibleAdminNavSections, type AdminNavSection } from '@/lib/admin-nav';
+import { useAdminMe } from '@/lib/use-admin-me';
 
 function AdminNavDropdown({
   section,
@@ -22,7 +23,7 @@ function AdminNavDropdown({
       <HelpButton
         helpKey={section.helpKey}
         type="button"
-        className="font-bold hover:text-gray-600 bg-transparent p-0 border-0 cursor-pointer"
+        className="inline-flex items-center leading-none font-bold hover:text-gray-600 bg-transparent p-0 border-0 cursor-pointer"
         aria-haspopup="true"
       >
         {section.label}
@@ -43,22 +44,24 @@ function AdminNavDropdown({
 export default function SiteNav() {
   const pathname = usePathname() || '';
   const isAdmin = isAdminChromePath(pathname);
+  const { me } = useAdminMe();
+  const adminSections = visibleAdminNavSections(me?.role ?? null, me?.pages ?? null);
 
   if (isAdmin) {
     return (
       <nav className="flex items-center" aria-label="Admin">
         <div className="hidden md:flex items-center space-x-8">
-          <HelpLink helpKey="admin.nav.home" href="/" className="font-bold hover:text-gray-600">
+          <HelpLink helpKey="admin.nav.home" href="/" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
             Home
           </HelpLink>
-          {ADMIN_NAV_SECTIONS.map((section, index) => (
+          {adminSections.map((section, index) => (
             <AdminNavDropdown key={section.id} section={section} alignEnd={index >= 2} />
           ))}
           <HeaderAuthButton />
         </div>
         <div className="flex items-center gap-4 md:hidden">
           <HeaderAuthButton />
-          <MobileNav variant="admin" sections={ADMIN_NAV_SECTIONS} />
+          <MobileNav variant="admin" sections={adminSections} />
         </div>
       </nav>
     );
@@ -67,16 +70,16 @@ export default function SiteNav() {
   return (
     <nav className="flex items-center" aria-label="Main">
       <div className="hidden md:flex items-center space-x-8">
-        <Link href="/" className="font-bold hover:text-gray-600">
+        <Link href="/" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
           Home
         </Link>
-        <Link href="/products" className="font-bold hover:text-gray-600">
+        <Link href="/products" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
           Products
         </Link>
-        <Link href="/projects" className="font-bold hover:text-gray-600">
+        <Link href="/projects" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
           Projects
         </Link>
-        <Link href="/contact" className="font-bold hover:text-gray-600">
+        <Link href="/contact" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
           Contact Us
         </Link>
         <SearchButton />

@@ -1,8 +1,9 @@
+import { isAdminRole, type AdminRole } from './admin-roles';
 import { resolveSessionSecret } from './production-secrets';
 
 export const ADMIN_SESSION_COOKIE = 'levo_admin_session';
 
-export type AdminRole = 'admin' | 'staff';
+export type { AdminRole };
 
 export type AdminSession = {
   username: string;
@@ -46,7 +47,7 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 function isRole(value: string): value is AdminRole {
-  return value === 'admin' || value === 'staff';
+  return isAdminRole(value);
 }
 
 export async function createSessionValue(

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
 import { writeFile } from 'fs/promises';
-import { requireAdminSession } from '@/lib/admin-backend';
+import { requirePageAccess } from '@/lib/admin-backend';
 import { isAllowedImageBuffer } from '@shared/image-magic';
 
 const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
@@ -16,7 +16,7 @@ async function ensureDirectoryExists(dirPath: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const unauthorized = await requireAdminSession(request);
+  const unauthorized = await requirePageAccess(request, 'projects');
   if (unauthorized) return unauthorized;
 
   try {

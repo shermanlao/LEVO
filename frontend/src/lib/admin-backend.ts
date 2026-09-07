@@ -16,6 +16,14 @@ import {
   UNAUTHORIZED_STATUS,
   isPublicCatalogReadMethod,
 } from '@shared/admin-backend-path';
+import {
+  defaultPagesForRole,
+  normalizeAdminRole,
+  roleCanOpenPage,
+  uniquePageKeys,
+  type AdminPageKey,
+  type AdminRole,
+} from '@shared/admin-roles';
 
 export { getExpressBaseUrl };
 export {
@@ -23,7 +31,13 @@ export {
   isAllowedAdminBackendPath,
 } from '@shared/admin-backend-path';
 
-type LiveSession = { ok: boolean; epoch: number; role: string; active: boolean };
+type LiveSession = {
+  ok: boolean;
+  epoch: number;
+  role: AdminRole;
+  active: boolean;
+  pages: AdminPageKey[];
+};
 
 const liveSessionCache = new Map<string, { live: LiveSession; until: number }>();
 
@@ -43,12 +57,22 @@ async function lookupLiveSession(username: string): Promise<LiveSession | null> 
         }
       );
       if (!response.ok) continue;
-      const json = (await response.json()) as { epoch?: number; role?: string; active?: boolean };
+      const json = (await response.json()) as {
+        epoch?: number;
+        role?: string;
+        active?: boolean;
+        pages?: unknown;
+      };
+      const role = normalizeAdminRole(json.role);
+      if (!role) continue;
       const live: LiveSession = {
         ok: true,
         epoch: Number(json.epoch) || 0,
-        role: String(json.role || ''),
+        role,
         active: Boolean(json.active),
+        pages: uniquePageKeys(json.pages).length
+          ? uniquePageKeys(json.pages)
+          : defaultPagesForRole(role),
       };
       liveSessionCache.set(username, { live, until: now + 30_000 });
       return live;
@@ -86,15 +110,39 @@ export async function readAdminSession(request: NextRequest): Promise<AdminSessi
   return session;
 }
 
-export async function requireAdminRole(request: NextRequest): Promise<NextResponse | null> {
+export async function getLiveAdminAccess(request: NextRequest): Promise<{
+  username: string;
+  role: AdminRole;
+  pages: AdminPageKey[];
+} | null> {
   const session = await readAdminSession(request);
-  if (!session) {
+  if (!session) return null;
+  const live = await lookupLiveSession(session.username);
+  if (!live || !live.active) return null;
+  const role = live.role;
+  return {
+    username: session.username,
+    role,
+    pages: live.pages.length ? live.pages : defaultPagesForRole(role),
+  };
+}
+
+export async function requirePageAccess(
+  request: NextRequest,
+  page: AdminPageKey
+): Promise<NextResponse | null> {
+  const access = await getLiveAdminAccess(request);
+  if (!access) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: UNAUTHORIZED_STATUS });
   }
-  if (session.role !== 'admin') {
+  if (!roleCanOpenPage(access.role, page, access.pages)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return null;
+}
+
+export async function requireAdminRole(request: NextRequest): Promise<NextResponse | null> {
+  return requirePageAccess(request, 'users');
 }
 
 function errorCause(error: unknown): string {
@@ -228,9 +276,19 @@ export function createPublicCatalogProxy(
 
 export function createAdminProxy(
   apiPrefix: string,
-  opts?: { timeoutMs?: number; encodeTail?: boolean; longTimeoutPattern?: RegExp; longTimeoutMs?: number }
+  opts?: {
+    timeoutMs?: number;
+    encodeTail?: boolean;
+    longTimeoutPattern?: RegExp;
+    longTimeoutMs?: number;
+    pageKey?: AdminPageKey;
+  }
 ) {
   async function handle(request: NextRequest, context: CatchAllContext) {
+    if (opts?.pageKey) {
+      const forbidden = await requirePageAccess(request, opts.pageKey);
+      if (forbidden) return forbidden;
+    }
     const params = await Promise.resolve(context.params);
     const segments = params.path || [];
     const suffix = opts?.encodeTail

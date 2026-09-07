@@ -16,7 +16,7 @@ describe('HMAC admin session', () => {
 
   it('rejects a missing or tampered cookie', async () => {
     assert.equal(await verifySessionValue(undefined), null);
-    const value = await createSessionValue('pat', 'staff', 0);
+    const value = await createSessionValue('pat', 'operation', 0);
     const bad = `${value.slice(0, -2)}aa`;
     assert.equal(await verifySessionValue(bad), null);
   });

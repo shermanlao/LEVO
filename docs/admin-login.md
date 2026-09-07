@@ -11,11 +11,11 @@ Staff routes under `/admin` require a signed-in session. Logins are rows in `adm
 
 If the form shows **Failed to fetch** / cannot reach the login API, the Next.js site is not running. Start it with `npm run dev` and retry. An **Invalid email or password** message means the credentials themselves were rejected. A 502-style message means the Express API is not running.
 
-The session is an httpOnly cookie (`levo_admin_session`) signed with `ADMIN_SESSION_SECRET`. Payload is `username.role.exp` plus HMAC (username stays the cookie subject after email login). Next.js middleware blocks `/admin/*` except `/admin/login`. Unsigned visitors are sent to `/admin/login` using the public `Host` / `X-Forwarded-Host` (or `SITE_ORIGIN`) so the browser stays on `http://187.7.21.12/admin`, not the Next.js bind address (`localhost:3000`). Staff cannot open `/admin/users`. Admin writes go through `/api/admin/*` (including `/api/admin/backend` for catalog and uploads, and `/api/admin/users` for the staff directory) and are **not** rewritten as open Express routes.
+The session is an httpOnly cookie (`levo_admin_session`) signed with `ADMIN_SESSION_SECRET`. Payload is `username.role.exp` plus HMAC (username stays the cookie subject after email login). Next.js middleware blocks `/admin/*` except `/admin/login`. Unsigned visitors are sent to `/admin/login` using the public `Host` / `X-Forwarded-Host` (or `SITE_ORIGIN`) so the browser stays on `http://187.7.21.12/admin`, not the Next.js bind address (`localhost:3000`). Operation cannot open `/admin/users`. Admin writes go through `/api/admin/*` (including `/api/admin/backend` for catalog and uploads, and `/api/admin/users` for the staff directory) and are **not** rewritten as open Express routes.
 
 The cookie is `Secure` only when the public site is HTTPS (`SITE_ORIGIN` / `NEXT_PUBLIC_SITE_URL` starts with `https://`, or `COOKIE_SECURE=true` in `/etc/levo/next.env`). On the current HTTP VPS IP, a `Secure` cookie would never be stored.
 
-Roles: **admin** (including User management) and **staff** (catalog and projects only). See [Admin users](admin-users.md). The dashboard layout and counts are in [Admin dashboard](admin-dashboard.md). Public visitor counts use a first-party cookie; see [Visitor analytics](visitor-analytics.md).
+Roles: **system**, **admin**, and **operation**, plus a role × page matrix. See [Admin users](admin-users.md). The dashboard layout and counts are in [Admin dashboard](admin-dashboard.md). Public visitor counts use a first-party cookie; see [Visitor analytics](visitor-analytics.md).
 
 ## Dashboard catalog layers
 
@@ -27,4 +27,4 @@ On `/admin`, catalog shortcuts are ordered by hierarchy:
 
 `/admin/products` and `/admin/products/[id]` redirect to `/admin/product-series`. A product row is now a **size pack** (size + photos) owned by the series, not a visitor SKU.
 
-Partner catalog (LightX) stays as a separate import entry on the same card; import from a series page. **LDT library** (`/admin/ldt-library`) and **AI settings** (`/admin/ai`) are linked from the same dashboard card. **Contact inquiries** (`/admin/inquiries`) is on the Projects card, the inquiries tile, and Needs attention. **User management** (`/admin/users`) is a separate card, visible to the admin role only. The site header still lists **Users** for all signed-in staff.
+Partner catalog (LightX) stays as a separate import entry on the same card; import from a series page. **LDT library** (`/admin/ldt-library`) and **AI settings** (`/admin/ai`) are linked from the same dashboard card. **Contact inquiries** (`/admin/inquiries`) is on the Projects card, the inquiries tile, and Needs attention. **User management** (`/admin/users`) is a separate card with **Page access** (`/admin/users/access`). Header menus and dashboard cards hide pages the role does not have.

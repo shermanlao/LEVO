@@ -20,6 +20,7 @@ LEVO keeps duplicated logic in one place instead of copying it across the Next.j
 | `production-secrets.ts` | Local default names, production fail-fast, `INTERNAL_API_HEADER` |
 | `safe-href.ts` | `safeHttpUrl` / `safePublicHref` for stored links |
 | `image-magic.ts` | JPEG/PNG/GIF/WebP magic-byte check |
+| `admin-roles.ts` | `system` / `admin` / `operation`, page keys, default matrix, path → page mapping, and `roleCanOpenPage` |
 | `admin-session-cookie.ts` | HMAC cookie create/verify (`username.role.exp.epoch.sig`), `safeAdminNextPath`, and `cookieIsSecure` (`Secure` only for HTTPS `SITE_ORIGIN`) |
 | `admin-backend-path.ts` | Admin BFF path allowlist; public catalog GET/HEAD vs 405 |
 
@@ -28,9 +29,10 @@ Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend w
 ## Frontend data clients
 
 - `sqlite-api.ts` — server catalog/projects/contact reads; `getFeaturedSeries`; `getDatasheetUrl` / `getInstallationUrl` / `getLdtUrl` / `getSeriesDatasheetUrl` / `getSeriesFamilyDatasheetUrl` / `getSeriesInstallationUrl` / `getSeriesLdtUrl` / `getSeriesPolarUrl` / `getProductLabelUrl` / `getGeneralLabelUrl` for catalog and admin downloads
-- `admin-backend.ts` — session-gated BFF proxy to Express (`requireAdminSession` / `requireAdminRole`), plus `createPublicCatalogProxy` / `createAdminProxy`
+- `admin-backend.ts` — session-gated BFF proxy to Express (`requireAdminSession` / `requirePageAccess` / `requireAdminRole`), plus `createPublicCatalogProxy` / `createAdminProxy`
 - `admin-fetch.ts` — browser `adminFetchJson` / `uploadAdminImage`
-- `admin-nav.ts` — Catalog / Projects / Settings / AI / Users sections for the admin header menus and dashboard shortcut cards
+- `admin-nav.ts` — Catalog / Projects / Settings / AI / Users sections for the admin header menus and dashboard shortcut cards, filtered by role page access
+- `use-admin-me.ts` — shared `/api/admin/me` fetch (username, role, pages) for the header and admin page gate
 - `site-contact-display.ts` — omit blank email / phone / address / hours / website on the public footer and Contact Us page. Construction mode is `PublicCatalogGate` in the root layout (public pages only; `/admin` stays open).
 - `image-utils.ts` — the only image URL builder (`toPublicImagePath`, `shouldSkipImageOptimize`, `productImageUrl`, `resolveSeriesImageUrl`, `uniqueSeriesPhotoUrls`, plus `seriesFeaturedCatalogUrl` / `seriesFeaturedPageUrl` / `seriesFeaturedDatasheetUrl`)
 - `image-frames.ts` — placeholder aspect ratios, `SERIES_FEATURED_SLOTS`, and `validateImageFile` / `assignFileToInput` for the upload crop board

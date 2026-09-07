@@ -23,6 +23,7 @@ const COPY_TABLES = [
   'ai_provider_settings',
   'ai_token_usage_log',
   'admin_users',
+  'admin_role_permissions',
   'visitor_events',
 ] as const;
 

@@ -4,7 +4,7 @@
 - [Admin dashboard](docs/admin-dashboard.md) — stats tiles, shortcuts, and attention counts on `/admin`
 - [Site settings](docs/admin-site-settings.md) — `/admin/settings` brand logos, homepage copy, contact/footer, and SEO
 - [Visitor analytics](docs/visitor-analytics.md) — first-party `levo_vid` cookie and 7-day unique visitors / page views
-- [Admin users](docs/admin-users.md) — admin vs staff roles and `/admin/users`
+- [Admin users](docs/admin-users.md) — system / admin / operation roles, `/admin/users`, and page-access matrix
 - [Partner catalog import](docs/partner-catalog-import.md) — LightX read-only fetch, search, and bulk import into an existing LEVO category and series on `/admin/products`
 - [Product codes](docs/product-codes.md) — LEVO SKUs (`DL00007`), vendor_code, and spec-based public names
 - [Public product catalog API](docs/product-catalog-api.md) — by-slug / by-path routes and Strapi-like product JSON

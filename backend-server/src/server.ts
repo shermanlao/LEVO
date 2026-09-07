@@ -24,6 +24,7 @@ import photometricLibraryRoutes from './routes/photometricLibraryRoutes';
 import aiRoutes from './routes/aiRoutes';
 import siteSettingsRoutes from './routes/siteSettingsRoutes';
 import adminUserRoutes, { authRoutes } from './routes/adminUserRoutes';
+import adminPermissionRoutes from './routes/adminPermissionRoutes';
 import dashboardRoutes, { visitorRoutes } from './routes/dashboardRoutes';
 import { rateLimit } from './lib/rateLimit';
 
@@ -91,6 +92,7 @@ app.use(
 );
 app.use('/api/auth', requireInternalSecret, authRoutes);
 app.use('/api/admin-users', requireInternalSecret, adminUserRoutes);
+app.use('/api/admin-permissions', requireInternalSecret, adminPermissionRoutes);
 app.use('/api/visitor-events', requireInternalSecret, visitorRoutes);
 app.use('/api/dashboard', requireInternalSecret, dashboardRoutes);
 

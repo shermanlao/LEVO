@@ -1,6 +1,7 @@
 import sequelize from '../database';
-import { ensureDefaultProductTypes, ensureDefaultHelpTips, ensureDefaultCatalogSource, ensureDefaultSiteContact, ensureDefaultAdminUser, ensureAdminUserColumns, ensureProductExternalColumns, ensureProductTypeColumns, ensureSeriesFeaturedImageColumn, ensureSeriesOptions, ensureSeriesAppearancePhotos, ensureVariantOptionCatalog, ensureAiSettingsColumns, ensureProjectFeaturedColumn, backfillLightxProductCodes } from '../seed/ensureDefaults';
+import { ensureDefaultProductTypes, ensureDefaultHelpTips, ensureDefaultCatalogSource, ensureDefaultSiteContact, ensureDefaultAdminUser, ensureAdminUserColumns, ensureAdminRolePermissions, ensureProductExternalColumns, ensureProductTypeColumns, ensureSeriesFeaturedImageColumn, ensureSeriesOptions, ensureSeriesAppearancePhotos, ensureVariantOptionCatalog, ensureAiSettingsColumns, ensureProjectFeaturedColumn, backfillLightxProductCodes } from '../seed/ensureDefaults';
 import AdminUser from './AdminUser';
+import AdminRolePermission from './AdminRolePermission';
 import { ensurePhotometricBeamLibrary } from '../lib/photometric/beamLibraryServer';
 import { backfillMissingProductLdtFiles } from '../lib/photometric/persistProductLdt';
 import Project from './Project';
@@ -61,6 +62,7 @@ async function syncDatabase() {
     await ensureAiSettingsColumns();
     await ensureProjectFeaturedColumn();
     await ensureAdminUserColumns();
+    await ensureAdminRolePermissions();
     await ensureDefaultProductTypes();
     await ensureDefaultHelpTips();
     await ensureDefaultCatalogSource();
@@ -98,6 +100,7 @@ export {
   AiProviderSettings,
   AiTokenUsageLog,
   AdminUser,
+  AdminRolePermission,
   VisitorEvent,
   ProductCodeSequence,
 };

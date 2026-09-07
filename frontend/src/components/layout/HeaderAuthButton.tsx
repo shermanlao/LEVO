@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
+import { invalidateAdminMe } from '@/lib/use-admin-me';
 
-const ICON_CLASS = 'h-6 w-6';
-const ICON_CONTROL_CLASS = 'inline-flex items-center hover:text-gray-600 bg-transparent p-0 border-0 cursor-pointer';
+const ICON_CLASS = 'block h-6 w-6';
+const ICON_CONTROL_CLASS =
+  'inline-flex h-6 w-6 items-center justify-center hover:text-gray-600 bg-transparent p-0 border-0 leading-none cursor-pointer';
 
 function UserIcon() {
   return (
@@ -74,6 +76,7 @@ export default function HeaderAuthButton() {
 
   async function logout() {
     await fetch('/api/admin/logout', { method: 'POST' });
+    invalidateAdminMe();
     setSignedIn(false);
     if (pathname === '/admin' || pathname.startsWith('/admin/')) {
       router.push('/');
@@ -82,11 +85,11 @@ export default function HeaderAuthButton() {
   }
 
   return (
-    <span className="inline-flex items-center gap-3">
+    <span className="inline-flex h-6 items-center gap-3">
       <HelpLink
         helpKey="catalog.header.admin"
         href="/admin"
-        className="text-xs font-semibold tracking-[0.18em] uppercase hover:text-gray-600"
+        className="inline-flex h-6 items-center text-xs font-semibold tracking-[0.18em] uppercase whitespace-nowrap leading-none hover:text-gray-600"
       >
         Admin
       </HelpLink>

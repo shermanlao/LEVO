@@ -3,16 +3,18 @@ import { Op } from 'sequelize';
 import AdminUser, { AdminRole } from '../models/AdminUser';
 import { asyncHandler, deleteSuccess, notFound } from '../lib/asyncHandler';
 import { hashPassword, verifyPassword } from '../lib/adminPassword';
+import { pagesForRole } from '../lib/adminPageAccess';
+import {
+  canManageUsers,
+  isAdminRole,
+  migrateStoredRole,
+} from '../lib/shared/admin-roles';
 import {
   USERNAME_RE,
   isValidEmail,
   normalizeEmail,
   normalizeOptionalText,
 } from '../lib/adminUserFields';
-
-function isRole(value: unknown): value is AdminRole {
-  return value === 'admin' || value === 'staff';
-}
 
 export function serializeAdminUser(row: AdminUser) {
   const p = row.get({ plain: true }) as {
@@ -36,25 +38,25 @@ export function serializeAdminUser(row: AdminUser) {
     tel: p.tel || '',
     position: p.position || '',
     division: p.division || '',
-    role: p.role,
+    role: migrateStoredRole(p.role),
     active: Boolean(p.active),
     created_at: p.created_at,
     updated_at: p.updated_at,
   };
 }
 
-async function countActiveAdmins(excludeId?: number): Promise<number> {
+async function countActiveUserManagers(excludeId?: number): Promise<number> {
   return AdminUser.count({
     where: {
-      role: 'admin',
+      role: { [Op.in]: ['system', 'admin'] },
       active: true,
       ...(excludeId != null ? { id: { [Op.ne]: excludeId } } : {}),
     },
   });
 }
 
-function lastAdminError(res: Response) {
-  return res.status(400).json({ error: 'Cannot remove or demote the last admin' });
+function lastManagerError(res: Response) {
+  return res.status(400).json({ error: 'Cannot remove or demote the last system or admin user' });
 }
 
 async function emailTaken(email: string, excludeId?: number): Promise<boolean> {
@@ -87,11 +89,13 @@ export const verifyCredentials = asyncHandler(async (req: Request, res: Response
   if (!user || !user.active || !verifyPassword(password, user.password_hash)) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
+  const role = migrateStoredRole(user.role);
   res.json({
     username: user.username,
     email: user.email,
-    role: user.role,
+    role,
     session_epoch: Number(user.session_epoch) || 0,
+    pages: await pagesForRole(role),
   });
 });
 
@@ -100,11 +104,13 @@ export const checkSession = asyncHandler(async (req: Request, res: Response) => 
   if (!username) return res.status(400).json({ error: 'Missing username' });
   const user = await AdminUser.findOne({ where: { username } });
   if (!user) return res.status(404).json({ error: 'Not found' });
+  const role = migrateStoredRole(user.role);
   res.json({
     username: user.username,
-    role: user.role,
+    role,
     active: Boolean(user.active),
     epoch: Number(user.session_epoch) || 0,
+    pages: await pagesForRole(role),
   });
 });
 
@@ -137,8 +143,8 @@ export const createAdminUser = asyncHandler(async (req: Request, res: Response) 
   if (password.length < 10) {
     return res.status(400).json({ error: 'Password must be at least 10 characters' });
   }
-  if (!isRole(role)) {
-    return res.status(400).json({ error: 'Role must be admin or staff' });
+  if (!isAdminRole(role)) {
+    return res.status(400).json({ error: 'Role must be system, admin, or operation' });
   }
   if (await usernameTaken(username)) {
     return res.status(409).json({ error: 'That username is already in use' });
@@ -210,8 +216,8 @@ export const updateAdminUser = asyncHandler(async (req: Request, res: Response) 
     patch.division = normalizeOptionalText(req.body.division);
   }
   if (req.body?.role !== undefined) {
-    if (!isRole(req.body.role)) {
-      return res.status(400).json({ error: 'Role must be admin or staff' });
+    if (!isAdminRole(req.body.role)) {
+      return res.status(400).json({ error: 'Role must be system, admin, or operation' });
     }
     patch.role = req.body.role;
   }
@@ -238,13 +244,13 @@ export const updateAdminUser = asyncHandler(async (req: Request, res: Response) 
     patch.session_epoch = (Number(user.session_epoch) || 0) + 1;
   }
 
-  const nextRole = patch.role ?? user.role;
+  const nextRole = patch.role ?? migrateStoredRole(user.role);
   const nextActive = patch.active !== undefined ? patch.active : user.active;
-  const wasActiveAdmin = user.role === 'admin' && user.active;
-  const staysActiveAdmin = nextRole === 'admin' && nextActive;
-  if (wasActiveAdmin && !staysActiveAdmin) {
-    const others = await countActiveAdmins(user.id);
-    if (others < 1) return lastAdminError(res);
+  const wasManager = canManageUsers(migrateStoredRole(user.role)) && user.active;
+  const staysManager = canManageUsers(nextRole) && nextActive;
+  if (wasManager && !staysManager) {
+    const others = await countActiveUserManagers(user.id);
+    if (others < 1) return lastManagerError(res);
   }
 
   await user.update(patch);
@@ -254,9 +260,9 @@ export const updateAdminUser = asyncHandler(async (req: Request, res: Response) 
 export const deleteAdminUser = asyncHandler(async (req: Request, res: Response) => {
   const user = await AdminUser.findByPk(req.params.id);
   if (!user) return notFound(res, 'User');
-  if (user.role === 'admin' && user.active) {
-    const others = await countActiveAdmins(user.id);
-    if (others < 1) return lastAdminError(res);
+  if (canManageUsers(migrateStoredRole(user.role)) && user.active) {
+    const others = await countActiveUserManagers(user.id);
+    if (others < 1) return lastManagerError(res);
   }
   await user.destroy();
   deleteSuccess(res);

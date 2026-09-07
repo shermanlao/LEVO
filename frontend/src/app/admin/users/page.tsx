@@ -7,8 +7,12 @@ import AlertBanner from '@/components/ui/AlertBanner';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { SelectField, TextInput } from '@/components/ui/FormField';
-
-type AdminRole = 'admin' | 'staff';
+import {
+  ADMIN_ROLE_HINTS,
+  ADMIN_ROLES,
+  isAdminRole,
+  type AdminRole,
+} from '@shared/admin-roles';
 
 type StaffUser = {
   id: number;
@@ -29,7 +33,7 @@ const EMPTY_FORM = {
   tel: '',
   position: '',
   division: '',
-  role: 'staff' as AdminRole,
+  role: 'operation' as AdminRole,
   active: true,
   password: '',
 };
@@ -43,7 +47,7 @@ function asStaffUser(row: Partial<StaffUser>): StaffUser {
     tel: String(row.tel || ''),
     position: String(row.position || ''),
     division: String(row.division || ''),
-    role: row.role === 'admin' ? 'admin' : 'staff',
+    role: isAdminRole(row.role) ? row.role : 'operation',
     active: Boolean(row.active),
   };
 }
@@ -203,18 +207,23 @@ export default function AdminUsersPage() {
       <AdminPageHeader
         title="User management"
         actions={
-          <Button
-            helpKey="admin.users.add"
-            variant="primary"
-            type="button"
-            onClick={() => {
-              setCreating((open) => !open);
-              setError(null);
-              setSuccess(null);
-            }}
-          >
-            {creating ? 'Close form' : 'Add user'}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button helpKey="admin.users.access" variant="secondary" href="/admin/users/access">
+              Page access
+            </Button>
+            <Button
+              helpKey="admin.users.add"
+              variant="primary"
+              type="button"
+              onClick={() => {
+                setCreating((open) => !open);
+                setError(null);
+                setSuccess(null);
+              }}
+            >
+              {creating ? 'Close form' : 'Add user'}
+            </Button>
+          </div>
         }
       />
 
@@ -281,11 +290,17 @@ export default function AdminUsersPage() {
               label="Role"
               value={newUser.role}
               onChange={(e) =>
-                setNewUser((prev) => ({ ...prev, role: e.target.value === 'admin' ? 'admin' : 'staff' }))
+                setNewUser((prev) => ({
+                  ...prev,
+                  role: isAdminRole(e.target.value) ? e.target.value : 'operation',
+                }))
               }
             >
-              <option value="staff">staff — catalog and projects</option>
-              <option value="admin">admin — including user management</option>
+              {ADMIN_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role} — {ADMIN_ROLE_HINTS[role]}
+                </option>
+              ))}
             </SelectField>
             <div className="flex items-end gap-3">
               <Button helpKey="admin.users.save" type="submit" disabled={saving}>
@@ -355,11 +370,17 @@ export default function AdminUsersPage() {
               label="Role"
               value={editUser.role}
               onChange={(e) =>
-                setEditUser((prev) => ({ ...prev, role: e.target.value === 'admin' ? 'admin' : 'staff' }))
+                setEditUser((prev) => ({
+                  ...prev,
+                  role: isAdminRole(e.target.value) ? e.target.value : 'operation',
+                }))
               }
             >
-              <option value="staff">staff — catalog and projects</option>
-              <option value="admin">admin — including user management</option>
+              {ADMIN_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role} — {ADMIN_ROLE_HINTS[role]}
+                </option>
+              ))}
             </SelectField>
             <SelectField
               label="Active"

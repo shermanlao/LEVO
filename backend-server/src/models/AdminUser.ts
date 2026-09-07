@@ -1,7 +1,8 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../database';
+import type { AdminRole } from '../lib/shared/admin-roles';
 
-export type AdminRole = 'admin' | 'staff';
+export type { AdminRole };
 
 class AdminUser extends Model {
   declare id: number;
@@ -59,7 +60,7 @@ AdminUser.init(
     role: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'staff',
+      defaultValue: 'operation',
     },
     active: {
       type: DataTypes.BOOLEAN,

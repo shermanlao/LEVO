@@ -8,8 +8,9 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import StatTile from '@/components/ui/StatTile';
 import { visibleAdminNavSections } from '@/lib/admin-nav';
+import { isAdminRole, type AdminPageKey, type AdminRole } from '@shared/admin-roles';
 
-type Me = { username: string; role: 'admin' | 'staff' };
+type Me = { username: string; role: AdminRole; pages: AdminPageKey[] };
 
 type DashboardStats = {
   products: number;
@@ -37,8 +38,12 @@ export default function AdminPage() {
     fetch('/api/admin/me', { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then((json) => {
-        if (json?.username && (json.role === 'admin' || json.role === 'staff')) {
-          setMe({ username: json.username, role: json.role });
+        if (json?.username && isAdminRole(json.role)) {
+          setMe({
+            username: json.username,
+            role: json.role,
+            pages: Array.isArray(json.pages) ? json.pages : [],
+          });
         }
       })
       .catch(() => {});
@@ -166,7 +171,7 @@ export default function AdminPage() {
       ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {visibleAdminNavSections(me?.role ?? null).map((section) => (
+        {visibleAdminNavSections(me?.role ?? null, me?.pages ?? null).map((section) => (
           <Card key={section.id}>
             <AdminNavSectionBody
               section={section}
