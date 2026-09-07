@@ -25,7 +25,7 @@ Upload one house-style product photo on `/admin/ai` (**Catalog photo style**). T
 
 On `/admin/product-series/[id]`, size-pack **Main A** and **Main B** stage the cropped vendor file on the form. **Save variants** writes those paths. When a catalog style photo is set, a **Match catalog style** button appears on filled Main A / Main B slots. Staff can ignore it. The button:
 
-1. Sends a JPEG (longest edge 1600) plus the stored path to `POST /api/admin/ai/stylize-product-photo`. The API also shrinks the catalog style reference before calling xAI or Google.
+1. Sends a JPEG (longest edge 1600) plus the stored path to `POST /api/admin/ai/stylize-product-photo`. The API also shrinks the catalog style reference before calling xAI or Google. xAI edits with one photo use `image: { url, type }`; style plus product use `image: ["data:…", "data:…"]` (an array of `{ url }` maps is a 422).
 2. Shows a preview. **Apply** replaces the slot. **Reset** or Close keeps the original upload
 3. Failures show the provider message (not a generic “Server error”). “Saved key cannot be read” means the xAI/Google key on `/admin/ai` is stored but cannot be decrypted — paste it again and Test connection. A missing catalog style photo is a separate 400.
 

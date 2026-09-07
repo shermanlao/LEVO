@@ -57,5 +57,6 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `pdfResponse.ts` — shared `sendPdf` for datasheet / series / label downloads
 - `ai/aiStyleImage.ts` — size-drawing and catalog photo style files under `/images/ai/`
 - `ai/aiImageDataUrl.ts` — parse/compact AI image data URLs (JPEG, max edge 1600) and read a local public product photo from disk
+- `ai/aiImageGeneration.ts` — xAI Imagine / Google image generate-or-edit. xAI `/images/edits` uses `image: { url, type }` for one photo and `image: [data URI, …]` for two or more (`assignXaiEditImages`)
 - `ai/aiUsage.ts` — `/admin/ai` usage: xAI billed ticks (÷ 10¹⁰), Google image token estimates, rewrite of old ticks÷1e6 rows
 - List `GET /api/product-series` uses a light serializer (one catalog load, batched options, no appearance photos). Detail `by-slug` / `:id` stays full.

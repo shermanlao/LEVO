@@ -10,8 +10,8 @@ function buildProductPhotoStylePrompt(hints?: string): string {
   const hintLine = hints?.trim() ? `Organization notes: ${hints.trim()}` : null;
   return [
     'You are restyling an existing product catalog photo for a lighting catalog.',
-    'The first image is a STYLE REFERENCE. Copy only its look: lighting, background, contrast, color grade, and studio framing feel.',
-    'The second image is the PRODUCT PHOTO to keep. Preserve this fixture identity, shape, finish, mounting, and camera viewpoint.',
+    '<IMAGE_0> is the STYLE REFERENCE. Copy only its look: lighting, background, contrast, color grade, and studio framing feel.',
+    '<IMAGE_1> is the PRODUCT PHOTO to keep. Preserve this fixture identity, shape, finish, mounting, and camera viewpoint.',
     'Do not flatten the product into a 2D line drawing or technical elevation.',
     'Do not invent a different product, change finish colors, or add text onto the image.',
     hintLine,

@@ -41,6 +41,27 @@ export const PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS: ImagePartLabels = {
 const XAI_IMAGE_MODEL = 'grok-imagine-image-quality';
 const GOOGLE_IMAGE_MODEL = 'gemini-3.1-flash-image';
 
+export type XaiImageRef = { url: string; type: 'image_url' };
+
+export function xaiImageRef(url: string): XaiImageRef {
+  return { url, type: 'image_url' };
+}
+
+/**
+ * xAI `/images/edits` accepts one photo as `{ url, type }`.
+ * Two or more must be data-URI / URL strings on `image` — an array of maps is a 422
+ * (`image[0]: invalid type: map, expected a string`).
+ */
+export function assignXaiEditImages(body: Record<string, unknown>, urls: string[]): void {
+  if (urls.length === 1) {
+    body.image = xaiImageRef(urls[0]);
+    return;
+  }
+  if (urls.length > 1) {
+    body.image = urls;
+  }
+}
+
 function dataUrlToParts(dataUrl: string): { mimeType: string; base64: string } {
   return parseImageDataUrl(dataUrl);
 }
@@ -72,11 +93,11 @@ async function generateWithXai(
   usageCtx: AiUsageContext
 ): Promise<GeneratedImageResult> {
   const modelId = XAI_IMAGE_MODEL;
-  const images = [
-    ...extraImageDataUrls.map((url) => ({ url, type: 'image_url' as const })),
-    ...(sourceImageDataUrl ? [{ url: sourceImageDataUrl, type: 'image_url' as const }] : []),
+  const imageUrls = [
+    ...extraImageDataUrls,
+    ...(sourceImageDataUrl ? [sourceImageDataUrl] : []),
   ];
-  const endpoint = images.length
+  const endpoint = imageUrls.length
     ? `${creds.baseUrl.replace(/\/$/, '')}/images/edits`
     : `${creds.baseUrl.replace(/\/$/, '')}/images/generations`;
 
@@ -86,11 +107,7 @@ async function generateWithXai(
     n: 1,
     response_format: 'b64_json',
   };
-  if (images.length === 1) {
-    body.image = images[0];
-  } else if (images.length > 1) {
-    body.image = images;
-  }
+  assignXaiEditImages(body, imageUrls);
 
   const res = await fetch(endpoint, {
     method: 'POST',
