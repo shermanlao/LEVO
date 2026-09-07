@@ -4,9 +4,7 @@ import { redirectSameOrigin } from '@/lib/same-origin-redirect';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-levo-pathname', pathname);
-  const pass = () => NextResponse.next({ request: { headers: requestHeaders } });
+  const pass = () => NextResponse.next();
 
   if (!pathname.startsWith('/admin')) {
     return pass();

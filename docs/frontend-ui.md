@@ -43,6 +43,7 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `BrandLogoMark` | `components/layout/Logo.tsx` — header/footer wordmark painted with `currentColor` |
 | `Footer` | Same-row columns: Contact Us (email / phone / address / website only when filled), Quick Links, **Resources** (Warranty / Certifications / Technical Underneath, stacked like Quick Links), and **Media** icons when URLs are set (Facebook, Instagram, Threads, Pinterest; hide empty). Then logo/copyright. Resource and social links use `HelpLink`. |
 | `UnderConstruction` | Public-page body while `public_under_construction` is on and the visitor is not signed in. Header and footer stay. |
+| `PublicCatalogGate` | Root-layout wrapper. Uses the current path (`usePathname`) so `/admin` and `/admin/login` keep their pages while public routes show `UnderConstruction`. |
 | `ResourcePage` | Shared public view for `/warranty`, `/certifications`, `/technical`: `Home / …` breadcrumb, heading and body from `site_contacts`. |
 | `DatasheetLabelManager` | Variant options page: IP / warranty / voltage datasheet squares and extra icons (CE, DALI). Upload or Generate by AI. Artwork is stored on the catalog option. |
 | `EntityDatasheetLabelEditor` | Series variants page: pick extra datasheet squares from the Variant catalog as tags (filled = on this series). Create new icons on `/admin/variant-options`. |

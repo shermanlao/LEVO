@@ -31,7 +31,7 @@ Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend w
 - `admin-backend.ts` — session-gated BFF proxy to Express (`requireAdminSession` / `requireAdminRole`), plus `createPublicCatalogProxy` / `createAdminProxy`
 - `admin-fetch.ts` — browser `adminFetchJson` / `uploadAdminImage`
 - `admin-nav.ts` — Catalog / Projects / Settings / AI / Users sections for the admin header menus and dashboard shortcut cards
-- `site-contact-display.ts` — omit blank email / phone / address / hours / website on the public footer and Contact Us page
+- `site-contact-display.ts` — omit blank email / phone / address / hours / website on the public footer and Contact Us page. Construction mode is `PublicCatalogGate` in the root layout (public pages only; `/admin` stays open).
 - `image-utils.ts` — the only image URL builder (`toPublicImagePath`, `shouldSkipImageOptimize`, `productImageUrl`, `resolveSeriesImageUrl`, `uniqueSeriesPhotoUrls`, plus `seriesFeaturedCatalogUrl` / `seriesFeaturedPageUrl` / `seriesFeaturedDatasheetUrl`)
 - `image-frames.ts` — placeholder aspect ratios, `SERIES_FEATURED_SLOTS`, and `validateImageFile` / `assignFileToInput` for the upload crop board
 - `image-file-intake.ts` — `IMAGE_INTAKE_HINT`, `isImageFile`, and extractors for drag / clipboard / file-picker photos used by `ImageFileIntake`

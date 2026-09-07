@@ -8,7 +8,7 @@ SQLite `site_contacts` remains the public singleton (`GET /api/contact`). New co
 
 - **Brand** — `company_name`, `company_short_name`, `slogan`, `logo_header`, `logo_pdf`, `logo_icon`
 - **Homepage** — hero title/subtitle/CTA/image, featured headings, Why Choose heading and `why_cards` JSON
-- **Public site** — `public_under_construction` (default on). Signed-out visitors see header, footer, and UNDER CONSTRUCTION. Staff who are signed in see the full catalog. Uncheck it on `/admin/settings` when the site goes live.
+- **Public site** — `public_under_construction` (default on). Signed-out visitors see header, footer, and UNDER CONSTRUCTION on public pages. `/admin/login` and the rest of `/admin` always render the real admin UI so staff can sign in. Staff who are signed in see the full catalog. Uncheck it on `/admin/settings` when the site goes live.
 - **Contact and footer** — existing contact fields plus social URLs (`social_linkedin`, `social_facebook`, `social_instagram`, `social_threads`, `social_pinterest`). The footer Contact Us column shows email, phone, address, and website only when that field has a value. The Media column shows Facebook, Instagram, Threads, and Pinterest when a URL is set. Empty fields stay hidden. LinkedIn stays in the database and admin form but is not in that Media column. **Website** is also the public catalog origin encoded in datasheet QR codes.
 - **Resources** — title and body for the public `/warranty`, `/certifications`, and `/technical` pages (`resource_warranty_title` / `resource_warranty_body`, and the same pair for certifications and technical). Footer label for the third link stays **Technical Underneath**.
 - **SEO** — `seo_title`, `seo_description`, `og_image`
