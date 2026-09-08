@@ -153,6 +153,46 @@ export function pageKeyForBackendPath(suffix: string): AdminPageKey | null {
   return null;
 }
 
+/** Generate/refine/stylize used on catalog pages. Settings and style uploads stay on AI. */
+const AI_CATALOG_API_PATHS = new Set([
+  'generate-size-drawing',
+  'refine-size-drawing',
+  'generate-appearance-photo',
+  'edit-product-photo',
+  'stylize-product-photo',
+  'generate-datasheet-label',
+  'generate-description-phrase',
+]);
+
+export function pagesForAiApi(method: string, suffix: string): AdminPageKey[] {
+  const path = String(suffix || '')
+    .replace(/\/+$/, '')
+    .split('/')
+    .filter(Boolean)
+    .join('/');
+  if (path === 'settings' && method.toUpperCase() === 'GET') return ['catalog', 'ai'];
+  if (AI_CATALOG_API_PATHS.has(path)) return ['catalog', 'ai'];
+  return ['ai'];
+}
+
+/** Grant default pages that were added after the matrix was first saved. */
+export function matrixWithNewDefaultPages(
+  matrix: Record<AdminRole, AdminPageKey[]>,
+  presentPages: Iterable<string>
+): Record<AdminRole, AdminPageKey[]> {
+  const present = new Set(presentPages);
+  const missing = ADMIN_PAGE_KEYS.filter((key) => !present.has(key));
+  if (!missing.length) return matrix;
+  const next = emptyRolePageMatrix();
+  for (const role of ADMIN_ROLES) {
+    next[role] = sanitizeRolePages(role, [
+      ...(matrix[role] || []),
+      ...DEFAULT_ROLE_PAGES[role].filter((key) => missing.includes(key)),
+    ]);
+  }
+  return next;
+}
+
 export function emptyRolePageMatrix(): Record<AdminRole, AdminPageKey[]> {
   return {
     system: [],

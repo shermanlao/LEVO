@@ -3,9 +3,12 @@ import { describe, it } from 'node:test';
 import {
   canManageUsers,
   defaultPagesForRole,
+  defaultRolePageMatrix,
+  matrixWithNewDefaultPages,
   migrateStoredRole,
   pageKeyForAdminPath,
   pageKeyForBackendPath,
+  pagesForAiApi,
   roleCanOpenPage,
   sanitizeRolePages,
 } from './admin-roles';
@@ -43,5 +46,40 @@ describe('admin roles and page access', () => {
     assert.equal(pageKeyForBackendPath('projects/9'), 'projects');
     assert.ok(defaultPagesForRole('operation').includes('catalog'));
     assert.ok(!defaultPagesForRole('operation').includes('users'));
+  });
+
+  it('lets catalog staff call generate routes and keeps settings on AI', () => {
+    assert.deepEqual(pagesForAiApi('POST', 'generate-size-drawing'), ['catalog', 'ai']);
+    assert.deepEqual(pagesForAiApi('POST', 'refine-size-drawing'), ['catalog', 'ai']);
+    assert.deepEqual(pagesForAiApi('POST', 'stylize-product-photo'), ['catalog', 'ai']);
+    assert.deepEqual(pagesForAiApi('GET', 'settings'), ['catalog', 'ai']);
+    assert.deepEqual(pagesForAiApi('PUT', 'settings'), ['ai']);
+    assert.deepEqual(pagesForAiApi('POST', 'settings/test'), ['ai']);
+    assert.deepEqual(pagesForAiApi('GET', 'usage'), ['ai']);
+    assert.deepEqual(pagesForAiApi('POST', 'size-drawing-style'), ['ai']);
+  });
+
+  it('grants newly added default pages without rewriting an existing matrix', () => {
+    const before = {
+      system: sanitizeRolePages('system', ['catalog', 'users', 'permissions']),
+      admin: sanitizeRolePages('admin', ['catalog']),
+      operation: sanitizeRolePages('operation', ['catalog']),
+    };
+    const next = matrixWithNewDefaultPages(before, ['catalog', 'users', 'permissions']);
+    assert.ok(next.system.includes('ai'));
+    assert.ok(next.admin.includes('ai'));
+    assert.ok(next.operation.includes('ai'));
+    const unchanged = matrixWithNewDefaultPages(defaultRolePageMatrix(), [
+      'catalog',
+      'lightx',
+      'ldt',
+      'projects',
+      'inquiries',
+      'settings',
+      'ai',
+      'users',
+      'permissions',
+    ]);
+    assert.deepEqual(unchanged, defaultRolePageMatrix());
   });
 });

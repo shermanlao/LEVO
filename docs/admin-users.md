@@ -31,7 +31,7 @@ Header menus and dashboard cards hide pages the role does not have. The same mat
 | Projects | `/admin/projects` | `/api/admin/backend/projects`, `/api/project-upload` |
 | Inquiries | `/admin/inquiries` | `/api/admin/inquiries` |
 | Settings | `/admin/settings` | `/api/admin/site-settings` |
-| AI | `/admin/ai` | `/api/admin/ai` |
+| AI | `/admin/ai` | `/api/admin/ai` settings, usage, style uploads, and connection test. Generate / refine / stylize / appearance / label / phrase also accept **Catalog** (those buttons live on series and variant pages). |
 | Users | `/admin/users` | `/api/admin/users` |
 | Page access | `/admin/users/access` | `/api/admin/permissions` |
 

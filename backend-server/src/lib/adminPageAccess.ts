@@ -3,6 +3,7 @@ import {
   ADMIN_ROLES,
   defaultPagesForRole,
   defaultRolePageMatrix,
+  matrixWithNewDefaultPages,
   sanitizeRolePageMatrix,
   sanitizeRolePages,
   type AdminPageKey,
@@ -46,8 +47,18 @@ export async function saveRolePageMatrix(
 
 export async function ensureDefaultRolePages(): Promise<void> {
   const count = await AdminRolePermission.count();
-  if (count > 0) return;
-  await saveRolePageMatrix(defaultRolePageMatrix());
+  if (count === 0) {
+    await saveRolePageMatrix(defaultRolePageMatrix());
+    return;
+  }
+  const rows = await AdminRolePermission.findAll();
+  const current = await loadRolePageMatrix();
+  const next = matrixWithNewDefaultPages(
+    current,
+    rows.map((row) => row.page_key)
+  );
+  const changed = ADMIN_ROLES.some((role) => next[role].join(',') !== current[role].join(','));
+  if (changed) await saveRolePageMatrix(next);
 }
 
 export function serializeRolePages(role: AdminRole, pages: AdminPageKey[]): AdminPageKey[] {

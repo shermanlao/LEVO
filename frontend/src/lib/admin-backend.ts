@@ -139,11 +139,18 @@ export async function requirePageAccess(
   request: NextRequest,
   page: AdminPageKey
 ): Promise<NextResponse | null> {
+  return requireAnyPageAccess(request, [page]);
+}
+
+export async function requireAnyPageAccess(
+  request: NextRequest,
+  pages: readonly AdminPageKey[]
+): Promise<NextResponse | null> {
   const access = await getLiveAdminAccess(request);
   if (!access) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: UNAUTHORIZED_STATUS });
   }
-  if (!roleCanOpenPage(access.role, page, access.pages)) {
+  if (!pages.some((page) => roleCanOpenPage(access.role, page, access.pages))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   return null;
@@ -290,18 +297,22 @@ export function createAdminProxy(
     longTimeoutPattern?: RegExp;
     longTimeoutMs?: number;
     pageKey?: AdminPageKey;
+    pageKeys?: (method: string, suffix: string) => readonly AdminPageKey[];
   }
 ) {
   async function handle(request: NextRequest, context: CatchAllContext) {
-    if (opts?.pageKey) {
-      const forbidden = await requirePageAccess(request, opts.pageKey);
-      if (forbidden) return forbidden;
-    }
     const params = await Promise.resolve(context.params);
     const segments = params.path || [];
     const suffix = opts?.encodeTail
       ? segments.map((part, index) => (index === 0 ? part : encodeURIComponent(part))).join('/')
       : segments.join('/');
+    if (opts?.pageKeys) {
+      const forbidden = await requireAnyPageAccess(request, opts.pageKeys(request.method, suffix));
+      if (forbidden) return forbidden;
+    } else if (opts?.pageKey) {
+      const forbidden = await requirePageAccess(request, opts.pageKey);
+      if (forbidden) return forbidden;
+    }
     const long = opts?.longTimeoutPattern?.test(suffix);
     return proxyToExpress(request, `${apiPrefix}/${suffix}`, {
       timeoutMs: long ? opts?.longTimeoutMs ?? 300000 : opts?.timeoutMs ?? 60000,
