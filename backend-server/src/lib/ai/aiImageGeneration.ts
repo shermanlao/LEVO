@@ -31,11 +31,12 @@ export const SIZE_DRAWING_IMAGE_PART_LABELS: ImagePartLabels = {
 };
 
 export const PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS: ImagePartLabels = {
-  extraFirst: 'Image: STYLE REFERENCE (copy lighting, background, contrast, and color grade only).',
+  extraFirst:
+    'Image: REFERENCE PHOTO — target website style (installed look, framing, ceiling, lighting mood). Do not copy this fixture.',
   extraOther: (index) => `Image: extra reference ${index + 1}.`,
   sourceWithExtras:
-    'Image: PRODUCT PHOTO (keep this fixture identity, shape, finish, and viewpoint).',
-  sourceOnly: 'Image: product photograph.',
+    'Image: ORIGINAL PHOTO — the product shot of this fixture. Keep this identity, shape, finish, and viewpoint.',
+  sourceOnly: 'Image: ORIGINAL PHOTO — the product shot of this fixture.',
 };
 
 const XAI_IMAGE_MODEL = 'grok-imagine-image-quality';

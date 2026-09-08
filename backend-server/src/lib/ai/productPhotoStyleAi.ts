@@ -3,6 +3,7 @@ import {
   generateOrEditImage,
   PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS,
 } from './aiImageGeneration';
+import { describeOriginalProductPhoto } from './productPhotoDescribeAi';
 import { fillProductPhotoStylePrompt } from './productPhotoStylePrompts';
 import {
   getOrCreateAiSettings,
@@ -15,6 +16,7 @@ import { readProductPhotoStyleDataUrl } from './aiStyleImage';
 export async function stylizeProductPhoto(opts: {
   imageDataUrl?: string;
   imageUrl?: string;
+  fixtureDescription?: string;
 }): Promise<{ imageDataUrl: string; mimeType: string }> {
   const sourceImageDataUrl = await resolveAiSourceImageDataUrl(opts);
   const creds = await requireImageAiCredentials('product_photo_edit');
@@ -24,9 +26,13 @@ export async function stylizeProductPhoto(opts: {
   const styleImageDataUrl = await compactAiImageDataUrl(styleRaw);
   const hints = await getParsingHints();
   const template = await getProductPhotoStylePromptTemplate();
+  const photoDescription = await describeOriginalProductPhoto({
+    imageDataUrl: sourceImageDataUrl,
+    fixtureDescription: opts.fixtureDescription,
+  });
   const result = await generateOrEditImage({
     creds,
-    prompt: fillProductPhotoStylePrompt(template, hints),
+    prompt: fillProductPhotoStylePrompt(template, hints, opts.fixtureDescription, photoDescription),
     sourceImageDataUrl,
     extraImageDataUrls: [styleImageDataUrl],
     imagePartLabels: PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS,

@@ -422,7 +422,7 @@ export default function AiSettingsPage() {
                   data-help-key="admin.ai.product_photo_style_prompt"
                   title="Template sent when matching catalog style on Main A or Main B."
                   className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"
-                  rows={10}
+                  rows={18}
                   value={productPhotoStylePrompt}
                   onChange={(event) => setProductPhotoStylePrompt(event.target.value)}
                 />

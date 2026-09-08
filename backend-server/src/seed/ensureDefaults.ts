@@ -26,6 +26,9 @@ import {
   productCodePrefix,
 } from '../lib/productCode';
 import { rewriteLegacyLumenPlaceholders } from '../lib/shared/description-phrase';
+import AiProviderSettings from '../models/AiProviderSettings';
+import { AI_PROVIDER_SETTINGS_ID } from '../lib/ai/aiConstants';
+import { isLegacyProductPhotoStylePrompt } from '../lib/ai/productPhotoStylePrompts';
 import {
   DEFAULT_COMPANY_NAME,
   DEFAULT_COMPANY_SHORT_NAME,
@@ -536,7 +539,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.ai.product_photo_style_prompt',
     title: 'Catalog photo style prompt',
-    body: 'Template sent when matching catalog style on Main A or Main B. A lock is always prepended so the style photo is look-only. Placeholder: {{hints_line}}.',
+    body: 'Template sent when matching catalog style on Main A or Main B. The model first describes the original photo, then follows cutout / polish / place-in-scene steps. A lock is always prepended so the style photo is look-only. The filled series phrase and that photo description are always sent. Placeholder: {{hints_line}}.',
   },
   {
     helpKey: 'admin.ai.product_photo_style_prompt_reset',
@@ -546,7 +549,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.photo_style_match',
     title: 'Match catalog style',
-    body: 'Optional. Restyle this saved Main A or Main B photo to the catalog style on /admin/ai. The button stays on filled Main A and Main B. Preview first; Apply replaces the slot. Close keeps the original. If no catalog style photo is stored, open /admin/ai and upload one first.',
+    body: 'Optional. Restyle this saved Main A or Main B photo to the catalog style on /admin/ai. The model first describes the original photo, then cutout / polish / place it in the reference scene. Sends the filled Phrase template as the fixture’s physical description (this size pack plus the other series tags). The button stays on filled Main A and Main B. Preview first; Apply replaces the slot. Close keeps the original. If no catalog style photo is stored, open /admin/ai and upload one first.',
   },
   {
     helpKey: 'admin.product_series.photo_style_apply',
@@ -1868,6 +1871,10 @@ export async function ensureAiSettingsColumns(): Promise<void> {
       type: DataTypes.TEXT,
       allowNull: true,
     });
+  }
+  const row = await AiProviderSettings.findByPk(AI_PROVIDER_SETTINGS_ID);
+  if (row && isLegacyProductPhotoStylePrompt(String(row.get('product_photo_style_prompt') || ''))) {
+    await row.update({ product_photo_style_prompt: '' });
   }
 }
 

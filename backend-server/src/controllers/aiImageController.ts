@@ -99,8 +99,12 @@ export const postGenerateAppearancePhoto = async (req: Request, res: Response) =
 
 export const postStylizeProductPhoto = async (req: Request, res: Response) => {
   try {
-    const { imageDataUrl, imageUrl } = (req.body || {}) as { imageDataUrl?: string; imageUrl?: string };
-    const result = await stylizeProductPhoto({ imageDataUrl, imageUrl });
+    const { imageDataUrl, imageUrl, fixtureDescription } = (req.body || {}) as {
+      imageDataUrl?: string;
+      imageUrl?: string;
+      fixtureDescription?: string;
+    };
+    const result = await stylizeProductPhoto({ imageDataUrl, imageUrl, fixtureDescription });
     res.json(result);
   } catch (error) {
     respondAiFailure(res, error);

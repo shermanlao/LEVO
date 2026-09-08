@@ -27,7 +27,10 @@ import {
 } from '../lib/ai/resolveCredentials';
 import { summarizeAiUsage } from '../lib/ai/aiUsage';
 import { testAiConnection } from '../lib/ai/aiImageGeneration';
-import { DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT } from '../lib/ai/productPhotoStylePrompts';
+import {
+  DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT,
+  resolveProductPhotoStylePromptTemplate,
+} from '../lib/ai/productPhotoStylePrompts';
 import {
   DEFAULT_SIZE_DRAWING_PROMPT,
   DEFAULT_SIZE_DRAWING_REFINE_PROMPT,
@@ -58,8 +61,9 @@ function serializeSettings() {
         String(row.get('size_drawing_refine_prompt') || '').trim() || DEFAULT_SIZE_DRAWING_REFINE_PROMPT,
       size_drawing_prompt_default: DEFAULT_SIZE_DRAWING_PROMPT,
       size_drawing_refine_prompt_default: DEFAULT_SIZE_DRAWING_REFINE_PROMPT,
-      product_photo_style_prompt:
-        String(row.get('product_photo_style_prompt') || '').trim() || DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT,
+      product_photo_style_prompt: resolveProductPhotoStylePromptTemplate(
+        row.get('product_photo_style_prompt')
+      ),
       product_photo_style_prompt_default: DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT,
       size_drawing_style_image: resolveSizeDrawingStylePathOnDisk(
         String(row.get('size_drawing_style_image') || '')

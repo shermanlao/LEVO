@@ -60,6 +60,44 @@ function fillSegment(text: string, specs: Record<string, unknown>, dropIfMissing
   return replaced.replace(/\s+/g, ' ').replace(/\s+([,;:.])/g, '$1').trim() || null;
 }
 
+function joinPhraseValues(values: unknown[]): string | undefined {
+  const unique = [
+    ...new Set(values.map((value) => String(value ?? '').trim()).filter(Boolean)),
+  ];
+  return unique.length ? unique.join(' / ') : undefined;
+}
+
+/** Build a phrase spec from series option drafts. Size / cutout come from the current size pack. */
+export function phraseSpecFromOptionDrafts(
+  drafts: Record<string, Array<Record<string, unknown>>>,
+  pack?: { value?: unknown; dimensions?: unknown; cutout_size?: unknown }
+): Record<string, unknown> {
+  const spec: Record<string, unknown> = {};
+  for (const [kind, rows] of Object.entries(drafts || {})) {
+    if (!Array.isArray(rows) || !rows.length) continue;
+    if (kind === 'size' || kind === 'dimensions' || kind === 'cutout_size') continue;
+    if (kind === 'wattage') {
+      const wattage = joinPhraseValues(rows.map((row) => row.value));
+      const lumen = joinPhraseValues(rows.map((row) => row.lumen));
+      const systemLumen = joinPhraseValues(rows.map((row) => row.system_lumen));
+      if (wattage) spec.wattage = wattage;
+      if (lumen) spec.lumen = lumen;
+      if (systemLumen) spec.system_lumen = systemLumen;
+      continue;
+    }
+    const joined = joinPhraseValues(rows.map((row) => row.value));
+    if (joined) spec[kind] = joined;
+  }
+  const size = String(pack?.dimensions || pack?.value || '').trim();
+  const cutout = String(pack?.cutout_size || '').trim();
+  if (size) {
+    spec.size = size;
+    spec.dimensions = String(pack?.dimensions || pack?.value || '').trim();
+  }
+  if (cutout) spec.cutout_size = cutout;
+  return spec;
+}
+
 /** Fill `{{wattage}}` / `{{cct}}` blanks from a combo spec. Drops semicolon clauses whose specs are missing. */
 export function fillPhraseTemplate(template: unknown, specs: Record<string, unknown>): string {
   const raw = String(template || '').trim();

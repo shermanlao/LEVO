@@ -25,11 +25,11 @@ Upload one house-style product photo on `/admin/ai` (**Catalog photo style**). T
 
 On `/admin/product-series/[id]`, size-pack **Main A** and **Main B** stage the cropped vendor file on the form. **Save variants** writes those paths. Filled Main A / Main B show **Match catalog style**. If no catalog style photo is stored, the button explains that `/admin/ai` needs one first. Staff can ignore it. The button:
 
-1. Sends a JPEG (longest edge 1600) plus the stored path to `POST /api/admin/ai/stylize-product-photo`. The API also shrinks the catalog style reference and fills the stored **Catalog photo style prompt** from `/admin/ai` (`{{hints_line}}`; empty uses the built-in default). A lock is always prepended so xAI edits the **product** as `<IMAGE_0>` and uses the style photo as `<IMAGE_1>` look-only. One photo uses `image: { url, type }`; two use `image: ["data:…", "data:…"]`.
+1. Sends a JPEG (longest edge 1600) plus the stored path and the filled **Phrase template** (`fixtureDescription`) to `POST /api/admin/ai/stylize-product-photo`. The phrase uses this size pack’s dimensions / cutout and joins the other series tags (`phraseSpecFromOptionDrafts`). The API first asks a chat/vision model to **describe the original photo**, then shrinks the catalog style reference and fills the stored **Catalog photo style prompt** from `/admin/ai` (`{{hints_line}}`; empty or the old restyle default uses the built-in 3-step prompt). A lock is always prepended so xAI treats `<IMAGE_0>` as the **ORIGINAL PHOTO** and `<IMAGE_1>` as the **REFERENCE PHOTO** (look/scene only). The filled phrase and that photo description are always injected. The default prompt is: remove hidden install parts and cut out; polish the cutout only; place it into the reference-style surround at real-world scale. One photo uses `image: { url, type }`; two use `image: ["data:…", "data:…"]`.
 2. Shows a preview. **Apply** replaces the slot. **Reset** or Close keeps the original upload
 3. Failures show the provider message (not a generic “Server error”). “Saved key cannot be read” means the xAI/Google key on `/admin/ai` is stored but cannot be decrypted — paste it again and Test connection. A missing catalog style photo is a separate 400.
 
-The model copies lighting, background, contrast, and color grade. It must keep this fixture, finish, and viewpoint — not flatten to a size drawing. Appearance, featured, and project slots are unchanged.
+The model copies the reference website style (ceiling/wall, camera distance, grading) after a clean cutout. It must keep this fixture’s identity from the original photo plus the phrase and the AI photo description — not flatten to a size drawing or paste the reference product. Appearance, featured, and project slots are unchanged.
 
 ## Providers
 
@@ -50,7 +50,7 @@ On `/admin/variant-options`, each datasheet square (IP, warranty, voltage, or a 
 - `POST /api/admin/ai/refine-size-drawing` `{ imageDataUrl, size, cuthole?, instruction }`
 - `POST /api/admin/ai/generate-appearance-photo` `{ imageDataUrl, colour?, trim_color?, reflector_finish? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/edit-product-photo` `{ imageDataUrl, instruction, photoType? }`
-- `POST /api/admin/ai/stylize-product-photo` `{ imageDataUrl, imageUrl? }` — optional Main A / B restyle. Send a data URL and/or a local `/images/` or `/uploads/` path. 400 if no catalog style photo is stored.
+- `POST /api/admin/ai/stylize-product-photo` `{ imageDataUrl, imageUrl?, fixtureDescription? }` — optional Main A / B restyle. Send a data URL and/or a local `/images/` or `/uploads/` path, plus the filled series phrase. The server describes the original photo first, then runs the 3-step style prompt. 400 if no catalog style photo is stored.
 - `POST /api/admin/ai/generate-datasheet-label` `{ text, instruction?, imageDataUrl? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/generate-description-phrase` `{ guide, seriesName, typeName?, fields?, existing? }` → `{ phrase }`
 

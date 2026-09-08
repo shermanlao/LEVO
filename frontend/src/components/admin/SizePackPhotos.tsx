@@ -31,6 +31,7 @@ type SizePackPhotosProps = {
   images: SizePackImages;
   size?: string;
   cuthole?: string;
+  fixtureDescription?: string;
   mounting?: string;
   onChanged: (images: SizePackImages) => void;
   onMainAUploaded?: (info: { productId?: number; imagePath: string }) => void;
@@ -42,6 +43,7 @@ export default function SizePackPhotos({
   images,
   size = '',
   cuthole = '',
+  fixtureDescription = '',
   mounting = '',
   onChanged,
   onMainAUploaded,
@@ -52,19 +54,17 @@ export default function SizePackPhotos({
   const [focusOpen, setFocusOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [croppedDataUrl, setCroppedDataUrl] = useState('');
-  const [hasPhotoStyle, setHasPhotoStyle] = useState(false);
+  const [hasPhotoStyle, setHasPhotoStyle] = useState<boolean | null>(null);
   const [styleField, setStyleField] = useState<'main_image_A' | 'main_image_B' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     void fetch('/api/admin/ai/settings', { cache: 'no-store' })
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!cancelled) setHasPhotoStyle(Boolean(data.data?.product_photo_style_image));
+        if (!cancelled && data) setHasPhotoStyle(Boolean(data.data?.product_photo_style_image));
       })
-      .catch(() => {
-        if (!cancelled) setHasPhotoStyle(false);
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -159,21 +159,7 @@ export default function SizePackPhotos({
               <AdminPhotoSlot src={src} alt={field.label} />
             </ImageFileIntake>
             <div className="flex flex-wrap items-center gap-2">
-              <label className="btn-secondary text-xs py-1 px-2 cursor-pointer">
-                {busy === field.key ? 'Uploading…' : 'Upload'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  data-help-key={field.helpKey}
-                  disabled={busy != null}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    event.target.value = '';
-                    if (file) takePhotoFile(field.key, file);
-                  }}
-                />
-              </label>
+              {busy === field.key ? <span className="text-xs text-gray-500">Uploading…</span> : null}
               {field.key === 'size_image' ? (
                 <Button
                   helpKey="admin.product_series.size_drawing_ai"
@@ -185,13 +171,20 @@ export default function SizePackPhotos({
                   Generate by AI
                 </Button>
               ) : null}
-              {hasPhotoStyle && src && (field.key === 'main_image_A' || field.key === 'main_image_B') ? (
+              {src && (field.key === 'main_image_A' || field.key === 'main_image_B') ? (
                 <Button
                   helpKey="admin.product_series.photo_style_match"
                   variant="secondary"
                   className="text-xs py-1 px-2"
                   disabled={busy != null}
-                  onClick={() => setStyleField(field.key)}
+                  onClick={() => {
+                    if (hasPhotoStyle === false) {
+                      setError('Upload a catalog photo style on /admin/ai first.');
+                      return;
+                    }
+                    setError(null);
+                    setStyleField(field.key);
+                  }}
                 >
                   Match catalog style
                 </Button>
@@ -240,6 +233,7 @@ export default function SizePackPhotos({
         open={Boolean(styleField && stylePhotoUrl)}
         imageUrl={stylePhotoUrl || ''}
         photoType={styleField || 'main_image_A'}
+        fixtureDescription={fixtureDescription}
         onClose={() => setStyleField(null)}
         onApply={async (file) => {
           if (!styleField) return;

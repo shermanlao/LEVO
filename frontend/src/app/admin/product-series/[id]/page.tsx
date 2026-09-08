@@ -17,7 +17,7 @@ import { adminFetchJson } from '@/lib/admin-fetch';
 import { productMatchesSize } from '@shared/series-options';
 import { parseDatasheetLabels, type DatasheetLabel } from '@shared/datasheet-labels';
 import { APPEARANCE_NA, isAppearanceNa, isAppearanceKind, type AppearancePhotoDto } from '@shared/appearance-photos';
-import { PHRASE_PLACEHOLDER_FIELDS } from '@shared/description-phrase';
+import { fillPhraseTemplate, phraseSpecFromOptionDrafts, PHRASE_PLACEHOLDER_FIELDS } from '@shared/description-phrase';
 import { asStrapiEntity } from '@/lib/strapi-entity';
 import {
   groupCatalogByKind,
@@ -497,6 +497,10 @@ export default function SeriesVariantEditorPage() {
                               }}
                               size={optionText(row.dimensions) || optionText(row.value)}
                               cuthole={optionText(row.cutout_size)}
+                              fixtureDescription={fillPhraseTemplate(
+                                descriptionPhrase,
+                                phraseSpecFromOptionDrafts(drafts, row)
+                              )}
                               mounting={(drafts.mounting_type || [])
                                 .map((item) => optionText(item.value))
                                 .filter(Boolean)

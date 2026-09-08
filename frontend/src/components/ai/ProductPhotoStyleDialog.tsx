@@ -9,6 +9,7 @@ type Props = {
   open: boolean;
   imageUrl: string;
   photoType: string;
+  fixtureDescription?: string;
   onClose: () => void;
   onApply: (file: File) => Promise<void>;
 };
@@ -17,6 +18,7 @@ export default function ProductPhotoStyleDialog({
   open,
   imageUrl,
   photoType,
+  fixtureDescription = '',
   onClose,
   onApply,
 }: Props) {
@@ -44,6 +46,7 @@ export default function ProductPhotoStyleDialog({
           body: JSON.stringify({
             imageDataUrl,
             imageUrl: imageUrl.startsWith('data:') ? undefined : imageUrl,
+            fixtureDescription: fixtureDescription.trim() || undefined,
           }),
         });
         const data = await res.json().catch(() => ({} as { error?: string; imageDataUrl?: string }));
@@ -61,7 +64,7 @@ export default function ProductPhotoStyleDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, imageUrl]);
+  }, [open, imageUrl, fixtureDescription]);
 
   if (!open) return null;
 
@@ -82,7 +85,8 @@ export default function ProductPhotoStyleDialog({
     >
       <div className="space-y-3">
         <p className="text-sm text-gray-600">
-          Optional preview. Apply replaces this slot. Close or Reset keeps the original upload.
+          The model first describes this photo, then cutout / polish / places it in the catalog style
+          scene. Apply replaces this slot. Close or Reset keeps the original upload.
         </p>
         <div className="flex flex-wrap gap-2">
           <HelpButton
