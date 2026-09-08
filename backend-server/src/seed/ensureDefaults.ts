@@ -454,7 +454,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.products.size_ai',
     title: 'Generate size drawing',
-    body: 'Create a 2D size drawing from Main A and Size Dimensions. Recessed fixtures also need Cut Hole Size. On the series size pack, use Generate by AI. Configure AI keys under Admin → AI settings.',
+    body: 'Create a 2D size drawing from Main A, Size Dimensions, and the series Description plus filled Phrase template. Recessed fixtures also need Cut Hole Size. On the series size pack, use Generate by AI. Configure AI keys under Admin → AI settings.',
   },
   {
     helpKey: 'admin.products.photo_ai',
@@ -499,12 +499,12 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.ai.size_drawing_prompt',
     title: 'Size drawing prompt',
-    body: 'Template sent when generating a size drawing. A 2D elevation lock is always prepended so the 3D product photo is not copied as an isometric sketch. Placeholders: {{size}}, {{cuthole_line}}, {{hints_line}}.',
+    body: 'Template sent when generating a size drawing. A 2D elevation lock is always prepended so the 3D product photo is not copied as an isometric sketch. The series Description and filled Phrase template are always injected. Placeholders: {{size}}, {{cuthole_line}}, {{description_line}}, {{phrase_line}}, {{hints_line}}.',
   },
   {
     helpKey: 'admin.ai.size_drawing_refine_prompt',
     title: 'Size drawing refine prompt',
-    body: 'Template sent when refining a size drawing from chat. If the current drawing is 3D, refine flattens it to a 2D elevation. Placeholders: {{instruction}}, {{size}}, {{cuthole_line}}, {{hints_line}}.',
+    body: 'Template sent when refining a size drawing from chat. If the current drawing is 3D, refine flattens it to a 2D elevation. The series Description and filled Phrase template are always injected. Placeholders: {{instruction}}, {{size}}, {{cuthole_line}}, {{description_line}}, {{phrase_line}}, {{hints_line}}.',
   },
   {
     helpKey: 'admin.ai.size_drawing_prompt_reset',
@@ -1099,7 +1099,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_drawing_ai',
     title: 'Generate by AI',
-    body: 'Create a 2D size drawing from Main A, Dimensions, and Cutout when the series is recessed. Crop the fixture, then Apply to save. Configure AI keys under Admin → AI settings.',
+    body: 'Create a 2D size drawing from Main A, Dimensions, Cutout when the series is recessed, plus the series Description and filled Phrase template. Crop the fixture, then Apply to save. Configure AI keys under Admin → AI settings.',
   },
   {
     helpKey: 'admin.product_series.size_drawing_ai_focus',

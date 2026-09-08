@@ -497,6 +497,7 @@ export default function SeriesVariantEditorPage() {
                               }}
                               size={optionText(row.dimensions) || optionText(row.value)}
                               cuthole={optionText(row.cutout_size)}
+                              description={description}
                               fixtureDescription={fillPhraseTemplate(
                                 descriptionPhrase,
                                 phraseSpecFromOptionDrafts(drafts, row)

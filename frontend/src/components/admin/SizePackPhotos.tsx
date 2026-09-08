@@ -31,6 +31,7 @@ type SizePackPhotosProps = {
   images: SizePackImages;
   size?: string;
   cuthole?: string;
+  description?: string;
   fixtureDescription?: string;
   mounting?: string;
   onChanged: (images: SizePackImages) => void;
@@ -43,6 +44,7 @@ export default function SizePackPhotos({
   images,
   size = '',
   cuthole = '',
+  description = '',
   fixtureDescription = '',
   mounting = '',
   onChanged,
@@ -221,6 +223,8 @@ export default function SizePackPhotos({
         croppedDataUrl={croppedDataUrl}
         size={drawingSize}
         cuthole={drawingCuthole || undefined}
+        description={description}
+        fixtureDescription={fixtureDescription}
         onClose={() => {
           setAiOpen(false);
           setCroppedDataUrl('');

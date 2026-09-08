@@ -11,6 +11,8 @@ type Props = {
   croppedDataUrl: string;
   size: string;
   cuthole?: string | null;
+  description?: string | null;
+  fixtureDescription?: string | null;
   onClose: () => void;
   onApply: (file: File) => Promise<void>;
 };
@@ -20,6 +22,8 @@ export default function SizeDrawingAiDialog({
   croppedDataUrl,
   size,
   cuthole,
+  description,
+  fixtureDescription,
   onClose,
   onApply,
 }: Props) {
@@ -43,6 +47,8 @@ export default function SizeDrawingAiDialog({
           imageDataUrl: refine ? preview || croppedDataUrl : croppedDataUrl,
           size,
           cuthole,
+          description: description?.trim() || undefined,
+          fixtureDescription: fixtureDescription?.trim() || undefined,
           instruction: refine,
         }),
       });
@@ -91,6 +97,11 @@ export default function SizeDrawingAiDialog({
           Dimensions: {size}
           {cuthole ? ` · Cut hole: ${cuthole}` : ''}
         </p>
+        {description?.trim() || fixtureDescription?.trim() ? (
+          <p className="text-xs text-gray-500 whitespace-pre-line">
+            {[description?.trim(), fixtureDescription?.trim()].filter(Boolean).join('\n')}
+          </p>
+        ) : null}
         <textarea
           className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
           rows={4}

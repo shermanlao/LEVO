@@ -1,12 +1,14 @@
 import { generateOrEditImage, SIZE_DRAWING_IMAGE_PART_LABELS } from './aiImageGeneration';
 import { getOrCreateAiSettings, getParsingHints, getSizeDrawingPromptTemplates, requireImageAiCredentials } from './resolveCredentials';
-import { fillPromptTemplate, SIZE_DRAWING_STYLE_LOCK, SIZE_DRAWING_VIEW_LOCK, sizeDrawingPromptVars } from './sizeDrawingPrompts';
+import { fillSizeDrawingPrompt, SIZE_DRAWING_STYLE_LOCK, SIZE_DRAWING_VIEW_LOCK } from './sizeDrawingPrompts';
 import { readSizeDrawingStyleDataUrl } from './sizeDrawingStyleImage';
 
 export async function generateSizeDrawing(opts: {
   imageDataUrl: string;
   size: string;
   cuthole?: string | null;
+  description?: string | null;
+  fixtureDescription?: string | null;
   refineInstruction?: string | null;
 }): Promise<{ imageDataUrl: string; mimeType: string }> {
   if (!opts.size?.trim()) throw new Error('Size dimensions are required');
@@ -19,15 +21,14 @@ export async function generateSizeDrawing(opts: {
   const styleImageDataUrl = readSizeDrawingStyleDataUrl(String(row.get('size_drawing_style_image') || ''));
   const prompt = [
     styleImageDataUrl ? SIZE_DRAWING_STYLE_LOCK : SIZE_DRAWING_VIEW_LOCK,
-    fillPromptTemplate(
-      opts.refineInstruction?.trim() ? templates.refine : templates.generate,
-      sizeDrawingPromptVars({
-        size: opts.size,
-        cuthole: opts.cuthole,
-        hints,
-        instruction: opts.refineInstruction,
-      })
-    ),
+    fillSizeDrawingPrompt(opts.refineInstruction?.trim() ? templates.refine : templates.generate, {
+      size: opts.size,
+      cuthole: opts.cuthole,
+      hints,
+      instruction: opts.refineInstruction,
+      description: opts.description,
+      fixtureDescription: opts.fixtureDescription,
+    }),
   ].join('\n');
   const result = await generateOrEditImage({
     creds,

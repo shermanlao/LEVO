@@ -23,6 +23,8 @@ export const DEFAULT_SIZE_DRAWING_PROMPT = [
   'Keep a plain white or transparent background. No lifestyle scenes, shadows, logos, or marketing copy.',
   'Canonical size dimensions (these are the ONLY measurement strings allowed on the drawing): {{size}}',
   '{{cuthole_line}}',
+  '{{description_line}}',
+  '{{phrase_line}}',
   '{{hints_line}}',
 ].join('\n');
 
@@ -40,6 +42,8 @@ export const DEFAULT_SIZE_DRAWING_REFINE_PROMPT = [
   'Keep a plain white or transparent background. No lifestyle scenes, shadows, logos, or marketing copy.',
   'Canonical size dimensions (these are the ONLY measurement strings allowed on the drawing): {{size}}',
   '{{cuthole_line}}',
+  '{{description_line}}',
+  '{{phrase_line}}',
   '{{hints_line}}',
   'Output a clearly updated 2D elevation that visibly reflects the requested change, with correct dimension labels only.',
 ].join('\n');
@@ -56,9 +60,13 @@ export function sizeDrawingPromptVars(opts: {
   cuthole?: string | null;
   hints?: string | null;
   instruction?: string | null;
+  description?: string | null;
+  fixtureDescription?: string | null;
 }): Record<string, string> {
   const cuthole = opts.cuthole?.trim() || '';
   const hints = opts.hints?.trim() || '';
+  const description = opts.description?.trim() || '';
+  const phrase = opts.fixtureDescription?.trim() || '';
   return {
     size: opts.size.trim(),
     cuthole,
@@ -66,5 +74,33 @@ export function sizeDrawingPromptVars(opts: {
     hints,
     hints_line: hints ? `Organization notes: ${hints}` : '',
     instruction: opts.instruction?.trim() || '',
+    description,
+    description_line: description
+      ? `PRODUCT DESCRIPTION (series copy for form/mounting identity only; do not paint this text on the drawing): ${description}`
+      : '',
+    phrase,
+    phrase_line: phrase
+      ? `FIXTURE PHRASE (filled series phrase for identity only; do not paint this text on the drawing): ${phrase}`
+      : '',
   };
+}
+
+export function fillSizeDrawingPrompt(
+  template: string,
+  opts: {
+    size: string;
+    cuthole?: string | null;
+    hints?: string | null;
+    instruction?: string | null;
+    description?: string | null;
+    fixtureDescription?: string | null;
+  }
+): string {
+  const vars = sizeDrawingPromptVars(opts);
+  const body = fillPromptTemplate(template, {
+    ...vars,
+    description_line: '',
+    phrase_line: '',
+  });
+  return [vars.description_line, vars.phrase_line, body].filter(Boolean).join('\n');
 }

@@ -20,7 +20,7 @@ LEVO keeps duplicated logic in one place instead of copying it across the Next.j
 | `production-secrets.ts` | Local default names, production fail-fast, `INTERNAL_API_HEADER` |
 | `safe-href.ts` | `safeHttpUrl` / `safePublicHref` for stored links |
 | `image-magic.ts` | JPEG/PNG/GIF/WebP magic-byte check |
-| `admin-roles.ts` | `system` / `admin` / `operation`, page keys, default matrix, path → page mapping, and `roleCanOpenPage` |
+| `admin-roles.ts` | `system` / `admin` / `operation`, page keys, default matrix, path → page mapping, `roleCanOpenPage`, `pagesForAiApi` (catalog generate vs AI settings), and `matrixWithNewDefaultPages` |
 | `admin-session-cookie.ts` | HMAC cookie create/verify (`username.role.exp.epoch.sig`), `safeAdminNextPath`, `adminLoginHref`, and `cookieIsSecure` (`Secure` only for HTTPS `SITE_ORIGIN`) |
 | `admin-backend-path.ts` | Admin BFF path allowlist; public catalog GET/HEAD vs 405 |
 
@@ -29,7 +29,7 @@ Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend w
 ## Frontend data clients
 
 - `sqlite-api.ts` — server catalog/projects/contact reads; `getFeaturedSeries`; `getDatasheetUrl` / `getInstallationUrl` / `getLdtUrl` / `getSeriesDatasheetUrl` / `getSeriesFamilyDatasheetUrl` / `getSeriesInstallationUrl` / `getSeriesLdtUrl` / `getSeriesPolarUrl` / `getProductLabelUrl` / `getGeneralLabelUrl` for catalog and admin downloads
-- `admin-backend.ts` — session-gated BFF proxy to Express (`requireAdminSession` / `requirePageAccess` / `requireAdminRole`), plus `createPublicCatalogProxy` / `createAdminProxy`
+- `admin-backend.ts` — session-gated BFF proxy to Express (`requireAdminSession` / `requirePageAccess` / `requireAnyPageAccess` / `requireAdminRole`), plus `createPublicCatalogProxy` / `createAdminProxy` (`pageKey` or `pageKeys`)
 - `admin-fetch.ts` — browser `adminFetchJson` / `uploadAdminImage`
 - `admin-nav.ts` — Catalog / Projects / Settings / AI / Users sections for the admin header menus and dashboard shortcut cards, filtered by role page access
 - `use-admin-me.ts` — shared `/api/admin/me` fetch (username, role, pages) for the header and admin page gate. Distinguishes `unauthorized` (send to login) from `unreachable` (API down).
@@ -60,7 +60,8 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `ai/aiStyleImage.ts` — size-drawing and catalog photo style files under `/images/ai/`
 - `ai/aiImageDataUrl.ts` — parse/compact AI image data URLs (JPEG, max edge 1600) and read a local public product photo from disk
 - `ai/aiImageGeneration.ts` — xAI Imagine / Google image generate-or-edit. xAI `/images/edits` uses `image: { url, type }` for one photo and `image: [data URI, …]` for two or more (`assignXaiEditImages`). Catalog style match sets `sourceFirst` so the product is `<IMAGE_0>`; size drawing still sends the style drawing first.
-- `ai/productPhotoStylePrompts.ts` — 3-step catalog style-match template (cutout / polish / place-in-scene), look-only lock, `{{hints_line}}`, filled phrase, and original-photo description (`fillProductPhotoStylePrompt`)
+- `ai/sizeDrawingPrompts.ts` — 2D elevation lock, generate/refine templates, and `fillSizeDrawingPrompt` (always injects series Description and filled phrase)
+- `ai/productPhotoStylePrompts.ts` — 3-step catalog style-match template (cutout / polish / place-in-scene), look-only lock, `{{hints_line}}`, `{{placeholder_size}}` (square 1:1, 1600×1600), filled phrase, and original-photo description (`fillProductPhotoStylePrompt`)
 - `ai/productPhotoDescribeAi.ts` — chat/vision look at the original product photo before Imagine restyles it
 - `ai/aiUsage.ts` — `/admin/ai` usage: xAI billed ticks (÷ 10¹⁰), Google image token estimates, rewrite of old ticks÷1e6 rows
 - List `GET /api/product-series` uses a light serializer (one catalog load, batched options, no appearance photos). Detail `by-slug` / `:id` stays full.

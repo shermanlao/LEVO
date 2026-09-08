@@ -27,12 +27,20 @@ function respondAiFailure(res: Response, error: unknown) {
 
 export const postGenerateSizeDrawing = async (req: Request, res: Response) => {
   try {
-    const { imageDataUrl, size, cuthole } = (req.body || {}) as {
+    const { imageDataUrl, size, cuthole, description, fixtureDescription } = (req.body || {}) as {
       imageDataUrl?: string;
       size?: string;
       cuthole?: string | null;
+      description?: string | null;
+      fixtureDescription?: string | null;
     };
-    const result = await generateSizeDrawing({ imageDataUrl: imageDataUrl || '', size: size || '', cuthole });
+    const result = await generateSizeDrawing({
+      imageDataUrl: imageDataUrl || '',
+      size: size || '',
+      cuthole,
+      description,
+      fixtureDescription,
+    });
     res.json(result);
   } catch (error) {
     respondAiFailure(res, error);
@@ -41,16 +49,21 @@ export const postGenerateSizeDrawing = async (req: Request, res: Response) => {
 
 export const postRefineSizeDrawing = async (req: Request, res: Response) => {
   try {
-    const { imageDataUrl, size, cuthole, instruction } = (req.body || {}) as {
+    const { imageDataUrl, size, cuthole, description, fixtureDescription, instruction } = (req.body ||
+      {}) as {
       imageDataUrl?: string;
       size?: string;
       cuthole?: string | null;
+      description?: string | null;
+      fixtureDescription?: string | null;
       instruction?: string;
     };
     const result = await generateSizeDrawing({
       imageDataUrl: imageDataUrl || '',
       size: size || '',
       cuthole,
+      description,
+      fixtureDescription,
       refineInstruction: instruction,
     });
     res.json(result);
