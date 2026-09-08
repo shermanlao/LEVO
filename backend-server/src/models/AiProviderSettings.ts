@@ -16,6 +16,7 @@ AiProviderSettings.init(
     size_drawing_refine_prompt: { type: DataTypes.TEXT, allowNull: true },
     size_drawing_style_image: { type: DataTypes.STRING, allowNull: true },
     product_photo_style_image: { type: DataTypes.STRING, allowNull: true },
+    product_photo_style_prompt: { type: DataTypes.TEXT, allowNull: true },
   },
   {
     sequelize,

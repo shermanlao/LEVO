@@ -21,7 +21,7 @@
 - [Email signature](docs/email-signature.md) — company-only HTML signature for Gmail, Outlook, and Apple Mail
 - [Photometric LDT](docs/photometric-ldt.md) — beam library, saved polar options, public LDT download (product detail and series list), polar drawing on the datasheet
 - [Product photo AI](docs/product-photo-ai.md) — size drawing generate/refine, optional catalog photo style on Main A / B
-- [Admin AI settings](docs/admin-ai-settings.md) — `/admin/ai` keys, routing, failover, usage, size-drawing prompts, size-drawing and catalog photo style references
+- [Admin AI settings](docs/admin-ai-settings.md) — `/admin/ai` keys, routing, failover, usage, size-drawing prompts, catalog photo style prompt, size-drawing and catalog photo style references
 - [Catalog page route](docs/catalog-page-route.md) — shared `Products / …` and `Projects / …` breadcrumb on public product and project pages
 - [Frontend UI](docs/frontend-ui.md) — CSS tokens, Button/FormField/Card, and helpKey
 - [Image crop board](docs/image-cutboard.md) — contain-start cutboard; series featured image is one source plus 16:9 / 4:5 / 1:1 crops

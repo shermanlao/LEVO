@@ -9,6 +9,8 @@ export type AiSettings = {
   size_drawing_refine_prompt_default: string;
   size_drawing_style_image: string | null;
   product_photo_style_image: string | null;
+  product_photo_style_prompt: string;
+  product_photo_style_prompt_default: string;
   key_presence: Record<string, boolean>;
   key_usable: Record<string, boolean>;
   env_key_overrides: boolean;

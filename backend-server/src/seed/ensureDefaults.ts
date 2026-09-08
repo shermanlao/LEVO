@@ -534,9 +534,19 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Clear the catalog photo style. Match catalog style is then hidden on size-pack Main A and Main B.',
   },
   {
+    helpKey: 'admin.ai.product_photo_style_prompt',
+    title: 'Catalog photo style prompt',
+    body: 'Template sent when matching catalog style on Main A or Main B. A lock is always prepended so the style photo is look-only. Placeholder: {{hints_line}}.',
+  },
+  {
+    helpKey: 'admin.ai.product_photo_style_prompt_reset',
+    title: 'Reset catalog photo style prompt',
+    body: 'Replace the catalog style prompt with the built-in default. Click Save to store it.',
+  },
+  {
     helpKey: 'admin.product_series.photo_style_match',
     title: 'Match catalog style',
-    body: 'Optional. Restyle this saved Main A or Main B photo to the catalog style on /admin/ai. Preview first; Apply replaces the slot. Close keeps the original.',
+    body: 'Optional. Restyle this saved Main A or Main B photo to the catalog style on /admin/ai. The button stays on filled Main A and Main B. Preview first; Apply replaces the slot. Close keeps the original. If no catalog style photo is stored, open /admin/ai and upload one first.',
   },
   {
     helpKey: 'admin.product_series.photo_style_apply',
@@ -1071,17 +1081,17 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_photo_a',
     title: 'Size main photo A',
-    body: 'Main photo for this series size. Used on the public option table and datasheet. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same square frame as the product photo slots. Click Save variants to store it on the size pack.',
+    body: 'Main photo for this series size. Used on the public option table and datasheet. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. After a photo is saved, click it to enlarge. The crop board uses the same square frame as the product photo slots. Click Save variants to store it on the size pack.',
   },
   {
     helpKey: 'admin.product_series.size_photo_b',
     title: 'Size main photo B',
-    body: 'Optional second photo for this series size. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. Click Save variants to store it on the size pack.',
+    body: 'Optional second photo for this series size. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. After a photo is saved, click it to enlarge. Click Save variants to store it on the size pack.',
   },
   {
     helpKey: 'admin.product_series.size_drawing',
     title: 'Size drawing',
-    body: 'Dimension drawing for this series size. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. You can also Generate by AI from Main A. Click Save variants to store it on the size pack. Used on datasheets and the option preview.',
+    body: 'Dimension drawing for this series size. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. You can also Generate by AI from Main A. Click Save variants to store it on the size pack. Used on datasheets and the option preview.',
   },
   {
     helpKey: 'admin.product_series.size_drawing_ai',
@@ -1151,7 +1161,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_upload',
     title: 'Upload appearance photo',
-    body: 'Replace this combination with a real product photo. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same square frame as the appearance slot. Staff uploads are not overwritten by Generate missing or Generate all.',
+    body: 'Replace this combination with a real product photo. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. The crop board uses the same square frame as the appearance slot. Staff uploads are not overwritten by Generate missing or Generate all.',
   },
   {
     helpKey: 'admin.product_series.appearance_remove',
@@ -1850,6 +1860,12 @@ export async function ensureAiSettingsColumns(): Promise<void> {
   if (!table.product_photo_style_image) {
     await qi.addColumn('ai_provider_settings', 'product_photo_style_image', {
       type: DataTypes.STRING,
+      allowNull: true,
+    });
+  }
+  if (!table.product_photo_style_prompt) {
+    await qi.addColumn('ai_provider_settings', 'product_photo_style_prompt', {
+      type: DataTypes.TEXT,
       allowNull: true,
     });
   }

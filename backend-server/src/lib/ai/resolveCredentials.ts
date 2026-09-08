@@ -20,6 +20,7 @@ import {
   normalizeImageAiModelId,
   normalizeImageAiProviderId,
 } from './imageAiProviders';
+import { DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT } from './productPhotoStylePrompts';
 import {
   DEFAULT_SIZE_DRAWING_PROMPT,
   DEFAULT_SIZE_DRAWING_REFINE_PROMPT,
@@ -171,4 +172,9 @@ export async function getSizeDrawingPromptTemplates(): Promise<{ generate: strin
     generate: generate || DEFAULT_SIZE_DRAWING_PROMPT,
     refine: refine || DEFAULT_SIZE_DRAWING_REFINE_PROMPT,
   };
+}
+
+export async function getProductPhotoStylePromptTemplate(): Promise<string> {
+  const row = await getOrCreateAiSettings();
+  return String(row.get('product_photo_style_prompt') || '').trim() || DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT;
 }

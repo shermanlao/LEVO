@@ -60,5 +60,6 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `ai/aiStyleImage.ts` — size-drawing and catalog photo style files under `/images/ai/`
 - `ai/aiImageDataUrl.ts` — parse/compact AI image data URLs (JPEG, max edge 1600) and read a local public product photo from disk
 - `ai/aiImageGeneration.ts` — xAI Imagine / Google image generate-or-edit. xAI `/images/edits` uses `image: { url, type }` for one photo and `image: [data URI, …]` for two or more (`assignXaiEditImages`). Catalog style match sets `sourceFirst` so the product is `<IMAGE_0>`; size drawing still sends the style drawing first.
+- `ai/productPhotoStylePrompts.ts` — default catalog style-match template, look-only lock, and `{{hints_line}}` fill (`fillProductPhotoStylePrompt`)
 - `ai/aiUsage.ts` — `/admin/ai` usage: xAI billed ticks (÷ 10¹⁰), Google image token estimates, rewrite of old ticks÷1e6 rows
 - List `GET /api/product-series` uses a light serializer (one catalog load, batched options, no appearance photos). Detail `by-slug` / `:id` stays full.

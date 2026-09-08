@@ -22,6 +22,7 @@ export default function AiSettingsPage() {
   const [sizeDrawingRefinePrompt, setSizeDrawingRefinePrompt] = useState('');
   const [sizeDrawingStyleImage, setSizeDrawingStyleImage] = useState<string | null>(null);
   const [productPhotoStyleImage, setProductPhotoStyleImage] = useState<string | null>(null);
+  const [productPhotoStylePrompt, setProductPhotoStylePrompt] = useState('');
   const [keys, setKeys] = useState<Record<string, string>>({});
   const [routing, setRouting] = useState<AiFeatureRouting>({});
   const [loading, setLoading] = useState(true);
@@ -53,6 +54,7 @@ export default function AiSettingsPage() {
         setSizeDrawingRefinePrompt(row.size_drawing_refine_prompt || '');
         setSizeDrawingStyleImage(row.size_drawing_style_image || null);
         setProductPhotoStyleImage(row.product_photo_style_image || null);
+        setProductPhotoStylePrompt(row.product_photo_style_prompt || '');
         setRouting(row.feature_model_routing || {});
         const usageJson = await usageRes.json();
         if (usageRes.ok && !cancelled) setUsage(usageJson.data);
@@ -80,6 +82,7 @@ export default function AiSettingsPage() {
       parsing_hints: hints,
       size_drawing_prompt: sizeDrawingPrompt,
       size_drawing_refine_prompt: sizeDrawingRefinePrompt,
+      product_photo_style_prompt: productPhotoStylePrompt,
       provider_keys: providerKeys,
       feature_model_routing: routing,
     };
@@ -103,6 +106,7 @@ export default function AiSettingsPage() {
       setSizeDrawingRefinePrompt(data.data.size_drawing_refine_prompt || '');
       setSizeDrawingStyleImage(data.data.size_drawing_style_image || null);
       setProductPhotoStyleImage(data.data.product_photo_style_image || null);
+      setProductPhotoStylePrompt(data.data.product_photo_style_prompt || '');
       setKeys({});
       setMessage('AI settings saved.');
     } catch (err) {
@@ -130,6 +134,7 @@ export default function AiSettingsPage() {
         setSizeDrawingRefinePrompt(data.data.size_drawing_refine_prompt || '');
         setSizeDrawingStyleImage(data.data.size_drawing_style_image || null);
         setProductPhotoStyleImage(data.data.product_photo_style_image || null);
+        setProductPhotoStylePrompt(data.data.product_photo_style_prompt || '');
         setKeys({});
       }
       setMessage(data.message || 'Connected.');
@@ -374,29 +379,54 @@ export default function AiSettingsPage() {
                   setSettings((prev) => (prev ? { ...prev, product_photo_style_image: null } : prev));
                 }}
               />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-gray-700">Size drawing prompt</label>
-                <HelpButton
-                  helpKey="admin.ai.size_drawing_prompt_reset"
-                  type="button"
-                  className="text-sm text-blue-600 hover:underline"
-                  onClick={() =>
-                    setSizeDrawingPrompt(settings.size_drawing_prompt_default || sizeDrawingPrompt)
-                  }
-                >
-                  Reset to default
-                </HelpButton>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-gray-700">Size drawing prompt</label>
+                  <HelpButton
+                    helpKey="admin.ai.size_drawing_prompt_reset"
+                    type="button"
+                    className="text-sm text-blue-600 hover:underline"
+                    onClick={() =>
+                      setSizeDrawingPrompt(settings.size_drawing_prompt_default || sizeDrawingPrompt)
+                    }
+                  >
+                    Reset to default
+                  </HelpButton>
+                </div>
+                <textarea
+                  data-help-key="admin.ai.size_drawing_prompt"
+                  title="Template sent when generating a size drawing."
+                  className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"
+                  rows={10}
+                  value={sizeDrawingPrompt}
+                  onChange={(event) => setSizeDrawingPrompt(event.target.value)}
+                />
               </div>
-              <textarea
-                data-help-key="admin.ai.size_drawing_prompt"
-                title="Template sent when generating a size drawing."
-                className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"
-                rows={10}
-                value={sizeDrawingPrompt}
-                onChange={(event) => setSizeDrawingPrompt(event.target.value)}
-              />
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-gray-700">Catalog photo style prompt</label>
+                  <HelpButton
+                    helpKey="admin.ai.product_photo_style_prompt_reset"
+                    type="button"
+                    className="text-sm text-blue-600 hover:underline"
+                    onClick={() =>
+                      setProductPhotoStylePrompt(
+                        settings.product_photo_style_prompt_default || productPhotoStylePrompt
+                      )
+                    }
+                  >
+                    Reset to default
+                  </HelpButton>
+                </div>
+                <textarea
+                  data-help-key="admin.ai.product_photo_style_prompt"
+                  title="Template sent when matching catalog style on Main A or Main B."
+                  className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"
+                  rows={10}
+                  value={productPhotoStylePrompt}
+                  onChange={(event) => setProductPhotoStylePrompt(event.target.value)}
+                />
+              </div>
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
