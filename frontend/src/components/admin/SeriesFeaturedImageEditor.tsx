@@ -1,15 +1,15 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
+import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
 import ImageCutboard from '@/components/ui/ImageCutboard';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
-import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
 import { extractImageSrc, storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
 import {
+  IMAGE_FRAMES,
   SERIES_FEATURED_SLOTS,
   validateImageFile,
   type SeriesFeaturedSlot,
@@ -35,6 +35,8 @@ type SeriesFeaturedImageEditorProps = {
   seriesId?: number;
   onChange: (next: Partial<SeriesFeaturedPaths>) => void;
   onError?: (message: string) => void;
+  /** List-row thumbnail: drop / paste / choose still opens the three-crop wizard. */
+  layout?: 'full' | 'thumb';
 };
 
 export function seriesFeaturedPathsFromAttrs(attrs?: {
@@ -85,6 +87,7 @@ export default function SeriesFeaturedImageEditor({
   seriesId,
   onChange,
   onError,
+  layout = 'full',
 }: SeriesFeaturedImageEditorProps) {
   const sourceInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -196,6 +199,75 @@ export default function SeriesFeaturedImageEditor({
   }
 
   const currentSlot = wizard ? SERIES_FEATURED_SLOTS[wizard.step] : null;
+  const catalogUrl = toPublicImagePath(paths.featured_image);
+  const thumbUrl = catalogUrl || sourceUrl;
+
+  const replaceInput = (
+    <input
+      ref={replaceInputRef}
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (file) handleReplaceFile(file);
+      }}
+    />
+  );
+
+  const cutboard =
+    wizard && currentSlot ? (
+      <ImageCutboard
+        key={`${wizard.step}:${wizard.src}`}
+        imageSrc={wizard.src}
+        frame={currentSlot.frame}
+        sourceName={wizard.fileName}
+        title={`${currentSlot.title} (${wizard.step + 1}/${SERIES_FEATURED_SLOTS.length})`}
+        hint={`${currentSlot.hint} Starts with the whole photo. Zoom and drag to fill the ${currentSlot.frame.label} frame.`}
+        confirmLabel={
+          wizard.slotOnly || wizard.step === SERIES_FEATURED_SLOTS.length - 1 ? 'Apply crop' : 'Next'
+        }
+        extraActions={
+          <Button
+            helpKey="admin.product_series.featured_different"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => openReplace(currentSlot.slot)}
+          >
+            Use a different image
+          </Button>
+        }
+        onCancel={() => closeWizard()}
+        onConfirm={(file) => void handleSlotCrop(file)}
+      />
+    ) : null;
+
+  if (layout === 'thumb') {
+    return (
+      <div>
+        {replaceInput}
+        <ImageFileIntake
+          enabled={!busy}
+          clickToPick={!thumbUrl}
+          helpKey="admin.product_series.featured_image"
+          onFile={(file) => void handleSourceFile(file)}
+        >
+          <AdminPhotoSlot
+            src={thumbUrl || null}
+            alt="Series catalog photo"
+            compact
+          />
+          {busy ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 text-white text-xs font-medium pointer-events-none">
+              Uploading…
+            </div>
+          ) : null}
+        </ImageFileIntake>
+        {cutboard}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -211,17 +283,7 @@ export default function SeriesFeaturedImageEditor({
           if (file) void handleSourceFile(file);
         }}
       />
-      <input
-        ref={replaceInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          event.target.value = '';
-          if (file) handleReplaceFile(file);
-        }}
-      />
+      {replaceInput}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <HelpButton
           helpKey="admin.product_series.featured_image"
@@ -237,26 +299,21 @@ export default function SeriesFeaturedImageEditor({
         </p>
       </div>
 
-      <AdminHoverPreview src={sourceUrl || null} className="mb-4 w-40">
+      <div className="mb-4 w-40">
         <ImageFileIntake
           enabled={!busy}
           clickToPick={!sourceUrl}
           helpKey="admin.product_series.featured_image"
-          className="w-40"
           onFile={(file) => void handleSourceFile(file)}
         >
-          <div className="relative w-40 h-28 border rounded overflow-hidden bg-gray-50">
-            {sourceUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={sourceUrl} alt="Source photo" className="absolute inset-0 h-full w-full object-contain" />
-            ) : (
-              <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 p-2 text-center">
-                {IMAGE_INTAKE_HINT}
-              </span>
-            )}
-          </div>
+          <AdminPhotoSlot
+            src={sourceUrl || null}
+            alt="Source photo"
+            frameClassName={IMAGE_FRAMES.catalog.className}
+            className="border border-gray-200"
+          />
         </ImageFileIntake>
-      </AdminHoverPreview>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {SERIES_FEATURED_SLOTS.map((slot) => {
@@ -265,78 +322,48 @@ export default function SeriesFeaturedImageEditor({
             <div key={slot.slot} className="border rounded p-3">
               <p className="text-sm font-medium text-gray-800">{slot.title}</p>
               <p className="text-xs text-gray-500 mb-2">{slot.hint}</p>
-              <AdminHoverPreview src={src || null} className="block mb-2">
-                <ImageFileIntake
-                  enabled={!busy}
-                  clickToPick={!src}
-                  helpKey="admin.product_series.featured_replace"
-                  onFile={(file) => {
-                    replaceSlotRef.current = slot.slot;
-                    handleReplaceFile(file);
-                  }}
-                >
-                  <div className={`relative w-full overflow-hidden bg-gray-100 ${slot.frame.className}`}>
-                    {src ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={src} alt={slot.title} className="absolute inset-0 h-full w-full object-cover" />
-                    ) : (
-                      <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-500 p-2 text-center">
-                        {IMAGE_INTAKE_HINT}
-                      </span>
-                    )}
-                  </div>
-                </ImageFileIntake>
-              </AdminHoverPreview>
+              <ImageFileIntake
+                enabled={!busy}
+                clickToPick={!src}
+                helpKey="admin.product_series.featured_replace"
+                className="mb-2"
+                onFile={(file) => {
+                  replaceSlotRef.current = slot.slot;
+                  handleReplaceFile(file);
+                }}
+              >
+                <AdminPhotoSlot src={src || null} alt={slot.title} frameClassName={slot.frame.className} />
+              </ImageFileIntake>
               <div className="flex flex-wrap gap-2">
-                <Button
-                  helpKey="admin.product_series.featured_replace"
-                  variant="secondary"
-                  className="text-xs py-1 px-2"
-                  disabled={busy}
-                  onClick={() => openReplace(slot.slot)}
-                >
-                  {src ? 'Replace photo' : 'Upload photo'}
-                </Button>
-                <Button
-                  helpKey={slot.helpKey}
-                  variant="secondary"
-                  className="text-xs py-1 px-2"
-                  disabled={busy || !sourceUrl}
-                  onClick={() => openAdjust(slot.slot)}
-                >
-                  Adjust crop
-                </Button>
+                {src ? (
+                  <Button
+                    helpKey="admin.product_series.featured_replace"
+                    variant="secondary"
+                    className="text-xs py-1 px-2"
+                    disabled={busy}
+                    onClick={() => openReplace(slot.slot)}
+                  >
+                    Replace photo
+                  </Button>
+                ) : null}
+                {sourceUrl ? (
+                  <Button
+                    helpKey={slot.helpKey}
+                    variant="secondary"
+                    className="text-xs py-1 px-2"
+                    disabled={busy}
+                    onClick={() => openAdjust(slot.slot)}
+                  >
+                    Adjust crop
+                  </Button>
+                ) : null}
               </div>
             </div>
           );
         })}
       </div>
 
-      {wizard && currentSlot ? (
-        <ImageCutboard
-          key={`${wizard.step}:${wizard.src}`}
-          imageSrc={wizard.src}
-          frame={currentSlot.frame}
-          sourceName={wizard.fileName}
-          title={`${currentSlot.title} (${wizard.step + 1}/${SERIES_FEATURED_SLOTS.length})`}
-          hint={`${currentSlot.hint} Starts with the whole photo. Zoom and drag to fill the ${currentSlot.frame.label} frame.`}
-          confirmLabel={
-            wizard.slotOnly || wizard.step === SERIES_FEATURED_SLOTS.length - 1 ? 'Apply crop' : 'Next'
-          }
-          extraActions={
-            <Button
-              helpKey="admin.product_series.featured_different"
-              variant="secondary"
-              disabled={busy}
-              onClick={() => openReplace(currentSlot.slot)}
-            >
-              Use a different image
-            </Button>
-          }
-          onCancel={() => closeWizard()}
-          onConfirm={(file) => void handleSlotCrop(file)}
-        />
-      ) : null}
+      {cutboard}
     </div>
   );
 }

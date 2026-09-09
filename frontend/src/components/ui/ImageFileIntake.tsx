@@ -177,12 +177,14 @@ export default function ImageFileIntake({
         if (!enabled || !clickToPick) return;
         if ((event.target as HTMLElement).closest('button, a, input, label')) return;
         event.preventDefault();
+        event.stopPropagation();
         openFilePicker();
       }}
       onKeyDown={(event) => {
         if (!enabled || !clickToPick) return;
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
+        event.stopPropagation();
         openFilePicker();
       }}
     >

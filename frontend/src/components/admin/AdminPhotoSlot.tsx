@@ -10,6 +10,8 @@ type AdminPhotoSlotProps = {
   /** Keep the square small (appearance rows). Size-pack cells fill their column. */
   compact?: boolean;
   className?: string;
+  /** Override the default square frame, e.g. `aspect-video` for catalog thumbs. */
+  frameClassName?: string;
 };
 
 function HoverEnlarge({ src }: { src: string }) {
@@ -21,32 +23,45 @@ function HoverEnlarge({ src }: { src: string }) {
   );
 }
 
-/** Square admin photo cell: hover shows a larger preview; click opens the lightbox. */
+/** Admin photo cell: hover shows a larger preview; click opens the lightbox. Empty slots show drop / paste / choose. */
 export default function AdminPhotoSlot({
   src,
   alt = '',
   compact = false,
   className = '',
+  frameClassName = 'aspect-square',
 }: AdminPhotoSlotProps) {
   const [hover, setHover] = useState(false);
+  const [enlarged, setEnlarged] = useState(false);
   return (
     <div
-      className={`relative aspect-square bg-gray-50 rounded ${
+      className={`relative bg-gray-50 rounded ${frameClassName} ${
         compact ? 'w-36 sm:w-40 shrink-0' : 'w-full'
       } ${className}`.trim()}
-      onMouseEnter={() => setHover(true)}
+      onMouseEnter={() => {
+        if (!enlarged) setHover(true);
+      }}
       onMouseLeave={() => setHover(false)}
     >
       <div className="absolute inset-0 overflow-hidden rounded bg-gray-50">
         {src ? (
-          <ImageLightbox src={src} alt={alt} preserveAspectRatio unoptimized />
+          <ImageLightbox
+            src={src}
+            alt={alt}
+            preserveAspectRatio
+            unoptimized
+            onOpenChange={(open) => {
+              setEnlarged(open);
+              if (open) setHover(false);
+            }}
+          />
         ) : (
           <div className="h-full flex items-center justify-center text-xs text-gray-400 text-center px-2">
             {IMAGE_INTAKE_HINT}
           </div>
         )}
       </div>
-      {src && hover ? <HoverEnlarge src={src} /> : null}
+      {src && hover && !enlarged ? <HoverEnlarge src={src} /> : null}
     </div>
   );
 }

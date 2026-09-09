@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { shouldSkipImageOptimize } from '@/lib/image-utils';
 
@@ -9,6 +10,7 @@ interface ImageLightboxProps {
   alt: string;
   preserveAspectRatio?: boolean;
   unoptimized?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 function shouldSkipOptimize(src: string, unoptimized?: boolean) {
@@ -20,6 +22,7 @@ export default function ImageLightbox({
   alt,
   preserveAspectRatio = false,
   unoptimized = false,
+  onOpenChange,
 }: ImageLightboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +30,11 @@ export default function ImageLightbox({
   const [isPanning, setIsPanning] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  function setOpen(next: boolean) {
+    setIsOpen(next);
+    onOpenChange?.(next);
+  }
 
   // Reset zoom and position when lightbox is opened or closed
   useEffect(() => {
@@ -38,7 +46,7 @@ export default function ImageLightbox({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsOpen(false);
+        setOpen(false);
       }
     };
 
@@ -85,7 +93,7 @@ export default function ImageLightbox({
       {/* Clickable thumbnail */}
       <div
         className="group relative cursor-pointer w-full h-full"
-        onClick={() => setIsOpen(true)}
+        onClick={() => setOpen(true)}
         aria-label={`Click to enlarge ${alt}`}
       >
         {shouldSkipOptimize(src, unoptimized) ? (
@@ -106,17 +114,18 @@ export default function ImageLightbox({
       </div>
 
       {/* Lightbox modal */}
-      {isOpen && (
+      {isOpen
+        ? createPortal(
         <div 
-          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
-          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-90 z-[80] flex items-center justify-center"
+          onClick={() => setOpen(false)}
         >
           {/* Close button */}
           <button 
             className="overlay-safe-close"
             onClick={(e) => {
               e.stopPropagation();
-              setIsOpen(false);
+              setOpen(false);
             }}
             aria-label="Close enlarged image"
           >
@@ -195,8 +204,10 @@ export default function ImageLightbox({
               )}
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+        : null}
     </>
   );
 } 

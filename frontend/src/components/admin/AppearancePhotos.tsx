@@ -438,21 +438,7 @@ export default function AppearancePhotos({
                         </Button>
                       </>
                     ) : null}
-                    <label className="btn-secondary text-xs py-1 px-2 cursor-pointer">
-                      {busy && !pendingSrc ? 'Working…' : 'Upload'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="sr-only"
-                        data-help-key="admin.product_series.appearance_upload"
-                        disabled={busyKey != null}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          event.target.value = '';
-                          if (file) takeComboFile(combo, file);
-                        }}
-                      />
-                    </label>
+                    {busy && !pendingSrc ? <span className="text-xs text-gray-500">Working…</span> : null}
                     <Button
                       helpKey="admin.product_series.appearance_generate"
                       variant="secondary"

@@ -359,7 +359,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.featured_image',
     title: 'Series source photo',
-    body: 'Upload the full series photo. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board then walks through three frames from that source: catalog 16:9, series page 4:5, and family datasheet 1:1. Replacing the source starts those three crops again. Any slot can also Upload / Replace photo with a different file. This is not a product photo.',
+    body: 'Upload the full series photo from the list thumbnail or the Edit form. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board then walks through three frames from that source: catalog 16:9, series page 4:5, and family datasheet 1:1. Replacing the source starts those three crops again. Any slot can also Upload / Replace photo with a different file. This is not a product photo.',
   },
   {
     helpKey: 'admin.product_series.featured_catalog',
@@ -379,7 +379,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.featured_replace',
     title: 'Upload or replace this photo',
-    body: 'Choose a different file for this frame only — catalog, series page, or datasheet. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The shared source photo stays the same. After you pick a file, crop it to this slot.',
+    body: 'Choose a different file for this frame only — catalog, series page, or datasheet. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or click the empty placeholder to choose a file. The shared source photo stays the same. After you pick a file, crop it to this slot.',
   },
   {
     helpKey: 'admin.product_series.featured_different',
