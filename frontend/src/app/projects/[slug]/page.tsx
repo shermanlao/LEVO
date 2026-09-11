@@ -13,6 +13,10 @@ import ProjectGalleryWrapper from '@/components/projects/ProjectGalleryWrapper';
 import { getProjectBySlugFromApi, getRelatedProjectsFromApi } from '@/lib/sqlite-api';
 import PageRoute from '@/components/layout/PageRoute';
 import { projectRouteItems } from '@/components/layout/pageRouteItems';
+import JsonLd from '@/components/layout/JsonLd';
+import { buildPageMetadata, stripHtml } from '@/lib/seo';
+import { breadcrumbJsonLd, creativeWorkJsonLd } from '@/lib/seo-jsonld';
+import { toPublicImagePath } from '@/lib/image-utils';
 
 export const revalidate = 120;
 
@@ -44,6 +48,8 @@ interface Project {
   country?: string;
   date?: string;
   maplink?: string;
+  seo_title?: string;
+  seo_description?: string;
   sections?: ProjectSection[];
   paragraphs?: {
     id: string;
@@ -120,33 +126,41 @@ type Props = {
 // Generate metadata for the page
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  
+  const path = `/projects/${slug}`;
+
   try {
     const project = await getProjectData(slug);
-    
+
     if (project && project.name) {
-      return {
-        title: `${project.name} | LEVO Lighting`,
-        description: project.description || `Details about the ${project.name} project by LEVO Lighting.`
-      };
+      const seoTitle = String(project.seo_title || '').trim();
+      const seoDescription = String(project.seo_description || '').trim();
+      return buildPageMetadata({
+        title: seoTitle || project.name,
+        description:
+          seoDescription ||
+          stripHtml(project.description) ||
+          `Details about the ${project.name} project by LEVO Lighting.`,
+        path,
+        image: toPublicImagePath(project.thumbnail) || null,
+      });
     }
-    
-    // Fallback metadata with slug if project exists but name is missing
+
     if (project) {
-      return {
-        title: `${slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ')} | LEVO Lighting`,
-        description: `Project details by LEVO Lighting.`
-      };
+      return buildPageMetadata({
+        title: `${slug.charAt(0).toUpperCase()}${slug.slice(1).replace(/-/g, ' ')}`,
+        description: 'Project details by LEVO Lighting.',
+        path,
+      });
     }
   } catch (error) {
     console.error('Error generating metadata:', error);
   }
-  
-  // Fallback metadata
-  return {
-    title: 'Project Details | LEVO Lighting',
-    description: 'LED lighting project showcase by LEVO.'
-  };
+
+  return buildPageMetadata({
+    title: 'Project Details',
+    description: 'LED lighting project showcase by LEVO.',
+    path,
+  });
 }
 
 export default async function ProjectPage({ params }: Props) {
@@ -191,6 +205,23 @@ export default async function ProjectPage({ params }: Props) {
 
     return (
       <div className="bg-white">
+        <JsonLd
+          data={[
+            breadcrumbJsonLd([
+              { name: 'Home', path: '/' },
+              { name: 'Projects', path: '/projects' },
+              { name: projectName, path: `/projects/${slug}` },
+            ]),
+            creativeWorkJsonLd({
+              name: projectName,
+              description: projectDescription,
+              image: toPublicImagePath(heroImage) || null,
+              path: `/projects/${slug}`,
+              location: project.location || project.place,
+              datePublished: project.year || project.date,
+            }),
+          ].filter((item): item is NonNullable<typeof item> => Boolean(item))}
+        />
         <div className="container mx-auto px-4 pt-4">
           <PageRoute items={projectRouteItems({ name: projectName })} />
         </div>

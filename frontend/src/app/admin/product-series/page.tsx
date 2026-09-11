@@ -8,10 +8,13 @@ import { slugify } from '@/lib/slugify';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
 import SeriesFeaturedImageEditor, {
   seriesFeaturedPathsFromAttrs,
   type SeriesFeaturedPaths,
 } from '@/components/admin/SeriesFeaturedImageEditor';
+import { IMAGE_FRAMES } from '@/lib/image-frames';
+import { toPublicImagePath } from '@/lib/image-utils';
 import SpecificationsEditor, {
   SpecPair,
   recordToSpecPairs,
@@ -74,17 +77,6 @@ export default function ProductSeriesAdminPage() {
     if (paths.featured_image_datasheet) target.featured_image_datasheet = paths.featured_image_datasheet;
   };
 
-  const mergeSeriesFeaturedPaths = (id: number, next: Partial<SeriesFeaturedPaths>) => {
-    setSeries((rows) =>
-      rows.map((row) =>
-        row.id === id ? { ...row, attributes: { ...row.attributes, ...next } } : row
-      )
-    );
-    if (editingSeries?.id === id) {
-      setEditFeaturedPaths((prev) => ({ ...prev, ...next }));
-    }
-  };
-  
   const [newSeries, setNewSeries] = useState({
     name: '',
     description: '',
@@ -626,6 +618,9 @@ export default function ProductSeriesAdminPage() {
             ) : (
               series.map((item) => {
                 const attrs = item?.attributes;
+                const imageUrl =
+                  toPublicImagePath(attrs?.featured_image) ||
+                  toPublicImagePath(attrs?.featured_image_source);
                 return (
                 <tr
                   key={item.id}
@@ -634,19 +629,24 @@ export default function ProductSeriesAdminPage() {
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div
-                        className="flex-shrink-0"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <SeriesFeaturedImageEditor
-                          layout="thumb"
-                          paths={seriesFeaturedPathsFromAttrs(attrs)}
-                          seriesSlug={attrs?.slug}
-                          seriesId={item.id}
-                          onChange={(next) => mergeSeriesFeaturedPaths(item.id, next)}
-                          onError={setError}
-                        />
-                      </div>
+                      <AdminHoverPreview src={imageUrl || null} className="flex-shrink-0 w-16">
+                        <div
+                          className={`relative w-16 overflow-hidden rounded ${IMAGE_FRAMES.catalog.className}`}
+                        >
+                          {imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={imageUrl}
+                              alt=""
+                              className="absolute inset-0 h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                              <span className="text-gray-500 text-xs">No img</span>
+                            </div>
+                          )}
+                        </div>
+                      </AdminHoverPreview>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{attrs?.name || 'Untitled'}</div>
                         <div className="text-xs text-gray-500">{attrs?.slug || ''}</div>

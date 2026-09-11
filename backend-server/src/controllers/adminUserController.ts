@@ -101,6 +101,15 @@ export const verifyCredentials = asyncHandler(async (req: Request, res: Response
   });
 });
 
+export const logoutSession = asyncHandler(async (req: Request, res: Response) => {
+  const username = String(req.body?.username || req.query.username || '').trim();
+  if (!username) return res.status(400).json({ error: 'Missing username' });
+  const user = await AdminUser.findOne({ where: { username } });
+  if (!user) return res.status(404).json({ error: 'Not found' });
+  await user.update({ session_epoch: (Number(user.session_epoch) || 0) + 1 });
+  res.json({ ok: true, username: user.username });
+});
+
 export const checkSession = asyncHandler(async (req: Request, res: Response) => {
   const username = String(req.query.username || '').trim();
   if (!username) return res.status(400).json({ error: 'Missing username' });

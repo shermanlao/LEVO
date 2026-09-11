@@ -43,6 +43,7 @@ import {
   writeProductPhotoStyleImage,
   writeSizeDrawingStyleImage,
 } from '../lib/ai/aiStyleImage';
+import { isAllowedImageBuffer } from '../lib/shared/image-magic';
 import multer from 'multer';
 
 function serializeSettings() {
@@ -205,6 +206,9 @@ export const uploadSizeDrawingStyle = async (req: Request, res: Response) => {
     if (!file?.buffer?.length) {
       return res.status(400).json({ error: 'No image uploaded' });
     }
+    if (!isAllowedImageBuffer(file.buffer)) {
+      return res.status(400).json({ error: 'Only JPEG, PNG, WebP, and GIF images are allowed' });
+    }
     const row = await getOrCreateAiSettings();
     deleteSizeDrawingStyleImage(String(row.get('size_drawing_style_image') || ''));
     const stored = writeSizeDrawingStyleImage(file.buffer, file.mimetype);
@@ -231,6 +235,9 @@ export const uploadProductPhotoStyle = async (req: Request, res: Response) => {
     const file = (req as Request & { file?: Express.Multer.File }).file;
     if (!file?.buffer?.length) {
       return res.status(400).json({ error: 'No image uploaded' });
+    }
+    if (!isAllowedImageBuffer(file.buffer)) {
+      return res.status(400).json({ error: 'Only JPEG, PNG, WebP, and GIF images are allowed' });
     }
     const row = await getOrCreateAiSettings();
     deleteProductPhotoStyleImage(String(row.get('product_photo_style_image') || ''));

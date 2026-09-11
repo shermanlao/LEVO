@@ -3,6 +3,7 @@ import { getSiteContact, type SiteContact } from '@/lib/sqlite-api';
 import PageRoute from '@/components/layout/PageRoute';
 import { resourceRouteItems } from '@/components/layout/pageRouteItems';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { buildPageMetadata } from '@/lib/seo';
 
 export type ResourceKind = 'warranty' | 'certifications' | 'technical';
 
@@ -47,17 +48,18 @@ export async function generateResourceMetadata(kind: ResourceKind): Promise<Meta
   try {
     const contact = await getSiteContact();
     const { title, body } = resourceCopy(contact, kind);
-    const company = contact.company_name?.trim() || 'LEVO Lighting';
     const description = body.replace(/\s+/g, ' ').slice(0, 160) || spec.fallbackDescription;
-    return {
-      title: `${title} - ${company}`,
+    return buildPageMetadata({
+      title,
       description,
-    };
+      path: `/${kind === 'technical' ? 'technical' : kind}`,
+    });
   } catch {
-    return {
-      title: `${spec.fallbackTitle} - LEVO Lighting`,
+    return buildPageMetadata({
+      title: spec.fallbackTitle,
       description: spec.fallbackDescription,
-    };
+      path: `/${kind === 'technical' ? 'technical' : kind}`,
+    });
   }
 }
 

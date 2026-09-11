@@ -44,8 +44,12 @@ import {
   DEFAULT_RESOURCE_TECHNICAL_TITLE,
   DEFAULT_RESOURCE_WARRANTY_BODY,
   DEFAULT_RESOURCE_WARRANTY_TITLE,
+  DEFAULT_ABOUT_BODY,
+  DEFAULT_ABOUT_TITLE,
   DEFAULT_SEO_DESCRIPTION,
   DEFAULT_SEO_TITLE,
+  PREVIOUS_SEO_DESCRIPTION,
+  PREVIOUS_SEO_TITLE,
   DEFAULT_WHY_CARDS,
   DEFAULT_WHY_HEADING,
   ensureSiteSettingsColumns,
@@ -359,7 +363,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.featured_image',
     title: 'Series source photo',
-    body: 'Upload the full series photo from the list thumbnail or the Edit form. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board then walks through three frames from that source: catalog 16:9, series page 4:5, and family datasheet 1:1. Replacing the source starts those three crops again. Any slot can also Upload / Replace photo with a different file. This is not a product photo.',
+    body: 'Upload the full series photo on Add New Series or Edit. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board then walks through three frames from that source: catalog 16:9, series page 4:5, and family datasheet 1:1. Replacing the source starts those three crops again. Any slot can also Upload / Replace photo with a different file. This is not a product photo.',
   },
   {
     helpKey: 'admin.product_series.featured_catalog',
@@ -549,12 +553,17 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.photo_style_match',
     title: 'Match catalog style',
-    body: 'Optional. Restyle this saved Main A or Main B photo to the catalog style on /admin/ai. The model first describes the original photo, then cutout / polish / place it in the reference scene. Sends the filled Phrase template as the fixture’s physical description (this size pack plus the other series tags). The button stays on filled Main A and Main B. Preview first; Apply replaces the slot. Close keeps the original. If no catalog style photo is stored, open /admin/ai and upload one first.',
+    body: 'Optional. Restyle this saved Main A or Main B photo to the catalog style on /admin/ai. The model first describes the original photo, then cutout / polish / place it in the reference scene. Sends the filled Phrase template as the fixture’s physical description (this size pack plus the other series tags). After the preview appears, use Refine chat to adjust the photo, then Apply. Close keeps the original. If no catalog style photo is stored, open /admin/ai and upload one first.',
+  },
+  {
+    helpKey: 'admin.product_series.photo_style_refine',
+    title: 'Refine styled photo',
+    body: 'After Match catalog style generates a preview, type an edit instruction (for example warmer light or tighter crop) and Refine. Uses the same product-photo edit path as Edit photo with AI. Apply still saves the latest preview; Reset restores the original upload.',
   },
   {
     helpKey: 'admin.product_series.photo_style_apply',
     title: 'Apply styled photo',
-    body: 'Replace the saved Main A or Main B file with the styled preview. Close or Reset keeps the original upload.',
+    body: 'Replace the saved Main A or Main B file with the styled (and optionally refined) preview. Close or Reset keeps the original upload.',
   },
   {
     helpKey: 'admin.products.size_drawing_ai',
@@ -635,6 +644,56 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'catalog.footer.pinterest',
     title: 'Pinterest',
     body: 'Open the LEVO Pinterest board in a new tab.',
+  },
+  {
+    helpKey: 'catalog.footer.linkedin',
+    title: 'LinkedIn',
+    body: 'Open the LEVO LinkedIn company page in a new tab.',
+  },
+  {
+    helpKey: 'catalog.about.products',
+    title: 'Explore Products',
+    body: 'Open the public product category grid from the About page.',
+  },
+  {
+    helpKey: 'catalog.about.contact',
+    title: 'Contact Us',
+    body: 'Open the Contact page from About for inquiries and partnership questions.',
+  },
+  {
+    helpKey: 'catalog.series.inquire',
+    title: 'Inquire',
+    body: 'Opens Contact with this series name filled into the message so you can request datasheets, LDT files, or a quote.',
+  },
+  {
+    helpKey: 'admin.product_types.seo_title',
+    title: 'SEO title',
+    body: 'Optional browser and search title for this category. Leave empty to use the category name.',
+  },
+  {
+    helpKey: 'admin.product_types.seo_description',
+    title: 'SEO description',
+    body: 'Optional search snippet for this category. Leave empty to use the category description.',
+  },
+  {
+    helpKey: 'admin.product_series.seo_title',
+    title: 'SEO title',
+    body: 'Optional browser and search title for this series. Leave empty to use the series name (and type when available).',
+  },
+  {
+    helpKey: 'admin.product_series.seo_description',
+    title: 'SEO description',
+    body: 'Optional search snippet for this series. Leave empty to use the series description.',
+  },
+  {
+    helpKey: 'admin.projects.seo_title',
+    title: 'SEO title',
+    body: 'Optional browser and search title for this project. Leave empty to use the project title.',
+  },
+  {
+    helpKey: 'admin.projects.seo_description',
+    title: 'SEO description',
+    body: 'Optional search snippet for this project. Leave empty to use the project description.',
   },
   {
     helpKey: 'catalog.404.home',
@@ -1385,6 +1444,8 @@ export async function ensureDefaultSiteContact(): Promise<void> {
       resource_certifications_body: DEFAULT_RESOURCE_CERTIFICATIONS_BODY,
       resource_technical_title: DEFAULT_RESOURCE_TECHNICAL_TITLE,
       resource_technical_body: DEFAULT_RESOURCE_TECHNICAL_BODY,
+      about_title: DEFAULT_ABOUT_TITLE,
+      about_body: DEFAULT_ABOUT_BODY,
       seo_title: DEFAULT_SEO_TITLE,
       seo_description: DEFAULT_SEO_DESCRIPTION,
     });
@@ -1414,8 +1475,14 @@ export async function ensureDefaultSiteContact(): Promise<void> {
   }
   if (!String(row.get('why_heading') || '').trim()) patch.why_heading = DEFAULT_WHY_HEADING;
   if (!String(row.get('why_cards') || '').trim()) patch.why_cards = JSON.stringify(DEFAULT_WHY_CARDS);
-  if (!String(row.get('seo_title') || '').trim()) patch.seo_title = DEFAULT_SEO_TITLE;
-  if (!String(row.get('seo_description') || '').trim()) patch.seo_description = DEFAULT_SEO_DESCRIPTION;
+  const seoTitle = String(row.get('seo_title') || '').trim();
+  if (!seoTitle || seoTitle === PREVIOUS_SEO_TITLE) patch.seo_title = DEFAULT_SEO_TITLE;
+  const seoDescription = String(row.get('seo_description') || '').trim();
+  if (!seoDescription || seoDescription === PREVIOUS_SEO_DESCRIPTION) {
+    patch.seo_description = DEFAULT_SEO_DESCRIPTION;
+  }
+  if (!String(row.get('about_title') || '').trim()) patch.about_title = DEFAULT_ABOUT_TITLE;
+  if (!String(row.get('about_body') || '').trim()) patch.about_body = DEFAULT_ABOUT_BODY;
   if (!String(row.get('resource_warranty_title') || '').trim()) {
     patch.resource_warranty_title = DEFAULT_RESOURCE_WARRANTY_TITLE;
   }
@@ -1452,6 +1519,18 @@ export async function ensureProjectFeaturedColumn(): Promise<void> {
       type: DataTypes.BOOLEAN,
       allowNull: true,
       defaultValue: false,
+    });
+  }
+  if (!table.seo_title) {
+    await qi.addColumn('projects', 'seo_title', {
+      type: DataTypes.STRING,
+      allowNull: true,
+    });
+  }
+  if (!table.seo_description) {
+    await qi.addColumn('projects', 'seo_description', {
+      type: DataTypes.TEXT,
+      allowNull: true,
     });
   }
   await ensureIndex('CREATE INDEX IF NOT EXISTS projects_is_featured ON projects (is_featured)');
@@ -1635,6 +1714,18 @@ export async function ensureProductTypeColumns(): Promise<void> {
       allowNull: true,
     });
   }
+  if (!table.seo_title) {
+    await qi.addColumn('product_types', 'seo_title', {
+      type: DataTypes.STRING,
+      allowNull: true,
+    });
+  }
+  if (!table.seo_description) {
+    await qi.addColumn('product_types', 'seo_description', {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    });
+  }
 }
 
 export async function ensureSeriesFeaturedImageColumn(): Promise<void> {
@@ -1698,6 +1789,18 @@ export async function ensureSeriesFeaturedImageColumn(): Promise<void> {
   }
   if (!table.description_phrase) {
     await qi.addColumn('product_series', 'description_phrase', {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    });
+  }
+  if (!table.seo_title) {
+    await qi.addColumn('product_series', 'seo_title', {
+      type: DataTypes.STRING,
+      allowNull: true,
+    });
+  }
+  if (!table.seo_description) {
+    await qi.addColumn('product_series', 'seo_description', {
       type: DataTypes.TEXT,
       allowNull: true,
     });

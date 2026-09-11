@@ -51,6 +51,8 @@ function emptySettings(): SiteContact {
     resource_certifications_body: '',
     resource_technical_title: '',
     resource_technical_body: '',
+    about_title: '',
+    about_body: '',
     seo_title: '',
     seo_description: '',
     og_image: '',
@@ -439,6 +441,27 @@ export default function AdminSiteSettingsPage() {
                 rows={4}
                 value={form.resource_technical_body || ''}
                 onChange={(e) => patch({ resource_technical_body: e.target.value })}
+                className="md:col-span-2"
+              />
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="text-xl font-bold mb-2">About</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Public <code className="text-xs">/about</code> page. Shown in the header and footer Quick Links.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextInput
+                label="About title"
+                value={form.about_title || ''}
+                onChange={(e) => patch({ about_title: e.target.value })}
+              />
+              <TextareaField
+                label="About body"
+                rows={6}
+                value={form.about_body || ''}
+                onChange={(e) => patch({ about_body: e.target.value })}
                 className="md:col-span-2"
               />
             </div>

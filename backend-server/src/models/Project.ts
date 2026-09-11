@@ -17,6 +17,8 @@ interface ProjectAttributes {
   lighting_designer: string;
   photography_credits: string;
   is_featured?: boolean;
+  seo_title?: string | null;
+  seo_description?: string | null;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -39,6 +41,8 @@ class Project extends Model<ProjectAttributes, ProjectCreationAttributes> implem
   public lighting_designer!: string;
   public photography_credits!: string;
   public is_featured!: boolean;
+  public seo_title!: string | null;
+  public seo_description!: string | null;
 
   // Timestamps
   public readonly created_at!: Date;
@@ -116,6 +120,14 @@ Project.init(
       type: DataTypes.BOOLEAN,
       allowNull: true,
       defaultValue: false,
+    },
+    seo_title: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    seo_description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,

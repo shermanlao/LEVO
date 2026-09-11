@@ -1,17 +1,34 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { TextInput, TextareaField } from '@/components/ui/FormField';
 import Button from '@/components/ui/Button';
 
+function seriesPrefill(seriesSlug: string): string {
+  const label = seriesSlug
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+  return `I am interested in the ${label || seriesSlug} series. Please send datasheets / LDT files and contact me about availability.`;
+}
+
 export default function ContactForm() {
+  const searchParams = useSearchParams();
+  const seriesSlug = (searchParams.get('series') || '').trim();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (!seriesSlug) return;
+    setMessage((current) => (current.trim() ? current : seriesPrefill(seriesSlug)));
+  }, [seriesSlug]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();

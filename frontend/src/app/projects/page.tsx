@@ -1,10 +1,20 @@
+import type { Metadata } from 'next';
 import PageRoute from '@/components/layout/PageRoute';
 import { projectRouteItems } from '@/components/layout/pageRouteItems';
 import ProjectCatalog, { type ProjectListItem } from '@/components/projects/ProjectCatalog';
 import { getProjectsFromApi } from '@/lib/sqlite-api';
 import AlertBanner from '@/components/ui/AlertBanner';
+import JsonLd from '@/components/layout/JsonLd';
+import { buildPageMetadata } from '@/lib/seo';
+import { breadcrumbJsonLd } from '@/lib/seo-jsonld';
 
 export const revalidate = 120;
+
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Projects',
+  description: 'Explore LEVO Lighting project case studies across architectural spaces.',
+  path: '/projects',
+});
 
 function toListItem(row: Record<string, unknown>): ProjectListItem | null {
   if (!row || typeof row !== 'object') return null;
@@ -35,17 +45,18 @@ export default async function ProjectsPage() {
 
   return (
     <div className="container mx-auto px-4 py-4">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Projects', path: '/projects' },
+        ])}
+      />
       <PageRoute items={projectRouteItems()} />
       <div className="mb-10">
         <h1 className="text-3xl font-bold mb-2">Projects</h1>
-        <p className="text-gray-600 max-w-3xl">
-          Discover how LEVO lighting solutions transform spaces across the globe. Our projects showcase
-          innovative approaches to illumination across cultural, commercial, and residential environments.
-        </p>
+        <p className="text-gray-600">Architectural lighting projects by LEVO.</p>
       </div>
-
-      {loadError && <AlertBanner variant="warning">{loadError}</AlertBanner>}
-
+      {loadError ? <AlertBanner>{loadError}</AlertBanner> : null}
       <ProjectCatalog projects={projects} />
     </div>
   );

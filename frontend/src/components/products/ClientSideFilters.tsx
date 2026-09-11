@@ -61,7 +61,7 @@ export default function ClientSideFilters({
   return (
     <div
       id="catalog-product-filters"
-      className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border border-gray-100 lg:sticky lg:top-8"
+      className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border border-gray-100 lg:sticky lg:top-[calc(var(--site-header-offset,2rem)+0.5rem)]"
     >
       <h3 className="hidden lg:block text-xl font-semibold mb-4">Filter Products</h3>
       <ProductFilter

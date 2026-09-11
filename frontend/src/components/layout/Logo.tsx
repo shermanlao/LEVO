@@ -49,12 +49,14 @@ export default function Logo({
   src,
   companyName,
   companyShortName,
+  compact = false,
 }: {
   className?: string;
   slogan?: string | null;
   src?: string | null;
   companyName?: string | null;
   companyShortName?: string | null;
+  compact?: boolean;
 }) {
   const sloganText = String(slogan || '').trim();
   const fullName = String(companyName || '').trim() || 'LEVO Lighting';
@@ -67,8 +69,15 @@ export default function Logo({
       ariaLabel={sloganText ? `${shortName} ${sloganText}` : fullName}
       className={`inline-flex w-max flex-col items-stretch justify-center ${className}`}
     >
-      <BrandLogoMark src={src} alt={shortName} width={160} height={48} priority className="h-9 md:h-10" />
-      {sloganText ? (
+      <BrandLogoMark
+        src={src}
+        alt={shortName}
+        width={160}
+        height={48}
+        priority
+        className={compact ? 'h-6' : 'h-9 md:h-10'}
+      />
+      {sloganText && !compact ? (
         <span className="brand-slogan brand-slogan-lockup mt-0.5" aria-hidden="true">
           {Array.from(sloganText).map((ch, i) => (
             <span key={i}>{ch === ' ' ? '\u00a0' : ch}</span>

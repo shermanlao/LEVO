@@ -8,6 +8,7 @@ import {
   type AiUsageContext,
 } from './aiUsage';
 import { normalizeImageAiProviderId } from './imageAiProviders';
+import { assertPublicHttpUrl } from '../ssrf';
 
 export type GeneratedImageResult = {
   dataUrl: string;

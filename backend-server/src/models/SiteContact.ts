@@ -37,6 +37,8 @@ class SiteContact extends Model {
   declare resource_certifications_body: string | null;
   declare resource_technical_title: string | null;
   declare resource_technical_body: string | null;
+  declare about_title: string | null;
+  declare about_body: string | null;
   declare seo_title: string | null;
   declare seo_description: string | null;
   declare og_image: string | null;
@@ -80,6 +82,8 @@ SiteContact.init(
     resource_certifications_body: { type: DataTypes.TEXT, allowNull: true },
     resource_technical_title: { type: DataTypes.STRING, allowNull: true },
     resource_technical_body: { type: DataTypes.TEXT, allowNull: true },
+    about_title: { type: DataTypes.STRING, allowNull: true },
+    about_body: { type: DataTypes.TEXT, allowNull: true },
     seo_title: { type: DataTypes.STRING, allowNull: true },
     seo_description: { type: DataTypes.TEXT, allowNull: true },
     og_image: { type: DataTypes.STRING, allowNull: true },

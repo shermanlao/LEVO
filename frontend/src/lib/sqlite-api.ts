@@ -160,6 +160,8 @@ export type SiteContact = {
   resource_certifications_body?: string;
   resource_technical_title?: string;
   resource_technical_body?: string;
+  about_title?: string;
+  about_body?: string;
   seo_title?: string;
   seo_description?: string;
   og_image?: string;

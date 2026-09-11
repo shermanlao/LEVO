@@ -9,13 +9,17 @@ import { catalogTypeIsBrowsable } from '@/lib/catalog-filters';
 import { devLog } from '@/lib/dev-log';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { ProductType } from '@/types/product';
+import { buildPageMetadata } from '@/lib/seo';
+import JsonLd from '@/components/layout/JsonLd';
+import { breadcrumbJsonLd } from '@/lib/seo-jsonld';
 
 export const revalidate = 120;
 
-export const metadata: Metadata = {
-  title: 'Product Categories - LEVO Lighting',
-  description: 'Browse our lighting categories and solutions.',
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Product Categories',
+  description: 'Browse LEVO Lighting categories — architectural LED downlights and luminaires.',
+  path: '/products',
+});
 
 export default async function ProductCategoriesPage() {
   let productTypes: ProductType[] = [];
@@ -63,6 +67,12 @@ export default async function ProductCategoriesPage() {
   
   return (
     <div className="container mx-auto px-4 py-4">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Products', path: '/products' },
+        ])}
+      />
       <PageRoute items={productRouteItems()} />
       {loadError && <AlertBanner>{loadError}</AlertBanner>}
       
@@ -89,4 +99,4 @@ export default async function ProductCategoriesPage() {
       </div>
     </div>
   );
-} 
+}

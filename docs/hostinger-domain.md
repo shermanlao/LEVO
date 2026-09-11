@@ -86,6 +86,6 @@ That is already in place. HTTP `levolight.com` / `www.levolight.com` redirects t
 
 ## 5. UAT
 
-`/admin/settings` has **UNDER CONSTRUCTION for visitors**. While it is on, signed-out visitors only see the header, footer, and UNDER CONSTRUCTION on public pages. `/admin/login` still shows the admin login form. Sign in there to see the real catalog. Uncheck that box when the public site should go live.
+`/admin/settings` has **UNDER CONSTRUCTION for visitors**. While it is on, signed-out visitors only see the header, footer, and UNDER CONSTRUCTION on public pages. `/admin/login` still shows the admin login form. Sign in there to see the real catalog. Uncheck that box when the public site should go live. Then follow the go-live checklist in [seo.md](seo.md) (Search Console, sitemap, one canonical host).
 
 More than one hostname on the same VPS: [vps-multiple-sites.md](vps-multiple-sites.md).

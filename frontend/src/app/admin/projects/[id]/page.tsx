@@ -29,6 +29,8 @@ interface Project {
   lightingDesigner?: string;
   photographyCredits?: string;
   is_featured?: boolean;
+  seo_title?: string;
+  seo_description?: string;
   sections?: {
     title: string;
     content: string;
@@ -96,6 +98,8 @@ export default function EditProjectPage() {
             lightingDesigner: projectData.lighting_designer || '',
             photographyCredits: projectData.photography_credits || '',
             is_featured: Boolean(projectData.is_featured),
+            seo_title: projectData.seo_title || '',
+            seo_description: projectData.seo_description || '',
             sections: projectData.sections?.map((section: any) => ({
               title: section.title || '',
               content: section.content || '',
@@ -167,6 +171,8 @@ export default function EditProjectPage() {
           lighting_designer: editedProject.lightingDesigner || '',
           photography_credits: editedProject.photographyCredits || '',
           is_featured: Boolean(editedProject.is_featured),
+          seo_title: editedProject.seo_title || '',
+          seo_description: editedProject.seo_description || '',
         }),
       });
       if (!res.ok) {
@@ -644,6 +650,36 @@ export default function EditProjectPage() {
                 rows={4}
                 required
               />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2" data-help-key="admin.projects.seo_title">
+                SEO title
+              </label>
+              <input
+                type="text"
+                name="seo_title"
+                value={editedProject.seo_title || ''}
+                onChange={handleChange}
+                className="input-field"
+                data-help-key="admin.projects.seo_title"
+              />
+              <p className="mt-1 text-sm text-gray-500">Optional. Empty uses the project title.</p>
+            </div>
+
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2" data-help-key="admin.projects.seo_description">
+                SEO description
+              </label>
+              <textarea
+                name="seo_description"
+                value={editedProject.seo_description || ''}
+                onChange={handleChange}
+                className="input-field"
+                rows={3}
+                data-help-key="admin.projects.seo_description"
+              />
+              <p className="mt-1 text-sm text-gray-500">Optional. Empty uses the project description.</p>
             </div>
             
             {/* Project Thumbnail Image Uploader */}

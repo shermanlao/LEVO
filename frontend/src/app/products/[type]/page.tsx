@@ -10,6 +10,10 @@ import { devLog } from '@/lib/dev-log';
 import AlertBanner from '@/components/ui/AlertBanner';
 import PageRoute from '@/components/layout/PageRoute';
 import CategoryCatalogSection from '@/components/products/CategoryCatalogSection';
+import JsonLd from '@/components/layout/JsonLd';
+import { buildPageMetadata, stripHtml } from '@/lib/seo';
+import { breadcrumbJsonLd } from '@/lib/seo-jsonld';
+import { toPublicImagePath } from '@/lib/image-utils';
 
 export const revalidate = 120;
 
@@ -40,29 +44,41 @@ type SeriesRow = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const { type } = resolvedParams;
+  const path = `/products/${type}`;
 
   try {
     const { data: productType } = await getProductType(type);
     if (!productType) {
-      return {
-        title: 'Category Not Found - LEVO Lighting',
+      return buildPageMetadata({
+        title: 'Category Not Found',
         description: 'The requested product category could not be found.',
-      };
+        path,
+        noIndex: true,
+      });
     }
-    return {
-      title: `${productType.attributes?.name || 'Products'} - LEVO Lighting`,
-      description: productType.attributes?.description || '',
-    };
+    const name = productType.attributes?.name || 'Products';
+    const seoTitle = String(productType.attributes?.seo_title || '').trim();
+    const seoDescription = String(productType.attributes?.seo_description || '').trim();
+    return buildPageMetadata({
+      title: seoTitle || name,
+      description:
+        seoDescription ||
+        stripHtml(productType.attributes?.description) ||
+        `Browse ${name} from LEVO Lighting.`,
+      path,
+      image: toPublicImagePath(productType.attributes?.featured_image) || null,
+    });
   } catch (error) {
     console.error('Error generating metadata for category:', type, error);
     const formattedTitle = type
       .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-    return {
-      title: `${formattedTitle} - LEVO Lighting`,
+    return buildPageMetadata({
+      title: formattedTitle,
       description: `Product information for ${formattedTitle} is temporarily unavailable.`,
-    };
+      path,
+    });
   }
 }
 
@@ -109,6 +125,13 @@ export default async function ProductCategoryPage({ params, searchParams }: Prop
 
   return (
     <div className="container mx-auto px-4 py-4">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Products', path: '/products' },
+          { name: attributes.name, path: `/products/${attributes.slug || type}` },
+        ])}
+      />
       {apiConnectionError && (
         <AlertBanner>
           Error: Could not load series data for this category. The API might be temporarily unavailable.

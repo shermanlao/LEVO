@@ -18,3 +18,11 @@ export function requireInternalSecret(req: Request, res: Response, next: NextFun
   }
   next();
 }
+
+export function requireInternalSecretOnMutations(req: Request, res: Response, next: NextFunction): void {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    next();
+    return;
+  }
+  requireInternalSecret(req, res, next);
+}

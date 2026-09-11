@@ -54,10 +54,24 @@ type MediaLink = {
   icon: ReactNode;
 };
 
+function LinkedInIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className={ICON_CLASS} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M6.5 8.5H3.7V20h2.8V8.5zM5.1 3.5C4.1 3.5 3.3 4.3 3.3 5.3s.8 1.8 1.8 1.8 1.8-.8 1.8-1.8-.8-1.8-1.8-1.8zM20.3 20h-2.8v-5.6c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9V20H10.8V8.5h2.7v1.6h.1c.4-.7 1.3-1.5 2.7-1.5 2.9 0 3.4 1.9 3.4 4.4V20z" />
+    </svg>
+  );
+}
+
 export default function Footer({ contact }: { contact: SiteContact | null }) {
   const companyName = contact?.company_name?.trim() || 'LEVO Lighting';
   const logoSrc = contact?.logo_header?.trim() || LEVO_LOGO_SRC;
   const media: MediaLink[] = [
+    {
+      href: contact?.social_linkedin?.trim() || '',
+      label: 'LinkedIn',
+      helpKey: 'catalog.footer.linkedin',
+      icon: <LinkedInIcon />,
+    },
     {
       href: contact?.social_facebook?.trim() || '',
       label: 'Facebook',
@@ -135,6 +149,11 @@ export default function Footer({ contact }: { contact: SiteContact | null }) {
               <li>
                 <Link href="/projects" className={LINK_CLASS}>
                   Projects
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className={LINK_CLASS}>
+                  About
                 </Link>
               </li>
               <li>

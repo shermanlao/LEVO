@@ -66,6 +66,14 @@ ProductSeries.init({
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  seo_title: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  seo_description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: true,

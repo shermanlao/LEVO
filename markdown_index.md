@@ -2,7 +2,8 @@
 
 - [Admin login](docs/admin-login.md) — `/admin` session, SQLite staff logins, and Product Types → Series → Variants dashboard layers
 - [Admin dashboard](docs/admin-dashboard.md) — stats tiles, shortcuts, and attention counts on `/admin`
-- [Site settings](docs/admin-site-settings.md) — `/admin/settings` brand logos, homepage copy, contact/footer, and SEO
+- [Site settings](docs/admin-site-settings.md) — `/admin/settings` brand logos, homepage copy, contact/footer, About, and SEO
+- [SEO and marketing](docs/seo.md) — robots, sitemap, canonicals, JSON-LD, go-live checklist
 - [Visitor analytics](docs/visitor-analytics.md) — first-party `levo_vid` cookie and 7-day unique visitors / page views
 - [Admin users](docs/admin-users.md) — system / admin / operation roles, `/admin/users`, and page-access matrix
 - [Partner catalog import](docs/partner-catalog-import.md) — LightX read-only fetch, search, and bulk import into an existing LEVO category and series on `/admin/products`
@@ -20,7 +21,7 @@
 - [Site branding](docs/site-branding.md) — LEVO wordmark, LIGHT EVOLUTION slogan, tab icon, and datasheet PDF chrome
 - [Email signature](docs/email-signature.md) — company-only HTML signature for Gmail, Outlook, and Apple Mail
 - [Photometric LDT](docs/photometric-ldt.md) — beam library, saved polar options, public LDT download (product detail and series list), polar drawing on the datasheet
-- [Product photo AI](docs/product-photo-ai.md) — size drawing generate/refine, optional catalog photo style on Main A / B (sends the filled series phrase)
+- [Product photo AI](docs/product-photo-ai.md) — size drawing generate/refine, optional catalog photo style on Main A / B with chat refine after stylize (sends the filled series phrase)
 - [Admin AI settings](docs/admin-ai-settings.md) — `/admin/ai` keys, routing, failover, usage, size-drawing prompts, catalog photo style prompt, size-drawing and catalog photo style references
 - [Catalog page route](docs/catalog-page-route.md) — shared `Products / …` and `Projects / …` breadcrumb on public product and project pages
 - [Frontend UI](docs/frontend-ui.md) — CSS tokens, Button/FormField/Card, and helpKey

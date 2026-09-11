@@ -35,8 +35,6 @@ type SeriesFeaturedImageEditorProps = {
   seriesId?: number;
   onChange: (next: Partial<SeriesFeaturedPaths>) => void;
   onError?: (message: string) => void;
-  /** List-row thumbnail: drop / paste / choose still opens the three-crop wizard. */
-  layout?: 'full' | 'thumb';
 };
 
 export function seriesFeaturedPathsFromAttrs(attrs?: {
@@ -87,7 +85,6 @@ export default function SeriesFeaturedImageEditor({
   seriesId,
   onChange,
   onError,
-  layout = 'full',
 }: SeriesFeaturedImageEditorProps) {
   const sourceInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
@@ -199,8 +196,6 @@ export default function SeriesFeaturedImageEditor({
   }
 
   const currentSlot = wizard ? SERIES_FEATURED_SLOTS[wizard.step] : null;
-  const catalogUrl = toPublicImagePath(paths.featured_image);
-  const thumbUrl = catalogUrl || sourceUrl;
 
   const replaceInput = (
     <input
@@ -242,32 +237,6 @@ export default function SeriesFeaturedImageEditor({
         onConfirm={(file) => void handleSlotCrop(file)}
       />
     ) : null;
-
-  if (layout === 'thumb') {
-    return (
-      <div>
-        {replaceInput}
-        <ImageFileIntake
-          enabled={!busy}
-          clickToPick={!thumbUrl}
-          helpKey="admin.product_series.featured_image"
-          onFile={(file) => void handleSourceFile(file)}
-        >
-          <AdminPhotoSlot
-            src={thumbUrl || null}
-            alt="Series catalog photo"
-            compact
-          />
-          {busy ? (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 text-white text-xs font-medium pointer-events-none">
-              Uploading…
-            </div>
-          ) : null}
-        </ImageFileIntake>
-        {cutboard}
-      </div>
-    );
-  }
 
   return (
     <div>

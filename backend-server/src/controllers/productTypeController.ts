@@ -18,6 +18,8 @@ function serializeProductType(
     slug: string;
     featured_image: string | null;
     datasheet_labels: unknown;
+    seo_title: string | null;
+    seo_description: string | null;
   };
   return {
     id: p.id,
@@ -27,6 +29,8 @@ function serializeProductType(
       slug: p.slug,
       featured_image: strapiMedia(p.featured_image),
       datasheet_labels: parseDatasheetLabels(p.datasheet_labels),
+      seo_title: p.seo_title ?? '',
+      seo_description: p.seo_description ?? '',
       ...(extras.series_count !== undefined ? { series_count: extras.series_count } : {}),
     },
   };
@@ -50,6 +54,12 @@ function typeWritePayload(body: Record<string, unknown>) {
   }
   if (body.datasheet_labels !== undefined) {
     payload.datasheet_labels = stringifyDatasheetLabels(parseDatasheetLabels(body.datasheet_labels));
+  }
+  if (body.seo_title !== undefined) {
+    payload.seo_title = String(body.seo_title ?? '').trim() || null;
+  }
+  if (body.seo_description !== undefined) {
+    payload.seo_description = String(body.seo_description ?? '').trim() || null;
   }
   delete payload.id;
   delete payload.attributes;

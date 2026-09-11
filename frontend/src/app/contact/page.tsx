@@ -1,10 +1,12 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { getSiteContact } from '@/lib/sqlite-api';
 import ContactForm from '@/components/layout/ContactForm';
 import AlertBanner from '@/components/ui/AlertBanner';
 import BrandSlogan from '@/components/layout/BrandSlogan';
 import { visibleContactFields } from '@/lib/site-contact-display';
 import { safeHttpUrl } from '@/lib/safe-http-url';
+import { buildPageMetadata } from '@/lib/seo';
 
 export const revalidate = 120;
 
@@ -13,17 +15,19 @@ export async function generateMetadata(): Promise<Metadata> {
     const contact = await getSiteContact();
     const company = contact.company_name?.trim() || 'LEVO Lighting';
     const slogan = contact.slogan?.trim() || '';
-    return {
-      title: `Contact Us - ${company}`,
+    return buildPageMetadata({
+      title: 'Contact Us',
       description: slogan
         ? `Contact ${company} (${slogan}) for product inquiries, project support, and partnership questions.`
         : `Contact ${company} for product inquiries, project support, and partnership questions.`,
-    };
+      path: '/contact',
+    });
   } catch {
-    return {
-      title: 'Contact Us - LEVO Lighting',
+    return buildPageMetadata({
+      title: 'Contact Us',
       description: 'Contact LEVO Lighting for product inquiries, project support, and partnership questions.',
-    };
+      path: '/contact',
+    });
   }
 }
 
@@ -90,7 +94,9 @@ export default async function ContactPage() {
           </div>
           <div className="md:w-1/2">
             <h2 className="text-3xl font-bold mb-4">Send a message</h2>
-            <ContactForm />
+            <Suspense fallback={<p className="text-gray-600">Loading form…</p>}>
+              <ContactForm />
+            </Suspense>
           </div>
         </div>
       </section>

@@ -31,7 +31,7 @@ The component is `ImageCutboard` plus `useImageCutboard()` in [`frontend/src/com
 
 Series featured images are **not** a single-frame upload. [`SeriesFeaturedImageEditor`](../frontend/src/components/admin/SeriesFeaturedImageEditor.tsx) on `/admin/product-series`:
 
-1. Upload a **source** photo (no crop). Stored as `featured_image_source`. On `/admin/product-series`, the list thumb is the same square **Drop, paste, or choose a file** slot as size Main A/B. Drop, paste, or click saves the source and opens this wizard. Clicking the thumb does not open the series variants page.
+1. Upload a **source** photo (no crop). Stored as `featured_image_source`. Drop, paste, or click an empty slot on **Add New Series** / **Edit** (not the list-row thumb). The crop board then walks through three frames from that source.
 2. A 3-step cutboard crops that source: Catalog 16:9 (`featured_image`) → Series page 4:5 (`featured_image_page`) → Family datasheet 1:1 (`featured_image_datasheet`).
 3. Each empty slot is the same drop / paste / choose placeholder as size Main A/B (no extra Upload button). **Replace photo** appears after a crop is saved. **Adjust crop** reopens that frame on the shared source. **Use a different image** on the cutboard crops a different file for the current slot only. The shared source is not replaced when a slot uses its own photo. On an existing series, each crop is saved as soon as you Apply (refresh keeps the previews). New series still save the three paths when you click Create Series.
 

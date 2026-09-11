@@ -17,6 +17,12 @@ export async function stylizeProductPhoto(opts: {
   imageDataUrl?: string;
   imageUrl?: string;
   fixtureDescription?: string;
+  placeholderSize?: {
+    aspect?: string;
+    width?: number;
+    height?: number;
+    label?: string;
+  };
 }): Promise<{ imageDataUrl: string; mimeType: string }> {
   const sourceImageDataUrl = await resolveAiSourceImageDataUrl(opts);
   const creds = await requireImageAiCredentials('product_photo_edit');
@@ -32,7 +38,13 @@ export async function stylizeProductPhoto(opts: {
   });
   const result = await generateOrEditImage({
     creds,
-    prompt: fillProductPhotoStylePrompt(template, hints, opts.fixtureDescription, photoDescription),
+    prompt: fillProductPhotoStylePrompt(
+      template,
+      hints,
+      opts.fixtureDescription,
+      photoDescription,
+      opts.placeholderSize
+    ),
     sourceImageDataUrl,
     extraImageDataUrls: [styleImageDataUrl],
     imagePartLabels: PRODUCT_PHOTO_STYLE_IMAGE_PART_LABELS,

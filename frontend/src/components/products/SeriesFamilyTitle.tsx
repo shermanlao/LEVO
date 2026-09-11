@@ -6,6 +6,7 @@ import { getSeriesFamilyDatasheetUrl, getSeriesInstallationUrl } from '@/lib/sql
 
 const FILE_BTN = 'btn-primary inline-flex items-center text-sm py-2 px-3 whitespace-nowrap shrink-0';
 const FILE_ICON = 'mr-1 h-4 w-4';
+const SECONDARY_BTN = 'btn-secondary inline-flex items-center text-sm py-2 px-3 whitespace-nowrap shrink-0';
 
 type SeriesFamilyTitleProps = {
   seriesName: string;
@@ -13,6 +14,8 @@ type SeriesFamilyTitleProps = {
 };
 
 export default function SeriesFamilyTitle({ seriesName, seriesSlug }: SeriesFamilyTitleProps) {
+  const inquireHref = `/contact?series=${encodeURIComponent(seriesSlug)}`;
+
   return (
     <div className="flex items-start justify-between gap-4 mb-2">
       <h1 className="text-4xl font-bold">{seriesName}</h1>
@@ -36,6 +39,9 @@ export default function SeriesFamilyTitle({ seriesName, seriesSlug }: SeriesFami
         >
           <InstallationIcon className={FILE_ICON} />
           Installation
+        </HelpLink>
+        <HelpLink href={inquireHref} helpKey="catalog.series.inquire" className={SECONDARY_BTN}>
+          Inquire
         </HelpLink>
       </div>
     </div>

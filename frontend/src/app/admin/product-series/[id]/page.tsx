@@ -145,6 +145,8 @@ export default function SeriesVariantEditorPage() {
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [descriptionPhrase, setDescriptionPhrase] = useState('');
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
   const [typeId, setTypeId] = useState<number>(0);
   const [typeName, setTypeName] = useState('');
   const [ldtFamily, setLdtFamily] = useState('');
@@ -178,6 +180,8 @@ export default function SeriesVariantEditorPage() {
     setSlug(String(attrs.slug || ''));
     setDescription(String(attrs.description || ''));
     setDescriptionPhrase(String(attrs.description_phrase || ''));
+    setSeoTitle(String(attrs.seo_title || ''));
+    setSeoDescription(String(attrs.seo_description || ''));
     setTypeId(Number(attrs.product_type_id || (attrs.product_type as { data?: { id?: number } })?.data?.id) || 0);
     const nestedType = attrs.product_type as {
       data?: { attributes?: { name?: string } };
@@ -303,6 +307,8 @@ export default function SeriesVariantEditorPage() {
         slug,
         description,
         description_phrase: descriptionPhrase,
+        seo_title: seoTitle,
+        seo_description: seoDescription,
         product_type_id: typeId || null,
         ldt_family: ldtFamily || null,
         product_code: productCode || null,
@@ -359,6 +365,20 @@ export default function SeriesVariantEditorPage() {
               <label className="admin-field-label">Description</label>
               <textarea className="input-field" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
             </div>
+            <TextInput
+              label="SEO title"
+              value={seoTitle}
+              onChange={(e) => setSeoTitle(e.target.value)}
+              data-help-key="admin.product_series.seo_title"
+              hint="Optional search title. Empty uses the series name."
+            />
+            <TextInput
+              label="SEO description"
+              value={seoDescription}
+              onChange={(e) => setSeoDescription(e.target.value)}
+              data-help-key="admin.product_series.seo_description"
+              hint="Optional search snippet. Empty uses the series description."
+            />
             <DescriptionPhraseEditor
               value={descriptionPhrase}
               onChange={setDescriptionPhrase}

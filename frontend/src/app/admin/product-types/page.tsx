@@ -22,6 +22,8 @@ interface ProductType {
     name: string;
     description: string;
     slug: string;
+    seo_title?: string;
+    seo_description?: string;
     featured_image?: {
       data: {
         id: number;
@@ -55,7 +57,9 @@ export default function ProductTypesAdminPage() {
   const [newType, setNewType] = useState({
     name: '',
     description: '',
-    slug: ''
+    slug: '',
+    seo_title: '',
+    seo_description: '',
   });
   
   // Get API URLs from configuration
@@ -158,7 +162,9 @@ export default function ProductTypesAdminPage() {
       setNewType({
         name: '',
         description: '',
-        slug: ''
+        slug: '',
+        seo_title: '',
+        seo_description: '',
       });
       setFeaturedImagePreview(null);
       setIsCreating(false);
@@ -180,7 +186,9 @@ export default function ProductTypesAdminPage() {
       const typeData: Record<string, unknown> = {
         name: editingType.attributes.name,
         description: editingType.attributes.description,
-        slug: editingType.attributes.slug
+        slug: editingType.attributes.slug,
+        seo_title: editingType.attributes.seo_title || '',
+        seo_description: editingType.attributes.seo_description || '',
       };
 
       const editFile = editFeaturedImageRef.current?.files?.[0];
@@ -351,6 +359,38 @@ export default function ProductTypesAdminPage() {
                 className="w-full border border-gray-300 rounded px-3 py-2 h-32"
               ></textarea>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-gray-700 mb-2">
+                  SEO title{' '}
+                  <HelpButton helpKey="admin.product_types.seo_title" type="button" className="text-xs text-gray-500">
+                    ?
+                  </HelpButton>
+                </label>
+                <input
+                  type="text"
+                  value={newType.seo_title}
+                  onChange={(e) => setNewType({ ...newType, seo_title: e.target.value })}
+                  className="input-field"
+                  data-help-key="admin.product_types.seo_title"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-2">
+                  SEO description{' '}
+                  <HelpButton helpKey="admin.product_types.seo_description" type="button" className="text-xs text-gray-500">
+                    ?
+                  </HelpButton>
+                </label>
+                <textarea
+                  value={newType.seo_description}
+                  onChange={(e) => setNewType({ ...newType, seo_description: e.target.value })}
+                  className="w-full border border-gray-300 rounded px-3 py-2 h-24"
+                  data-help-key="admin.product_types.seo_description"
+                />
+              </div>
+            </div>
             
             <div className="flex justify-end">
               <Button helpKey="admin.product_types.create" type="submit">
@@ -464,6 +504,48 @@ export default function ProductTypesAdminPage() {
                 })}
                 className="w-full border border-gray-300 rounded px-3 py-2 h-32"
               ></textarea>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-gray-700 mb-2">
+                  SEO title{' '}
+                  <HelpButton helpKey="admin.product_types.seo_title" type="button" className="text-xs text-gray-500">
+                    ?
+                  </HelpButton>
+                </label>
+                <input
+                  type="text"
+                  value={editingType.attributes.seo_title || ''}
+                  onChange={(e) =>
+                    setEditingType({
+                      ...editingType,
+                      attributes: { ...editingType.attributes, seo_title: e.target.value },
+                    })
+                  }
+                  className="input-field"
+                  data-help-key="admin.product_types.seo_title"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-2">
+                  SEO description{' '}
+                  <HelpButton helpKey="admin.product_types.seo_description" type="button" className="text-xs text-gray-500">
+                    ?
+                  </HelpButton>
+                </label>
+                <textarea
+                  value={editingType.attributes.seo_description || ''}
+                  onChange={(e) =>
+                    setEditingType({
+                      ...editingType,
+                      attributes: { ...editingType.attributes, seo_description: e.target.value },
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded px-3 py-2 h-24"
+                  data-help-key="admin.product_types.seo_description"
+                />
+              </div>
             </div>
             
             <div className="flex justify-end">

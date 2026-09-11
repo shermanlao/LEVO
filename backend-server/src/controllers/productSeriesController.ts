@@ -38,6 +38,10 @@ function seriesWritePayload(body: Record<string, unknown>) {
   if (body.description_phrase !== undefined) {
     payload.description_phrase = rewriteLegacyLumenPlaceholders(body.description_phrase);
   }
+  if (body.seo_title !== undefined) payload.seo_title = String(body.seo_title ?? '').trim() || null;
+  if (body.seo_description !== undefined) {
+    payload.seo_description = String(body.seo_description ?? '').trim() || null;
+  }
   if (body.slug !== undefined) payload.slug = body.slug;
   if (body.product_type_id !== undefined) payload.product_type_id = body.product_type_id;
   if (body.featured_image !== undefined) payload.featured_image = extractStoredImageUrl(body.featured_image);
@@ -107,6 +111,8 @@ async function serializeProductSeries(row: any, productsOrOpts?: any[] | Seriali
       product_code: p.product_code ?? null,
       is_featured: Boolean(p.is_featured),
       datasheet_labels: parseDatasheetLabels(p.datasheet_labels),
+      seo_title: p.seo_title ?? '',
+      seo_description: p.seo_description ?? '',
       option_count: comboCount(groupOptionsByKind(options)),
       options,
       appearance_photos: includeAppearance && Number.isInteger(seriesId) ? await loadAppearancePhotos(seriesId) : [],

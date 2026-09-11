@@ -6,6 +6,7 @@
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;
   --chrome-rgb: 229, 231, 235;
+  --site-header-offset: 5.25rem;
 }
 
 body {

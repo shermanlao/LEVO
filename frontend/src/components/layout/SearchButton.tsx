@@ -44,19 +44,19 @@ export default function SearchButton() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative flex items-center">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="hover:text-gray-600"
+        className="inline-flex h-6 w-6 items-center justify-center bg-transparent p-0 border-0 leading-none hover:text-gray-600"
         aria-label="Search products"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-10 mt-2 w-72 bg-white shadow-lg rounded-md overflow-hidden z-50">
+        <div data-header-overlay className="absolute right-0 top-full mt-2 w-72 bg-white shadow-lg rounded-md overflow-hidden z-50">
           <form onSubmit={handleSubmit} className="p-3">
             <div className="flex items-center border border-gray-300 rounded overflow-hidden">
               <input

@@ -74,6 +74,8 @@ export const updateSiteSettings = asyncHandler(async (req: Request, res: Respons
     'resource_certifications_body',
     'resource_technical_title',
     'resource_technical_body',
+    'about_title',
+    'about_body',
     'seo_title',
     'seo_description',
   ] as const;

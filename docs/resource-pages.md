@@ -7,9 +7,9 @@ Public footer **Resources** and **Media** sit in the same column grid as Contact
 [`Footer.tsx`](../frontend/src/components/layout/Footer.tsx):
 
 - **Resources** — Warranty → `/warranty`, Certifications → `/certifications`, Technical Underneath → `/technical`
-- **Media** — icon links for Facebook, Instagram, Threads, and Pinterest. A network is hidden when its URL is empty. LinkedIn can be stored (`social_linkedin`) but is not shown in this column.
+- **Media** — icon links for LinkedIn, Facebook, Instagram, Threads, and Pinterest. A network is hidden when its URL is empty.
 
-Help keys: `catalog.footer.warranty`, `catalog.footer.certifications`, `catalog.footer.technical`, `catalog.footer.facebook`, `catalog.footer.instagram`, `catalog.footer.threads`, `catalog.footer.pinterest`.
+Help keys: `catalog.footer.warranty`, `catalog.footer.certifications`, `catalog.footer.technical`, `catalog.footer.linkedin`, `catalog.footer.facebook`, `catalog.footer.instagram`, `catalog.footer.threads`, `catalog.footer.pinterest`.
 
 ## Public pages
 

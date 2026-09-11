@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT,
   LEGACY_PRODUCT_PHOTO_STYLE_PROMPT,
+  LEGACY_THREE_STEP_PRODUCT_PHOTO_STYLE_PROMPT,
   PRODUCT_PHOTO_STYLE_LOCK,
   fillProductPhotoStylePrompt,
   isLegacyProductPhotoStylePrompt,
@@ -50,11 +51,23 @@ describe('fillProductPhotoStylePrompt', () => {
     const withoutSeen = fillProductPhotoStylePrompt(DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT, null, null, '');
     assert.match(withoutSeen, /Describe <IMAGE_0> yourself before STEP 1/);
   });
+
+  it('always injects the square catalog placeholder size', () => {
+    const prompt = fillProductPhotoStylePrompt(DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT);
+    assert.match(prompt, /PLACEHOLDER SIZE/);
+    assert.match(prompt, /1600×1600 px/);
+    assert.match(prompt, /1:1/);
+  });
 });
 
 describe('resolveProductPhotoStylePromptTemplate', () => {
   it('replaces the stored legacy default with the 3-step prompt', () => {
     assert.equal(isLegacyProductPhotoStylePrompt(LEGACY_PRODUCT_PHOTO_STYLE_PROMPT), true);
+    assert.equal(isLegacyProductPhotoStylePrompt(LEGACY_THREE_STEP_PRODUCT_PHOTO_STYLE_PROMPT), true);
+    assert.equal(
+      resolveProductPhotoStylePromptTemplate(LEGACY_THREE_STEP_PRODUCT_PHOTO_STYLE_PROMPT),
+      DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT
+    );
     assert.equal(
       resolveProductPhotoStylePromptTemplate(LEGACY_PRODUCT_PHOTO_STYLE_PROMPT),
       DEFAULT_PRODUCT_PHOTO_STYLE_PROMPT

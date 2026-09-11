@@ -177,6 +177,8 @@ export async function forwardToExpress(
   const headers: Record<string, string> = internalApiHeaders();
   const accept = request.headers.get('Accept');
   headers.Accept = accept && accept.length > 0 ? accept : 'application/json';
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp?.trim()) headers['x-real-ip'] = realIp.trim();
 
   let body: ArrayBuffer | undefined;
   if (request.method !== 'GET' && request.method !== 'HEAD') {

@@ -50,7 +50,7 @@ export default function MobileNav({
       </button>
 
       {isOpen && (
-        <div id="mobile-menu" className="absolute top-16 right-0 left-0 z-50 bg-white shadow-lg">
+        <div id="mobile-menu" data-header-overlay className="absolute top-full right-0 left-0 z-50 bg-white shadow-lg">
           {variant === 'admin' ? (
             <div className="flex flex-col py-4">
               <HelpLink
@@ -96,6 +96,9 @@ export default function MobileNav({
               </Link>
               <Link href="/projects" className="py-3 px-6 font-bold hover:bg-gray-100">
                 Projects
+              </Link>
+              <Link href="/about" className="py-3 px-6 font-bold hover:bg-gray-100">
+                About
               </Link>
               <Link href="/contact" className="py-3 px-6 font-bold hover:bg-gray-100">
                 Contact Us

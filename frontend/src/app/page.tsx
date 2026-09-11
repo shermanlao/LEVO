@@ -12,6 +12,7 @@ import FeatureCard from '@/components/ui/FeatureCard';
 import BrandSlogan from '@/components/layout/BrandSlogan';
 import WhyChooseIcon from '@/components/layout/WhyChooseIcon';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
+import { buildPageMetadata } from '@/lib/seo';
 
 export const revalidate = 120;
 
@@ -41,19 +42,29 @@ export async function generateMetadata(): Promise<Metadata> {
     const contact = await getSiteContact();
     const company = contact.company_name?.trim() || 'LEVO Lighting';
     const slogan = contact.slogan?.trim() || '';
-    return {
-      title: contact.seo_title?.trim() || (slogan ? `${company} - ${slogan}` : `${company} - Innovative Lighting Solutions`),
-      description:
-        contact.seo_description?.trim() ||
-        (slogan
-          ? `Discover ${company}'s range of innovative lighting solutions for modern spaces. ${slogan}.`
-          : `Discover ${company}'s range of innovative lighting solutions for modern spaces.`),
-    };
+    const title =
+      contact.seo_title?.trim() ||
+      (slogan ? `${company} | ${slogan}` : `${company} | Architectural LED Lighting`);
+    const description =
+      contact.seo_description?.trim() ||
+      (slogan
+        ? `Discover ${company}'s architectural LED lighting for modern spaces. ${slogan}.`
+        : `Discover ${company}'s architectural LED lighting for hotels, retail, and residences.`);
+    return buildPageMetadata({
+      title,
+      description,
+      path: '/',
+      image: contact.og_image?.trim() || contact.hero_image?.trim(),
+      absoluteTitle: true,
+    });
   } catch {
-    return {
-      title: 'LEVO Lighting - Innovative Lighting Solutions',
-      description: "Discover LEVO Lighting's range of innovative lighting solutions for modern spaces.",
-    };
+    return buildPageMetadata({
+      title: 'LEVO Lighting | Architectural LED Downlights & Luminaires',
+      description:
+        'Architectural LED lighting for hotels, retail, and residences. Browse downlights, datasheets, and photometric files.',
+      path: '/',
+      absoluteTitle: true,
+    });
   }
 }
 

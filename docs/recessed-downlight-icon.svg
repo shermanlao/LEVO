@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Recessed downlight">
+  <title>Recessed downlight</title>
+  <g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- terminals -->
+    <path d="M10.6 2.4v2.3M13.4 2.4v2.3"/>
+    <!-- recessed housing -->
+    <path d="M7.5 10.6a4.5 4.5 0 0 1 9 0"/>
+    <!-- ceiling plane -->
+    <path d="M2 10.6h5.5M16.5 10.6H22M2 12.1h5.5M16.5 12.1H22"/>
+    <!-- visible trim -->
+    <path d="M7.4 12.15h9.2l1.85 2.55H5.55L7.4 12.15z"/>
+    <!-- light rays -->
+    <path d="M12 15.9v3.3M12 15.9 9.7 18.2M12 15.9l2.3 2.3"/>
+  </g>
+</svg>

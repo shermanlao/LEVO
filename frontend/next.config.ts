@@ -1,14 +1,6 @@
 import type { NextConfig } from 'next';
 
 const publicReadPaths = [
-  '/api/contact',
-  '/api/contact/:path*',
-  '/api/datasheets',
-  '/api/datasheets/:path*',
-  '/api/series',
-  '/api/series/:path*',
-  '/api/labels',
-  '/api/labels/:path*',
   '/api/product-media',
   '/api/product-media/:path*',
   '/api/help-tips',
@@ -16,6 +8,11 @@ const publicReadPaths = [
   '/uploads',
   '/uploads/:path*',
 ];
+
+function publicOriginIsHttps(): boolean {
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_ORIGIN || '';
+  return origin.startsWith('https://');
+}
 
 const nextConfig: NextConfig = {
   eslint: {
@@ -56,7 +53,28 @@ const nextConfig: NextConfig = {
       { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      {
+        key: 'Content-Security-Policy',
+        value: [
+          "default-src 'self'",
+          "base-uri 'self'",
+          "form-action 'self'",
+          "frame-ancestors 'self'",
+          "img-src 'self' data: blob: https://lightx.synology.me http://lightx.synology.me",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+          "style-src 'self' 'unsafe-inline'",
+          "font-src 'self' data:",
+          "connect-src 'self'",
+          "worker-src 'self' blob:",
+        ].join('; '),
+      },
     ];
+    if (publicOriginIsHttps()) {
+      security.push({
+        key: 'Strict-Transport-Security',
+        value: 'max-age=31536000; includeSubDomains',
+      });
+    }
     return [
       { source: '/:path*', headers: security },
       { source: '/images/products/:path*', headers: imageCache },

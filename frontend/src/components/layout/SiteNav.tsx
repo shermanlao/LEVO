@@ -79,6 +79,9 @@ export default function SiteNav() {
         <Link href="/projects" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
           Projects
         </Link>
+        <Link href="/about" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
+          About
+        </Link>
         <Link href="/contact" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
           Contact Us
         </Link>

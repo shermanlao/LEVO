@@ -5,7 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
 import { assertProductionSecrets } from './lib/shared/production-secrets';
-import { requireInternalSecret } from './lib/internalAuth';
+import { requireInternalSecret, requireInternalSecretOnMutations } from './lib/internalAuth';
 import projectRoutes from './routes/projectRoutes';
 import productRoutes from './routes/productRoutes';
 import productTypeRoutes from './routes/productTypeRoutes';
@@ -63,10 +63,10 @@ app.use('/images/ai', express.static(path.join(__dirname, '..', '..', 'frontend'
 app.use('/images/site', express.static(path.join(__dirname, '..', '..', 'frontend', 'public', 'images', 'site')));
 app.use('/uploads', express.static(path.join(__dirname, '..', '..', 'frontend', 'public', 'images', 'products')));
 
-app.use('/api/projects', projectRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/product-types', productTypeRoutes);
-app.use('/api/product-series', productSeriesRoutes);
+app.use('/api/projects', requireInternalSecretOnMutations, projectRoutes);
+app.use('/api/products', requireInternalSecretOnMutations, productRoutes);
+app.use('/api/product-types', requireInternalSecretOnMutations, productTypeRoutes);
+app.use('/api/product-series', requireInternalSecretOnMutations, productSeriesRoutes);
 app.use(
   '/api/upload',
   requireInternalSecret,
