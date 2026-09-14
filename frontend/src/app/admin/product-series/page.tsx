@@ -71,10 +71,10 @@ export default function ProductSeriesAdminPage() {
     target: Record<string, unknown>,
     paths: Partial<SeriesFeaturedPaths>
   ) => {
-    if (paths.featured_image_source) target.featured_image_source = paths.featured_image_source;
-    if (paths.featured_image) target.featured_image = paths.featured_image;
-    if (paths.featured_image_page) target.featured_image_page = paths.featured_image_page;
-    if (paths.featured_image_datasheet) target.featured_image_datasheet = paths.featured_image_datasheet;
+    (Object.keys(paths) as Array<keyof SeriesFeaturedPaths>).forEach((key) => {
+      if (paths[key] === undefined) return;
+      target[key] = paths[key] || null;
+    });
   };
 
   const [newSeries, setNewSeries] = useState({

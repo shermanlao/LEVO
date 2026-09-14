@@ -391,6 +391,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Crop a different file for the current frame only. The shared source photo is not replaced. Use this when that frame still does not fit the source.',
   },
   {
+    helpKey: 'admin.product_series.featured_delete',
+    title: 'Delete this photo',
+    body: 'Remove the saved photo for this slot (or the shared source). On an existing series the clear is saved immediately. Public pages then fall back to the source or catalog crop when a slot is empty.',
+  },
+  {
     helpKey: 'admin.product_types.featured_image',
     title: 'Category photo',
     body: 'Upload the category card image used on /products. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same 16:9 frame as the public category cards.',

@@ -92,8 +92,8 @@ export default function SeriesFeaturedImageEditor({
   const [busy, setBusy] = useState(false);
   const [wizard, setWizard] = useState<WizardState | null>(null);
 
-  const sourceUrl =
-    toPublicImagePath(paths.featured_image_source) || toPublicImagePath(paths.featured_image);
+  const sourcePath = toPublicImagePath(paths.featured_image_source);
+  const sourceUrl = sourcePath || toPublicImagePath(paths.featured_image);
 
   function reportError(err: unknown) {
     const message = err instanceof Error ? err.message : 'Upload failed';
@@ -119,6 +119,25 @@ export default function SeriesFeaturedImageEditor({
         if (!saved.ok) throw new Error(saved.error);
       }
       return path;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function clearField(field: keyof SeriesFeaturedPaths) {
+    setBusy(true);
+    try {
+      onChange({ [field]: '' });
+      if (seriesId) {
+        const saved = await adminFetchJson(`/product-series/${seriesId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: null }),
+        });
+        if (!saved.ok) throw new Error(saved.error);
+      }
+    } catch (err) {
+      reportError(err);
     } finally {
       setBusy(false);
     }
@@ -263,6 +282,17 @@ export default function SeriesFeaturedImageEditor({
         >
           {sourceUrl ? 'Replace source' : 'Upload source'}
         </HelpButton>
+        {sourcePath ? (
+          <Button
+            helpKey="admin.product_series.featured_delete"
+            variant="danger"
+            className="text-xs py-1 px-2"
+            disabled={busy}
+            onClick={() => void clearField('featured_image_source')}
+          >
+            Delete source
+          </Button>
+        ) : null}
         <p className="text-xs text-gray-500">
           Crop one source into three frames, or upload a different photo for any slot.
         </p>
@@ -324,6 +354,17 @@ export default function SeriesFeaturedImageEditor({
                     onClick={() => openAdjust(slot.slot)}
                   >
                     Adjust crop
+                  </Button>
+                ) : null}
+                {src ? (
+                  <Button
+                    helpKey="admin.product_series.featured_delete"
+                    variant="danger"
+                    className="text-xs py-1 px-2"
+                    disabled={busy}
+                    onClick={() => void clearField(slot.field)}
+                  >
+                    Delete
                   </Button>
                 ) : null}
               </div>
