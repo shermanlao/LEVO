@@ -40,7 +40,7 @@ Public fallbacks when a chunk is empty: that surface uses source, then `featured
 | Surface | Field | Frame |
 |---------|-------|-------|
 | `/products/[type]` cards | `featured_image` | 16:9 |
-| `/products/[type]/[series]` gallery | `featured_image_page` | 4:5 `object-cover` |
+| `/products/[type]/[series]` gallery | `featured_image_page` | Admin crops 4:5; public gallery shows the file’s intrinsic ratio |
 | Family datasheet hero, option-list thumbs, compact SKU dialog | `featured_image_datasheet` | 1:1 |
 
 ## Other upload locations

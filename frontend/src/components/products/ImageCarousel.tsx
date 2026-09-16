@@ -125,26 +125,46 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
         className={
           compact
             ? 'relative w-full aspect-square bg-white rounded-lg overflow-hidden group border border-gray-200 self-start'
-            : 'relative w-full max-w-[400px] min-w-0 self-start bg-white rounded-lg overflow-hidden group order-1 sm:order-2 aspect-[4/5]'
+            : 'relative w-full max-w-[400px] min-w-0 self-start bg-white rounded-lg overflow-hidden group order-1 sm:order-2'
         }
       >
         <button
           type="button"
           onClick={() => setShowZoom(true)}
-          className={compact ? 'w-full h-full cursor-zoom-in' : 'block w-full h-full cursor-zoom-in'}
+          className={
+            compact
+              ? 'w-full h-full cursor-zoom-in'
+              : 'relative block w-full cursor-zoom-in'
+          }
           aria-label={`Zoom ${selected.alt}`}
         >
-          <Image
-            src={selectedUrl}
-            alt={selected.alt}
-            fill
-            sizes={compact ? '100vw' : '400px'}
-            priority
-            unoptimized={shouldSkipImageOptimize(selectedUrl)}
-            className={compact ? 'object-contain object-top' : 'object-cover'}
-            onLoad={() => setFailed(false)}
-            onError={() => setFailed(true)}
-          />
+          {compact ? (
+            <Image
+              src={selectedUrl}
+              alt={selected.alt}
+              fill
+              sizes="100vw"
+              priority
+              unoptimized={shouldSkipImageOptimize(selectedUrl)}
+              className="object-contain object-top"
+              onLoad={() => setFailed(false)}
+              onError={() => setFailed(true)}
+            />
+          ) : (
+            <Image
+              src={selectedUrl}
+              alt={selected.alt}
+              width={800}
+              height={1000}
+              sizes="400px"
+              priority
+              unoptimized={shouldSkipImageOptimize(selectedUrl)}
+              className="object-contain object-top w-full h-auto"
+              style={{ width: '100%', height: 'auto', aspectRatio: 'auto' }}
+              onLoad={() => setFailed(false)}
+              onError={() => setFailed(true)}
+            />
+          )}
           {failed && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 pointer-events-none">
               <span className="text-gray-500 text-center p-4">
