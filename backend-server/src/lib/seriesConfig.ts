@@ -360,6 +360,7 @@ export async function upsertSeriesSizePacks(
   const typeId = Number(series.get('product_type_id')) || null;
   const seriesName = String(series.get('name') || 'Series');
   const seriesSlug = String(series.get('slug') || 'series');
+  const usedPackIds = new Set<number>();
 
   for (const size of sizes) {
     const packId = parsePackId(size.pack_id);
@@ -367,14 +368,18 @@ export async function upsertSeriesSizePacks(
       (packId
         ? products.find((row) => Number(row.get('id')) === packId)
         : undefined) ||
-      products.find((row) =>
-        productMatchesSize(row.get({ plain: true }) as Record<string, unknown>, size)
-      );
+      products.find((row) => {
+        const id = Number(row.get('id'));
+        if (usedPackIds.has(id)) return false;
+        return productMatchesSize(row.get({ plain: true }) as Record<string, unknown>, size);
+      });
     const name = `${seriesName} ${size.value}`.trim();
     const dimensions = optionText(size.dimensions) || size.value;
     const cutout = optionText(size.cutout_size) || null;
     const images = sizeImagePatch(size);
     if (existing) {
+      const existingId = Number(existing.get('id'));
+      if (existingId) usedPackIds.add(existingId);
       await existing.update({
         name,
         dimensions,
@@ -402,6 +407,8 @@ export async function upsertSeriesSizePacks(
       created_at: new Date(),
       updated_at: new Date(),
     });
+    const createdId = Number(created.get('id'));
+    if (createdId) usedPackIds.add(createdId);
     products.push(created);
   }
 }

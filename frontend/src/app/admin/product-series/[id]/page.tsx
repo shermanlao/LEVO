@@ -64,21 +64,24 @@ function draftsFromOptions(
 ): Record<string, DraftOption[]> {
   const grouped = groupOptionsByKind(options);
   const drafts: Record<string, DraftOption[]> = {};
+  const usedPackIds = new Set<number>();
   for (const field of variantSpecFields()) {
     drafts[field.key] = (grouped[field.key] || []).map((option) => {
       const pack =
         field.key === SIZE_KIND
-          ? products.find((product) =>
-              productMatchesSize(
+          ? products.find((product) => {
+              if (usedPackIds.has(product.id)) return false;
+              return productMatchesSize(
                 {
                   ...(product.attributes || {}),
                   dimensions: product.attributes?.dimensions,
                   cutout_size: product.attributes?.cutout_size,
                 },
                 option
-              )
-            )
+              );
+            })
           : undefined;
+      if (pack?.id) usedPackIds.add(pack.id);
       return {
         value: option.value || '',
         code: lookupCatalogCode(catalog, field.key, option.value),
@@ -267,6 +270,27 @@ export default function SeriesVariantEditorPage() {
       const list = [...(prev[kind] || [])];
       list[index] = { ...list[index], ...patch };
       return { ...prev, [kind]: list };
+    });
+  }
+
+  function duplicateSize(index: number) {
+    setDrafts((prev) => {
+      const list = [...(prev[SIZE_KIND] || [])];
+      const source = list[index];
+      if (!source) return prev;
+      const baseLabel = optionText(source.value) || optionText(source.dimensions);
+      const copyLabel = baseLabel ? `${baseLabel} (copy)` : '';
+      const copy = emptyDraft({
+        value: copyLabel,
+        code: source.code,
+        dimensions: source.dimensions,
+        cutout_size: source.cutout_size,
+        main_image_A: source.main_image_A,
+        main_image_B: source.main_image_B,
+        size_image: source.size_image,
+      });
+      list.splice(index + 1, 0, copy);
+      return { ...prev, [SIZE_KIND]: list };
     });
   }
 
@@ -493,7 +517,14 @@ export default function SeriesVariantEditorPage() {
                                 onChange={(e) => updateRow(field.key, index, { cutout_size: e.target.value })}
                               />
                             </div>
-                            <div className="md:col-span-3">
+                            <div className="md:col-span-3 flex flex-wrap items-end gap-2">
+                              <Button
+                                helpKey="admin.product_series.size_duplicate"
+                                variant="secondary"
+                                onClick={() => duplicateSize(index)}
+                              >
+                                Duplicate
+                              </Button>
                               <Button
                                 helpKey="admin.product_series.option_remove"
                                 variant="danger"

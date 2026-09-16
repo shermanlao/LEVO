@@ -1111,6 +1111,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Add a size row with Label, Dimensions, Cutout, and Main A / Main B / Size drawing. Photos stay on this form until you click Save variants.',
   },
   {
+    helpKey: 'admin.product_series.size_duplicate',
+    title: 'Duplicate size',
+    body: 'Insert a copy of this size row below it, including dimensions, cutout, and photo paths. The label gets “ (copy)” so Save variants creates a new size pack instead of merging with the original. Edit the copy, then click Save variants.',
+  },
+  {
     helpKey: 'admin.product_series.option_remove',
     title: 'Remove tag',
     body: 'Click a selected tag to remove it from this series. Listed products are not deleted.',
