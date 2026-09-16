@@ -241,16 +241,16 @@ export default function SeriesConfigurator({
             </Button>
           ) : null}
         </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
           {selectors.map((field) => {
             const list = realOptionsForKind(field.key, grouped[field.key] || []);
             return (
-              <label key={field.key} className="block min-w-0">
-                <span className="block text-xs font-medium text-gray-600 mb-1">
+              <label key={field.key} className="flex items-center gap-3 min-w-0">
+                <span className="shrink-0 w-[7.5rem] text-xs font-medium text-gray-600">
                   {variantKindLabel(field.key)}
                 </span>
                 <select
-                  className="select-field !py-1.5 text-sm"
+                  className="select-field !py-1.5 text-sm min-w-0 flex-1"
                   data-help-key={helpKeyForKind(field.key)}
                   value={selection[field.key] || ''}
                   onChange={(e) => setKind(field.key, e.target.value)}
