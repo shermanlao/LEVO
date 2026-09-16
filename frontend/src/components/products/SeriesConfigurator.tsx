@@ -328,10 +328,11 @@ export default function SeriesConfigurator({
       ) : null}
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-8 items-start">
-        <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0 space-y-3">
-          {liveGallery || gallery ? <div className="min-w-0">{liveGallery || gallery}</div> : null}
-          <SeriesFamilyActions seriesSlug={seriesSlug} />
-        </div>
+        {liveGallery || gallery ? (
+          <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0">
+            {liveGallery || gallery}
+          </div>
+        ) : null}
         <div
           className={`min-w-0 flex-1 flex flex-col md:flex-row gap-6 md:gap-8 items-start ${
             liveGallery || gallery ? '' : 'w-full'
@@ -342,6 +343,7 @@ export default function SeriesConfigurator({
             {seriesDescription ? (
               <p className="text-sm text-gray-600 leading-relaxed max-w-prose">{seriesDescription}</p>
             ) : null}
+            <SeriesFamilyActions seriesSlug={seriesSlug} />
           </div>
           {selectors.length > 0 ? (
             <aside className="hidden lg:block w-full md:max-w-[17.5rem] md:w-[17.5rem] shrink-0 min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50/80 p-4">
