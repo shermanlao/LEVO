@@ -13,41 +13,53 @@ const SECONDARY_BTN =
 type SeriesFamilyTitleProps = {
   seriesName: string;
   seriesSlug: string;
+  /** When false, only the series name is rendered (CTAs live under the gallery). */
+  showActions?: boolean;
 };
 
-export default function SeriesFamilyTitle({ seriesName, seriesSlug }: SeriesFamilyTitleProps) {
+export function SeriesFamilyActions({ seriesSlug }: { seriesSlug: string }) {
   const inquireHref = `/contact?series=${encodeURIComponent(seriesSlug)}`;
 
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <HelpLink
+        href={getSeriesFamilyDatasheetUrl(seriesSlug)}
+        helpKey="catalog.family_datasheet.download"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={FILE_BTN}
+      >
+        <FileDownloadIcon className={FILE_ICON} />
+        Family Datasheet
+      </HelpLink>
+      <HelpLink
+        href={getSeriesInstallationUrl(seriesSlug)}
+        helpKey="catalog.installation.download"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={FILE_BTN}
+      >
+        <InstallationIcon className={FILE_ICON} />
+        Installation
+      </HelpLink>
+      <HelpLink href={inquireHref} helpKey="catalog.series.inquire" className={SECONDARY_BTN}>
+        Inquire
+      </HelpLink>
+    </div>
+  );
+}
+
+export default function SeriesFamilyTitle({
+  seriesName,
+  seriesSlug,
+  showActions = true,
+}: SeriesFamilyTitleProps) {
   return (
     <div className="min-w-0">
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 leading-tight">
         {seriesName}
       </h1>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <HelpLink
-          href={getSeriesFamilyDatasheetUrl(seriesSlug)}
-          helpKey="catalog.family_datasheet.download"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={FILE_BTN}
-        >
-          <FileDownloadIcon className={FILE_ICON} />
-          Family Datasheet
-        </HelpLink>
-        <HelpLink
-          href={getSeriesInstallationUrl(seriesSlug)}
-          helpKey="catalog.installation.download"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={FILE_BTN}
-        >
-          <InstallationIcon className={FILE_ICON} />
-          Installation
-        </HelpLink>
-        <HelpLink href={inquireHref} helpKey="catalog.series.inquire" className={SECONDARY_BTN}>
-          Inquire
-        </HelpLink>
-      </div>
+      {showActions ? <div className="mt-3"><SeriesFamilyActions seriesSlug={seriesSlug} /></div> : null}
     </div>
   );
 }

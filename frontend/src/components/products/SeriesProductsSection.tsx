@@ -1,7 +1,7 @@
 import { Product } from '@/types/product';
 import { Suspense } from 'react';
 import SeriesConfigurator from './SeriesConfigurator';
-import SeriesFamilyTitle from './SeriesFamilyTitle';
+import SeriesFamilyTitle, { SeriesFamilyActions } from './SeriesFamilyTitle';
 import EmptyState from '@/components/ui/EmptyState';
 import ImageCarousel from './ImageCarousel';
 import { uniqueSeriesPhotoUrls } from '@/lib/image-utils';
@@ -90,11 +90,16 @@ export default function SeriesProductsSection({
       <div>
         {breadcrumbItems.length > 0 ? <PageRoute items={breadcrumbItems} /> : null}
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-10 items-start">
-          {gallery ? (
-            <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0">{gallery}</div>
-          ) : null}
+          <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0 space-y-3">
+            {gallery ? <div className="min-w-0">{gallery}</div> : null}
+            <SeriesFamilyActions seriesSlug={currentSeriesSlug} />
+          </div>
           <div className={gallery ? 'min-w-0 flex-1' : undefined}>
-            <SeriesFamilyTitle seriesName={seriesName} seriesSlug={currentSeriesSlug} />
+            <SeriesFamilyTitle
+              seriesName={seriesName}
+              seriesSlug={currentSeriesSlug}
+              showActions={false}
+            />
             {seriesDescription ? (
               <p className="mt-3 text-sm text-gray-600 leading-relaxed max-w-prose">{seriesDescription}</p>
             ) : null}
@@ -114,11 +119,16 @@ export default function SeriesProductsSection({
         <div>
           {breadcrumbItems.length > 0 ? <PageRoute items={breadcrumbItems} /> : null}
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-10 items-start">
-            {gallery ? (
-              <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0">{gallery}</div>
-            ) : null}
+            <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0 space-y-3">
+              {gallery ? <div className="min-w-0">{gallery}</div> : null}
+              <SeriesFamilyActions seriesSlug={currentSeriesSlug} />
+            </div>
             <div className={gallery ? 'min-w-0 flex-1' : 'w-full'}>
-              <SeriesFamilyTitle seriesName={seriesName} seriesSlug={currentSeriesSlug} />
+              <SeriesFamilyTitle
+                seriesName={seriesName}
+                seriesSlug={currentSeriesSlug}
+                showActions={false}
+              />
               {seriesDescription ? (
                 <p className="mt-3 text-sm text-gray-600 leading-relaxed max-w-prose">{seriesDescription}</p>
               ) : null}

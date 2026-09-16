@@ -12,7 +12,7 @@ import CatalogFunnelToggle from './CatalogFunnelToggle';
 import PageRoute from '@/components/layout/PageRoute';
 import type { RouteCrumb } from '@/components/layout/pageRouteItems';
 import { FileDownloadIcon } from './ProductFileIcons';
-import SeriesFamilyTitle from './SeriesFamilyTitle';
+import SeriesFamilyTitle, { SeriesFamilyActions } from './SeriesFamilyTitle';
 import { datasheetGalleryUrls, productImageUrl, toPublicImagePath } from '@/lib/image-utils';
 import { productFinishValue } from '@shared/product-specs';
 import {
@@ -243,19 +243,19 @@ export default function SeriesConfigurator({
             </Button>
           ) : null}
         </div>
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 min-w-0">
           {selectors.map((field) => {
             const list = realOptionsForKind(field.key, grouped[field.key] || []);
             return (
               <label
                 key={field.key}
-                className="flex items-center justify-between gap-3 min-w-0"
+                className="grid grid-cols-[minmax(0,1fr)_minmax(0,7.75rem)] gap-2 items-center min-w-0"
               >
-                <span className="shrink-0 text-xs font-medium text-gray-600">
+                <span className="min-w-0 text-xs font-medium text-gray-600 leading-snug">
                   {variantKindLabel(field.key)}
                 </span>
                 <select
-                  className="select-field !py-1.5 !px-2.5 text-sm w-[10rem] shrink-0"
+                  className="select-field !py-1.5 !px-2 text-sm w-full min-w-0 max-w-full"
                   data-help-key={helpKeyForKind(field.key)}
                   value={selection[field.key] || ''}
                   onChange={(e) => setKind(field.key, e.target.value)}
@@ -328,24 +328,23 @@ export default function SeriesConfigurator({
       ) : null}
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-8 items-start">
-        {liveGallery || gallery ? (
-          <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0">
-            {liveGallery || gallery}
-          </div>
-        ) : null}
+        <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0 space-y-3">
+          {liveGallery || gallery ? <div className="min-w-0">{liveGallery || gallery}</div> : null}
+          <SeriesFamilyActions seriesSlug={seriesSlug} />
+        </div>
         <div
           className={`min-w-0 flex-1 flex flex-col md:flex-row gap-6 md:gap-8 items-start ${
             liveGallery || gallery ? '' : 'w-full'
           }`}
         >
           <div className="min-w-0 flex-1 space-y-3">
-            <SeriesFamilyTitle seriesName={seriesName} seriesSlug={seriesSlug} />
+            <SeriesFamilyTitle seriesName={seriesName} seriesSlug={seriesSlug} showActions={false} />
             {seriesDescription ? (
               <p className="text-sm text-gray-600 leading-relaxed max-w-prose">{seriesDescription}</p>
             ) : null}
           </div>
           {selectors.length > 0 ? (
-            <aside className="hidden lg:block w-full md:w-[17.5rem] shrink-0 rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+            <aside className="hidden lg:block w-full md:max-w-[17.5rem] md:w-[17.5rem] shrink-0 min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50/80 p-4">
               {renderConfigFields()}
             </aside>
           ) : null}
