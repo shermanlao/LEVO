@@ -89,14 +89,14 @@ export default function SeriesProductsSection({
     return (
       <div>
         {breadcrumbItems.length > 0 ? <PageRoute items={breadcrumbItems} /> : null}
-        <div className="flex flex-col md:flex-row gap-8 mb-10 items-start">
-          {gallery ? <div className="w-full md:w-1/2 min-w-0">{gallery}</div> : null}
-          <div className={gallery ? 'w-full md:w-1/2 min-w-0' : undefined}>
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-10 items-start">
+          {gallery ? (
+            <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0">{gallery}</div>
+          ) : null}
+          <div className={gallery ? 'min-w-0 flex-1' : undefined}>
             <SeriesFamilyTitle seriesName={seriesName} seriesSlug={currentSeriesSlug} />
             {seriesDescription ? (
-              <div className="prose max-w-none">
-                <p>{seriesDescription}</p>
-              </div>
+              <p className="mt-3 text-sm text-gray-600 leading-relaxed max-w-prose">{seriesDescription}</p>
             ) : null}
           </div>
         </div>
@@ -113,14 +113,14 @@ export default function SeriesProductsSection({
       fallback={
         <div>
           {breadcrumbItems.length > 0 ? <PageRoute items={breadcrumbItems} /> : null}
-          <div className="flex flex-col md:flex-row gap-8 mb-10 items-start">
-            {gallery ? <div className="w-full md:w-1/2 min-w-0">{gallery}</div> : null}
-            <div className={gallery ? 'w-full md:w-1/2 min-w-0' : 'w-full'}>
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-10 items-start">
+            {gallery ? (
+              <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0">{gallery}</div>
+            ) : null}
+            <div className={gallery ? 'min-w-0 flex-1' : 'w-full'}>
               <SeriesFamilyTitle seriesName={seriesName} seriesSlug={currentSeriesSlug} />
               {seriesDescription ? (
-                <div className="prose max-w-none">
-                  <p>{seriesDescription}</p>
-                </div>
+                <p className="mt-3 text-sm text-gray-600 leading-relaxed max-w-prose">{seriesDescription}</p>
               ) : null}
               <p className="text-sm text-gray-500 mt-4">Loading options…</p>
             </div>

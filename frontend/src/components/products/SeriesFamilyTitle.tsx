@@ -4,9 +4,11 @@ import { HelpLink } from '@/components/admin/HelpButton';
 import { FileDownloadIcon, InstallationIcon } from './ProductFileIcons';
 import { getSeriesFamilyDatasheetUrl, getSeriesInstallationUrl } from '@/lib/sqlite-api';
 
-const FILE_BTN = 'btn-primary inline-flex items-center text-sm py-2 px-3 whitespace-nowrap shrink-0';
-const FILE_ICON = 'mr-1 h-4 w-4';
-const SECONDARY_BTN = 'btn-secondary inline-flex items-center text-sm py-2 px-3 whitespace-nowrap shrink-0';
+const FILE_BTN =
+  'btn-primary inline-flex items-center gap-1.5 text-xs py-1.5 px-2.5 whitespace-nowrap shrink-0';
+const FILE_ICON = 'h-3.5 w-3.5';
+const SECONDARY_BTN =
+  'btn-secondary inline-flex items-center text-xs py-1.5 px-2.5 whitespace-nowrap shrink-0';
 
 type SeriesFamilyTitleProps = {
   seriesName: string;
@@ -17,9 +19,11 @@ export default function SeriesFamilyTitle({ seriesName, seriesSlug }: SeriesFami
   const inquireHref = `/contact?series=${encodeURIComponent(seriesSlug)}`;
 
   return (
-    <div className="flex items-start justify-between gap-4 mb-2">
-      <h1 className="text-4xl font-bold">{seriesName}</h1>
-      <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+    <div className="min-w-0">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 leading-tight">
+        {seriesName}
+      </h1>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <HelpLink
           href={getSeriesFamilyDatasheetUrl(seriesSlug)}
           helpKey="catalog.family_datasheet.download"

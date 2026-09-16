@@ -62,8 +62,8 @@ type SeriesConfiguratorProps = {
   children?: ReactNode;
 };
 
-const FILE_BTN = 'btn-primary inline-flex items-center text-sm py-2 px-3 whitespace-nowrap';
-const FILE_ICON = 'mr-1 h-4 w-4';
+const FILE_BTN = 'btn-primary inline-flex items-center gap-1.5 text-xs py-1.5 px-2.5 whitespace-nowrap';
+const FILE_ICON = 'h-3.5 w-3.5';
 
 function helpKeyForKind(kind: string): string {
   if (kind === 'beam_angle') return 'catalog.series.beam';
@@ -227,30 +227,35 @@ export default function SeriesConfigurator({
   function renderConfigFields() {
     if (selectors.length === 0) return null;
     return (
-      <>
-        <div className={`flex items-baseline justify-between gap-3 mb-2 ${hasSelection ? '' : 'max-lg:hidden'}`}>
-          <h2 className="hidden lg:block text-sm font-semibold text-gray-900">Configure</h2>
+      <div className="space-y-3">
+        <div className={`flex items-center justify-between gap-3 ${hasSelection ? '' : 'max-lg:hidden'}`}>
+          <h2 className="hidden lg:block text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Configure
+          </h2>
           {hasSelection ? (
             <Button
               helpKey="catalog.series.clear"
               variant="ghost"
               onClick={clearSelection}
-              className="text-sm md:ml-auto"
+              className="text-xs !px-0 !py-0 h-auto"
             >
               Clear
             </Button>
           ) : null}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+        <div className="space-y-2.5">
           {selectors.map((field) => {
             const list = realOptionsForKind(field.key, grouped[field.key] || []);
             return (
-              <label key={field.key} className="flex items-center gap-3 min-w-0">
-                <span className="shrink-0 w-[7.5rem] text-xs font-medium text-gray-600">
+              <label
+                key={field.key}
+                className="flex items-center justify-between gap-3 min-w-0"
+              >
+                <span className="shrink-0 text-xs font-medium text-gray-600">
                   {variantKindLabel(field.key)}
                 </span>
                 <select
-                  className="select-field !py-1.5 text-sm min-w-0 flex-1"
+                  className="select-field !py-1.5 !px-2.5 text-sm w-[10rem] shrink-0"
                   data-help-key={helpKeyForKind(field.key)}
                   value={selection[field.key] || ''}
                   onChange={(e) => setKind(field.key, e.target.value)}
@@ -267,7 +272,7 @@ export default function SeriesConfigurator({
           })}
         </div>
         {complete ? (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="pt-1 flex flex-wrap items-center gap-2">
             <HelpLink
               href={getSeriesDatasheetUrl(seriesSlug, selection)}
               helpKey="catalog.datasheet.download"
@@ -289,7 +294,7 @@ export default function SeriesConfigurator({
             </HelpLink>
           </div>
         ) : null}
-      </>
+      </div>
     );
   }
 
@@ -316,22 +321,34 @@ export default function SeriesConfigurator({
       {selectors.length > 0 ? (
         <div
           id="series-config-panel"
-          className={`${mobileOpen ? 'block' : 'hidden'} lg:hidden bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6`}
+          className={`${mobileOpen ? 'block' : 'hidden'} lg:hidden bg-white p-4 rounded-lg border border-gray-200 mb-6`}
         >
           {renderConfigFields()}
         </div>
       ) : null}
 
-      <div className="flex flex-col md:flex-row gap-6 mb-8 items-start">
-        {liveGallery || gallery ? <div className="w-full md:w-1/2 min-w-0">{liveGallery || gallery}</div> : null}
-        <div className={liveGallery || gallery ? 'w-full md:w-1/2 min-w-0' : 'w-full'}>
-          <SeriesFamilyTitle seriesName={seriesName} seriesSlug={seriesSlug} />
-          {seriesDescription ? (
-            <div className="prose max-w-none mb-4 text-sm">
-              <p>{seriesDescription}</p>
-            </div>
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-8 items-start">
+        {liveGallery || gallery ? (
+          <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0">
+            {liveGallery || gallery}
+          </div>
+        ) : null}
+        <div
+          className={`min-w-0 flex-1 flex flex-col md:flex-row gap-6 md:gap-8 items-start ${
+            liveGallery || gallery ? '' : 'w-full'
+          }`}
+        >
+          <div className="min-w-0 flex-1 space-y-3">
+            <SeriesFamilyTitle seriesName={seriesName} seriesSlug={seriesSlug} />
+            {seriesDescription ? (
+              <p className="text-sm text-gray-600 leading-relaxed max-w-prose">{seriesDescription}</p>
+            ) : null}
+          </div>
+          {selectors.length > 0 ? (
+            <aside className="hidden lg:block w-full md:w-[17.5rem] shrink-0 rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+              {renderConfigFields()}
+            </aside>
           ) : null}
-          {selectors.length > 0 ? <div className="max-lg:hidden">{renderConfigFields()}</div> : null}
         </div>
       </div>
 
