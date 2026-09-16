@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Product } from '@/types/product';
 import ProductList from './ProductList';
@@ -64,6 +64,8 @@ type SeriesConfiguratorProps = {
 
 const FILE_BTN = 'btn-primary inline-flex items-center gap-1.5 text-xs py-1.5 px-2.5 whitespace-nowrap';
 const FILE_ICON = 'h-3.5 w-3.5';
+const LIST_INITIAL_ROWS = 25;
+const LIST_PAGE_ROWS = 50;
 
 function helpKeyForKind(kind: string): string {
   if (kind === 'beam_angle') return 'catalog.series.beam';
@@ -117,60 +119,114 @@ export default function SeriesConfigurator({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(LIST_INITIAL_ROWS);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const grouped = useMemo(() => groupOptionsByKind(options), [options]);
   const selectors = useMemo(() => visibleSelectorKinds(grouped), [grouped]);
   const selection = useMemo(() => selectionFromSearchParams(searchParams), [searchParams]);
   const catalog = useMemo(() => catalogFromOptions(options), [options]);
   const packs = useMemo(() => products.map(productPlain), [products]);
+  const selectionKey = searchParams.toString();
+
+  const filteredCombos = useMemo(
+    () =>
+      cartesianComboRows(grouped).filter((combo) =>
+        comboMatchesSelection(combo.selection, selection)
+      ),
+    [grouped, selection]
+  );
+
+  useEffect(() => {
+    setVisibleCount(LIST_INITIAL_ROWS);
+    setLoadingMore(false);
+    if (loadMoreTimerRef.current) {
+      clearTimeout(loadMoreTimerRef.current);
+      loadMoreTimerRef.current = null;
+    }
+  }, [selectionKey]);
+
+  useEffect(() => {
+    return () => {
+      if (loadMoreTimerRef.current) clearTimeout(loadMoreTimerRef.current);
+    };
+  }, []);
 
   const comboRows = useMemo(() => {
-    const combos = cartesianComboRows(grouped);
-    return combos
-      .filter((combo) => comboMatchesSelection(combo.selection, selection))
-      .map((combo): SeriesComboPreview => {
-        const specs = specFromCombo(grouped, combo.selection);
-        specs.product_code = seriesProductCode || '';
-        specs.name = seriesName;
-        const sizeValue = optionText(specs.size) || combo.selection[SIZE_KIND];
-        const pack = findSizePack(packs, sizeValue, grouped);
-        copyPackDatasheetFields(specs, pack);
-        const packProduct = pack
-          ? products.find((product) => Number(product.id) === Number(pack.id))
-          : null;
-        const appearance = findAppearancePhoto(appearancePhotos, { ...specs, ...combo.selection });
-        const uniquePhotos = datasheetGalleryUrls({
-          main: toPublicImagePath(appearance?.main_image_A) || productImageUrl(packProduct || undefined),
-          size: packProduct?.attributes?.size_image,
-          fallbackMain: seriesThumbUrl || seriesImageUrl,
-          polarUrl: getSeriesPolarUrl(seriesSlug, combo.selection),
-        });
-        const wattage = wattageOptionValue(specs.wattage) || combo.selection.wattage || '';
-        return {
-          id: combo.id,
-          selection: combo.selection,
-          name: seriesName,
-          sku: composeDatasheetSku(specs, catalog, grouped),
-          productCode: optionText(seriesProductCode),
-          wattage,
-          size: optionText(specs.size) || optionText(specs.dimensions) || combo.selection[SIZE_KIND] || '',
-          cct: optionText(specs.cct) || combo.selection.cct || '',
-          beam: optionText(specs.beam_angle) || combo.selection.beam_angle || '',
-          dimming: optionText(specs.dimming) || combo.selection.dimming || '',
-          finish: productFinishValue(specs),
-          imageUrl: uniquePhotos[0] || seriesThumbUrl || seriesImageUrl,
-          photos: uniquePhotos,
-          specs,
-          seriesName,
-          description: fillPhraseTemplate(seriesPhrase, specs) || undefined,
-          labels: mergeScopedDatasheetLabels({
-            spec: specs,
-            catalog,
-            typeLabels,
-            seriesLabels,
-          }),
-        };
+    return filteredCombos.slice(0, visibleCount).map((combo): SeriesComboPreview => {
+      const specs = specFromCombo(grouped, combo.selection);
+      specs.product_code = seriesProductCode || '';
+      specs.name = seriesName;
+      const sizeValue = optionText(specs.size) || combo.selection[SIZE_KIND];
+      const pack = findSizePack(packs, sizeValue, grouped);
+      copyPackDatasheetFields(specs, pack);
+      const packProduct = pack
+        ? products.find((product) => Number(product.id) === Number(pack.id))
+        : null;
+      const appearance = findAppearancePhoto(appearancePhotos, { ...specs, ...combo.selection });
+      const uniquePhotos = datasheetGalleryUrls({
+        main: toPublicImagePath(appearance?.main_image_A) || productImageUrl(packProduct || undefined),
+        size: packProduct?.attributes?.size_image,
+        fallbackMain: seriesThumbUrl || seriesImageUrl,
+        polarUrl: getSeriesPolarUrl(seriesSlug, combo.selection),
       });
-  }, [appearancePhotos, catalog, grouped, packs, products, selection, seriesImageUrl, seriesName, seriesPhrase, seriesProductCode, seriesSlug, seriesThumbUrl, typeLabels, seriesLabels]);
+      const wattage = wattageOptionValue(specs.wattage) || combo.selection.wattage || '';
+      return {
+        id: combo.id,
+        selection: combo.selection,
+        name: seriesName,
+        sku: composeDatasheetSku(specs, catalog, grouped),
+        productCode: optionText(seriesProductCode),
+        wattage,
+        size: optionText(specs.size) || optionText(specs.dimensions) || combo.selection[SIZE_KIND] || '',
+        cct: optionText(specs.cct) || combo.selection.cct || '',
+        beam: optionText(specs.beam_angle) || combo.selection.beam_angle || '',
+        dimming: optionText(specs.dimming) || combo.selection.dimming || '',
+        finish: productFinishValue(specs),
+        imageUrl: uniquePhotos[0] || seriesThumbUrl || seriesImageUrl,
+        photos: uniquePhotos,
+        specs,
+        seriesName,
+        description: fillPhraseTemplate(seriesPhrase, specs) || undefined,
+        labels: mergeScopedDatasheetLabels({
+          spec: specs,
+          catalog,
+          typeLabels,
+          seriesLabels,
+        }),
+      };
+    });
+  }, [
+    appearancePhotos,
+    catalog,
+    filteredCombos,
+    grouped,
+    packs,
+    products,
+    seriesImageUrl,
+    seriesName,
+    seriesPhrase,
+    seriesProductCode,
+    seriesSlug,
+    seriesThumbUrl,
+    typeLabels,
+    seriesLabels,
+    visibleCount,
+  ]);
+
+  const totalCount = filteredCombos.length;
+  const hasMore = visibleCount < totalCount;
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || visibleCount >= filteredCombos.length) return;
+    setLoadingMore(true);
+    if (loadMoreTimerRef.current) clearTimeout(loadMoreTimerRef.current);
+    loadMoreTimerRef.current = setTimeout(() => {
+      setVisibleCount((current) => Math.min(current + LIST_PAGE_ROWS, filteredCombos.length));
+      setLoadingMore(false);
+      loadMoreTimerRef.current = null;
+    }, 0);
+  }, [filteredCombos.length, loadingMore, visibleCount]);
 
   const liveGallery = useMemo(() => {
     const filled = filledSelection(grouped, selection);
@@ -355,13 +411,17 @@ export default function SeriesConfigurator({
 
       {children}
 
-      {comboRows.length === 0 && cartesianComboRows(grouped).length > 0 ? (
+      {totalCount === 0 && cartesianComboRows(grouped).length > 0 ? (
         <p className="text-gray-600">No options match this selection.</p>
       ) : (
         <ProductList
           rows={comboRows}
           seriesSlug={currentSeriesSlug || seriesSlug}
           seriesImageUrl={seriesThumbUrl || seriesImageUrl}
+          totalCount={totalCount}
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+          onLoadMore={loadMore}
         />
       )}
     </div>

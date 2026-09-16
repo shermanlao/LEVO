@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import RobustImage from '@/components/ui/robust-image';
 import EmptyState from '@/components/ui/EmptyState';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
+import Spinner from '@/components/ui/Spinner';
 import { FileDownloadIcon } from './ProductFileIcons';
 import ProductSkuDialog, { type SeriesComboPreview } from './ProductSkuDialog';
 import { BeamSpecValue, CctSpecValue, FinishSpecValue } from './SpecValueIcons';
@@ -24,6 +25,10 @@ type ProductListProps = {
   rows: SeriesComboPreview[];
   seriesSlug: string;
   seriesImageUrl?: string;
+  totalCount?: number;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 };
 
 type ListColumn = { key: string; label: string };
@@ -187,18 +192,40 @@ export default function ProductList({
   rows = [],
   seriesSlug,
   seriesImageUrl = '',
+  totalCount,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
 }: ProductListProps) {
   const searchParams = useSearchParams();
   const [openId, setOpenId] = useState<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const openRow = rows.find((row) => row.id === openId) || null;
   const previewId = searchParams.get('preview') === '1' && rows.length === 1 ? rows[0].id : null;
   const columns = useMemo(() => listColumns(rows), [rows]);
+  const shownCount = rows.length;
+  const allCount = typeof totalCount === 'number' ? totalCount : shownCount;
 
   useEffect(() => {
     if (previewId) setOpenId(previewId);
   }, [previewId]);
 
-  if (rows.length === 0) {
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !onLoadMore || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting) && !loadingMore) {
+          onLoadMore();
+        }
+      },
+      { root: null, rootMargin: '200px 0px', threshold: 0 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, onLoadMore, shownCount]);
+
+  if (rows.length === 0 && allCount === 0) {
     return (
       <EmptyState>
         <p>No options available in this series yet.</p>
@@ -323,6 +350,23 @@ export default function ProductList({
           </tbody>
         </table>
       </div>
+
+      {allCount > 0 ? (
+        <div className="mt-3 flex flex-col items-start gap-2 text-sm text-gray-500">
+          <p>
+            Showing {shownCount} of {allCount}
+          </p>
+          {loadingMore ? (
+            <div className="flex items-center gap-2" role="status" aria-live="polite">
+              <Spinner className="!h-5 !w-5" />
+              <span>Loading more…</span>
+            </div>
+          ) : null}
+          {hasMore || loadingMore ? (
+            <div ref={sentinelRef} className="h-1 w-full" aria-hidden />
+          ) : null}
+        </div>
+      ) : null}
 
       {openRow ? (
         <ProductSkuDialog row={openRow} seriesSlug={seriesSlug} open onClose={() => setOpenId(null)} />
