@@ -77,6 +77,11 @@ const HEADER_BOTTOM = 58;
 const FOOTER_PAD_TOP = 8;
 const QR_SIZE = 54;
 const CONTENT_TOP = HEADER_BOTTOM + 26;
+const FAMILY_PHOTO_MIN = 240;
+const FAMILY_PHOTO_MAX = 280;
+const FAMILY_PHOTO_TEXT_GAP = 16;
+const FAMILY_PHOTO_BADGE_GAP = 4;
+const FAMILY_BADGE_SECTION_GAP = 24;
 const A4_WIDTH = 595.28;
 /** AFM CapHeight for Helvetica / Helvetica-Bold (units/em). Used to optically center table text. */
 const HELVETICA_CAP_PER_EM = 718 / 1000;
@@ -912,14 +917,16 @@ function drawBadgeRow(
   badges: Array<{ text: string; image: Buffer | null }>,
   x: number,
   y: number,
-  width: number
+  width: number,
+  options?: { afterGap?: number }
 ): number {
   if (!badges.length) return y;
+  const afterGap = options?.afterGap ?? 8;
   const size = 32;
   const gap = 6;
   const cols = Math.max(1, Math.floor((width + gap) / (size + gap)));
   const rows = Math.ceil(badges.length / cols);
-  y = ensureSpace(doc, y, rows * size + (rows - 1) * gap + 8);
+  y = ensureSpace(doc, y, rows * size + (rows - 1) * gap + afterGap);
   let bx = x;
   let by = y;
   for (const badge of badges) {
@@ -938,7 +945,7 @@ function drawBadgeRow(
     }
     bx += size + gap;
   }
-  return by + size + 8;
+  return by + size + afterGap;
 }
 
 export async function buildDatasheetPdf(productRow: Product | { get: (opts: { plain: true }) => Record<string, unknown> }): Promise<Buffer> {
@@ -1300,6 +1307,101 @@ function drawKeyFacts(
     cx += w + gap;
   }
   return cy + rowH + 10;
+}
+
+function keyFactsBlockHeight(doc: PDFKit.PDFDocument, facts: string[], width: number): number {
+  if (!facts.length) return 0;
+  const padX = 6;
+  const gap = 5;
+  const rowH = 15;
+  doc.font('Helvetica-Bold').fontSize(7.5);
+  let cx = 0;
+  let rows = 1;
+  for (const fact of facts) {
+    const w = Math.min(width, doc.widthOfString(fact) + padX * 2);
+    if (cx > 0 && cx + w > width) {
+      cx = 0;
+      rows += 1;
+    }
+    cx += w + gap;
+  }
+  return rows * rowH + (rows - 1) * gap + 10;
+}
+
+function introBlockHeight(doc: PDFKit.PDFDocument, text: string, width: number): number {
+  doc.font('Helvetica').fontSize(8);
+  const lineHeight = 11;
+  const words = text.split(/(\s+)/);
+  let cursorX = 0;
+  let lines = 1;
+  for (const word of words) {
+    if (!word) continue;
+    const w = doc.widthOfString(word);
+    if (cursorX + w > width && word.trim()) {
+      cursorX = 0;
+      lines += 1;
+    }
+    cursorX += w;
+  }
+  return lines * lineHeight + 16;
+}
+
+type FamilyHeroCopy = {
+  typeName: string;
+  titleBits: string;
+  keyFacts: string[];
+  description: string;
+  phrase: string;
+};
+
+function familyHeroCopyHeight(doc: PDFKit.PDFDocument, copy: FamilyHeroCopy, width: number): number {
+  let h = 0;
+  if (copy.typeName) {
+    doc.font('Helvetica').fontSize(8);
+    h += doc.heightOfString(copy.typeName.toUpperCase(), { width }) + 4;
+  }
+  doc.font('Helvetica-Bold').fontSize(14);
+  h += doc.heightOfString(copy.titleBits, { width }) + 8;
+  h += keyFactsBlockHeight(doc, copy.keyFacts, width);
+  if (copy.description) h += introBlockHeight(doc, copy.description, width);
+  if (copy.phrase && copy.phrase !== copy.description) {
+    doc.font('Helvetica').fontSize(8);
+    h += doc.heightOfString(copy.phrase, { width }) + 8;
+  }
+  return h;
+}
+
+function pickFamilyPhotoSize(doc: PDFKit.PDFDocument, innerW: number, copy: FamilyHeroCopy): number {
+  const maxPhoto = Math.min(FAMILY_PHOTO_MAX, Math.floor(innerW * 0.5));
+  let photoSize = FAMILY_PHOTO_MIN;
+  for (let i = 0; i < 2; i += 1) {
+    const rightW = Math.max(140, innerW - photoSize - FAMILY_PHOTO_TEXT_GAP);
+    const rightH = familyHeroCopyHeight(doc, copy, rightW);
+    photoSize = Math.min(maxPhoto, Math.max(FAMILY_PHOTO_MIN, Math.round(rightH)));
+  }
+  return photoSize;
+}
+
+function drawFamilyHeroCopy(
+  doc: PDFKit.PDFDocument,
+  copy: FamilyHeroCopy,
+  x: number,
+  y: number,
+  width: number
+): number {
+  if (copy.typeName) {
+    doc.fillColor(MUTED).font('Helvetica').fontSize(8).text(copy.typeName.toUpperCase(), x, y, { width });
+    y = doc.y + 4;
+  }
+  doc.fillColor(BLACK).font('Helvetica-Bold').fontSize(14).text(copy.titleBits, x, y, { width });
+  y = doc.y + 8;
+  y = drawKeyFacts(doc, copy.keyFacts, x, y, width);
+  if (copy.description) y = drawIntro(doc, [{ text: copy.description }], x, y, width);
+  if (copy.phrase && copy.phrase !== copy.description) {
+    doc.fillColor(MUTED).font('Helvetica').fontSize(8).text(copy.phrase, x, y, { width });
+    y = doc.y + 8;
+  }
+  return y;
 }
 
 function drawWattageMiniTable(
@@ -1769,50 +1871,37 @@ export async function buildFamilyDatasheetPdf(
   const done = pdfToBuffer(doc);
   const innerW = doc.page.width - MARGIN * 2;
   let y = CONTENT_TOP;
-
-  const photoSize = 188;
-  if (featured) {
-    const rightX = MARGIN + photoSize + 22;
-    const rightW = doc.page.width - MARGIN - rightX;
-    drawImageBox(doc, featured, MARGIN, y, photoSize);
-    let rightY = y;
-    if (typeName) {
-      doc.fillColor(MUTED).font('Helvetica').fontSize(8).text(typeName.toUpperCase(), rightX, rightY, {
-        width: rightW,
-      });
-      rightY = doc.y + 4;
-    }
-    doc.fillColor(BLACK).font('Helvetica-Bold').fontSize(14).text(titleBits, rightX, rightY, { width: rightW });
-    rightY = doc.y + 8;
-    rightY = drawKeyFacts(doc, keyFacts, rightX, rightY, rightW);
-    if (description) {
-      rightY = drawIntro(doc, [{ text: description }], rightX, rightY, rightW);
-    }
-    if (phrase && phrase !== description) {
-      doc.fillColor(MUTED).font('Helvetica').fontSize(8).text(phrase, rightX, rightY, { width: rightW });
-      rightY = doc.y + 8;
-    }
-    y = Math.max(y + photoSize + 8, rightY);
-  } else {
-    if (typeName) {
-      doc.fillColor(MUTED).font('Helvetica').fontSize(8).text(typeName.toUpperCase(), MARGIN, y, { width: innerW });
-      y = doc.y + 4;
-    }
-    doc.fillColor(BLACK).font('Helvetica-Bold').fontSize(14).text(titleBits, MARGIN, y, { width: innerW });
-    y = doc.y + 8;
-    y = drawKeyFacts(doc, keyFacts, MARGIN, y, innerW);
-    if (description) y = drawIntro(doc, [{ text: description }], MARGIN, y, innerW);
-    if (phrase && phrase !== description) {
-      doc.fillColor(MUTED).font('Helvetica').fontSize(8).text(phrase, MARGIN, y, { width: innerW });
-      y = doc.y + 8;
-    }
-  }
-
+  const heroCopy: FamilyHeroCopy = {
+    typeName,
+    titleBits,
+    keyFacts,
+    description,
+    phrase,
+  };
   const badges = labelItems.map((label, index) => ({
     text: label.text,
     image: labelImages[index] || null,
   }));
-  y = drawBadgeRow(doc, badges, MARGIN, y, innerW);
+
+  if (featured) {
+    const photoSize = pickFamilyPhotoSize(doc, innerW, heroCopy);
+    const photoTop = y;
+    const rightX = MARGIN + photoSize + FAMILY_PHOTO_TEXT_GAP;
+    const rightW = doc.page.width - MARGIN - rightX;
+    drawImageBox(doc, featured, MARGIN, photoTop, photoSize);
+    const rightY = drawFamilyHeroCopy(doc, heroCopy, rightX, photoTop, rightW);
+    if (badges.length) {
+      const badgeY = photoTop + photoSize + FAMILY_PHOTO_BADGE_GAP;
+      const badgeWidth = rightY <= badgeY ? innerW : photoSize;
+      y = drawBadgeRow(doc, badges, MARGIN, badgeY, badgeWidth, { afterGap: FAMILY_BADGE_SECTION_GAP });
+      y = Math.max(y, rightY + FAMILY_BADGE_SECTION_GAP);
+    } else {
+      y = Math.max(photoTop + photoSize, rightY) + FAMILY_BADGE_SECTION_GAP;
+    }
+  } else {
+    y = drawFamilyHeroCopy(doc, heroCopy, MARGIN, y, innerW);
+    y = drawBadgeRow(doc, badges, MARGIN, y, innerW, { afterGap: FAMILY_BADGE_SECTION_GAP });
+  }
 
   const tableGap = 16;
   const halfW = (innerW - tableGap) / 2;

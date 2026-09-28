@@ -56,7 +56,7 @@ export async function getSeriesFamilyDatasheet(req: Request, res: Response) {
   try {
     const slug = String(req.params.slug || '').trim();
     if (!slug) return res.status(400).json({ error: 'Missing series slug' });
-    const key = pdfCacheKey(['series', 'family', slug]);
+    const key = pdfCacheKey(['series', 'family', slug, 'hero-v2']);
     const cached = await readCachedPdf(key);
     if (cached) return sendPdf(res, cached, `${slug}-family.pdf`, PUBLIC_CACHE_CONTROL);
     const built = await buildFamilyDatasheetPdf(slug);
