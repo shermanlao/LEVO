@@ -5,6 +5,7 @@ import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
+import ProductPhotoAiEditDialog from '@/components/ai/ProductPhotoAiEditDialog';
 import ProductPhotoStyleDialog from '@/components/ai/ProductPhotoStyleDialog';
 import SizeDrawingAiDialog from '@/components/ai/SizeDrawingAiDialog';
 import SizeDrawingFocusDialog from '@/components/ai/SizeDrawingFocusDialog';
@@ -58,6 +59,7 @@ export default function SizePackPhotos({
   const [croppedDataUrl, setCroppedDataUrl] = useState('');
   const [hasPhotoStyle, setHasPhotoStyle] = useState<boolean | null>(null);
   const [styleField, setStyleField] = useState<'main_image_A' | 'main_image_B' | null>(null);
+  const [enhanceField, setEnhanceField] = useState<(typeof FIELDS)[number]['key'] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +76,7 @@ export default function SizePackPhotos({
 
   const mainPhotoUrl = toPublicImagePath(images.main_image_A);
   const stylePhotoUrl = styleField ? toPublicImagePath(images[styleField]) : null;
+  const enhancePhotoUrl = enhanceField ? toPublicImagePath(images[enhanceField]) : null;
   const drawingSize = String(size || '').trim();
   const drawingCuthole = String(cuthole || '').trim();
 
@@ -173,6 +176,20 @@ export default function SizePackPhotos({
                   Generate by AI
                 </Button>
               ) : null}
+              {src ? (
+                <Button
+                  helpKey="admin.product_series.photo_enhance"
+                  variant="secondary"
+                  className="text-xs py-1 px-2"
+                  disabled={busy != null}
+                  onClick={() => {
+                    setError(null);
+                    setEnhanceField(field.key);
+                  }}
+                >
+                  Edit with AI
+                </Button>
+              ) : null}
               {src && (field.key === 'main_image_A' || field.key === 'main_image_B') ? (
                 <Button
                   helpKey="admin.product_series.photo_style_match"
@@ -231,6 +248,18 @@ export default function SizePackPhotos({
         }}
         onApply={async (file) => {
           await stageFile('size_image', file);
+        }}
+      />
+      <ProductPhotoAiEditDialog
+        open={Boolean(enhanceField && enhancePhotoUrl)}
+        imageUrl={enhancePhotoUrl || ''}
+        photoType={
+          enhanceField === 'main_image_B' ? 'Main B' : enhanceField === 'size_image' ? 'Size drawing' : 'Main A'
+        }
+        onClose={() => setEnhanceField(null)}
+        onApply={async (file) => {
+          if (!enhanceField) return;
+          await stageFile(enhanceField, file);
         }}
       />
       <ProductPhotoStyleDialog

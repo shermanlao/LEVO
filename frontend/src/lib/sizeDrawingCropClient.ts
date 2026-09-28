@@ -55,6 +55,69 @@ export async function cropImageUrlToDataUrl(
   return canvas.toDataURL('image/png');
 }
 
+export type PaddedFrame = {
+  dataUrl: string;
+  /** `horizontal` = blank canvas on the left and right. `vertical` = above and below. */
+  axis: 'horizontal' | 'vertical' | 'none';
+};
+
+/**
+ * Fit the photo inside a target width/height ratio without scaling it non-uniformly.
+ * The fixture stays centered at its own aspect. Blank canvas is only the short axis,
+ * so a later outpaint can extend the background to the placeholder.
+ */
+export async function padImageToAspect(
+  imageUrl: string,
+  ratio: number,
+  maxEdge = 1600
+): Promise<PaddedFrame> {
+  if (!(ratio > 0)) throw new Error('Frame ratio is required');
+  const dataUrl = await imageUrlToDataUrl(imageUrl);
+  const img = await loadImageElement(dataUrl);
+  const srcW = img.naturalWidth;
+  const srcH = img.naturalHeight;
+  if (!srcW || !srcH) throw new Error('Image has no size');
+  const srcRatio = srcW / srcH;
+  if (Math.abs(srcRatio - ratio) / ratio < 0.015) {
+    return { dataUrl, axis: 'none' };
+  }
+
+  let canvasW: number;
+  let canvasH: number;
+  if (srcRatio < ratio) {
+    canvasH = Math.min(srcH, maxEdge);
+    canvasW = Math.max(1, Math.round(canvasH * ratio));
+    if (canvasW > maxEdge) {
+      canvasW = maxEdge;
+      canvasH = Math.max(1, Math.round(canvasW / ratio));
+    }
+  } else {
+    canvasW = Math.min(srcW, maxEdge);
+    canvasH = Math.max(1, Math.round(canvasW / ratio));
+    if (canvasH > maxEdge) {
+      canvasH = maxEdge;
+      canvasW = Math.max(1, Math.round(canvasH * ratio));
+    }
+  }
+
+  const scale = Math.min(canvasW / srcW, canvasH / srcH);
+  const drawW = Math.max(1, Math.round(srcW * scale));
+  const drawH = Math.max(1, Math.round(srcH * scale));
+  const dx = Math.round((canvasW - drawW) / 2);
+  const dy = Math.round((canvasH - drawH) / 2);
+  const axis: PaddedFrame['axis'] = dx > 1 ? 'horizontal' : dy > 1 ? 'vertical' : 'none';
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasW;
+  canvas.height = canvasH;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas unavailable');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvasW, canvasH);
+  ctx.drawImage(img, dx, dy, drawW, drawH);
+  return { dataUrl: canvas.toDataURL('image/jpeg', 0.92), axis };
+}
+
 export function dataUrlToFile(dataUrl: string, filename: string): File {
   const match = dataUrl.trim().match(/^data:([^;,]+)(?:;charset=[^;,]+)?;base64,(.+)$/i);
   if (!match) throw new Error('Invalid data URL');

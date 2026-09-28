@@ -2,13 +2,17 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import HelpButton from '@/components/admin/HelpButton';
+import Button from '@/components/ui/Button';
 import AiImageWorkbenchDialog from './AiImageWorkbenchDialog';
-import { dataUrlToFile, imageUrlToDataUrl } from '@/lib/sizeDrawingCropClient';
+import type { ImageFrame } from '@/lib/image-frames';
+import { dataUrlToFile, imageUrlToDataUrl, padImageToAspect } from '@/lib/sizeDrawingCropClient';
 
 type Props = {
   open: boolean;
   imageUrl: string;
   photoType: string;
+  /** When set, the dialog can outpaint this photo to the placeholder frame. */
+  extendFrame?: ImageFrame | null;
   onClose: () => void;
   onApply: (file: File) => Promise<void>;
 };
@@ -17,6 +21,7 @@ export default function ProductPhotoAiEditDialog({
   open,
   imageUrl,
   photoType,
+  extendFrame = null,
   onClose,
   onApply,
 }: Props) {
@@ -48,8 +53,12 @@ export default function ProductPhotoAiEditDialog({
 
   if (!open) return null;
 
-  async function runEdit(text: string) {
-    if (!preview) return;
+  async function runEdit(
+    text: string,
+    imageDataUrl = preview,
+    outpaint?: { aspect: string; axis: 'horizontal' | 'vertical' }
+  ) {
+    if (!imageDataUrl) return;
     setLoading(true);
     setError(null);
     try {
@@ -57,9 +66,10 @@ export default function ProductPhotoAiEditDialog({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageDataUrl: preview,
+          imageDataUrl,
           instruction: text,
           photoType,
+          outpaint,
         }),
       });
       const data = await res.json();
@@ -79,6 +89,25 @@ export default function ProductPhotoAiEditDialog({
     setInstruction('');
   }
 
+  async function handleExtendSides() {
+    if (!preview || !extendFrame) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const padded = await padImageToAspect(preview, extendFrame.ratio, extendFrame.maxEdge);
+      if (padded.axis === 'none') {
+        setError(`This photo already matches the ${extendFrame.label} placeholder.`);
+        setLoading(false);
+        return;
+      }
+      setPreview(padded.dataUrl);
+      await runEdit('', padded.dataUrl, { aspect: extendFrame.label, axis: padded.axis });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Extend failed');
+      setLoading(false);
+    }
+  }
+
   const changed = Boolean(original && preview && original !== preview);
 
   return (
@@ -92,16 +121,33 @@ export default function ProductPhotoAiEditDialog({
       onReset={() => {
         setPreview(original);
         setInstruction('');
+        setError(null);
       }}
       extraHeader={
-        <button
-          type="button"
-          className="px-3 py-1 rounded border text-sm"
-          disabled={loading || !preview}
-          onClick={() => void runEdit('Increase resolution / upscale while keeping the same product and composition.')}
-        >
-          Upscale
-        </button>
+        <>
+          {extendFrame ? (
+            <Button
+              helpKey="admin.product_series.photo_extend_sides"
+              variant="secondary"
+              className="text-sm py-1 px-3"
+              disabled={loading || !preview}
+              onClick={() => void handleExtendSides()}
+            >
+              Extend sides
+            </Button>
+          ) : null}
+          <Button
+            helpKey="admin.product_series.photo_enhance_upscale"
+            variant="secondary"
+            className="text-sm py-1 px-3"
+            disabled={loading || !preview}
+            onClick={() =>
+              void runEdit('Increase resolution / upscale while keeping the same product and composition.')
+            }
+          >
+            Upscale
+          </Button>
+        </>
       }
     >
       <form onSubmit={handleSend} className="space-y-3">
@@ -113,15 +159,17 @@ export default function ProductPhotoAiEditDialog({
           placeholder="e.g. white background, remove glare"
         />
         <div className="flex flex-wrap gap-2">
-          <button
-            type="submit"
+          <Button
+            helpKey="admin.product_series.photo_enhance_send"
+            variant="primary"
+            className="text-sm"
             disabled={loading || !instruction.trim()}
-            className="bg-gray-800 text-white px-4 py-2 rounded text-sm disabled:opacity-60"
+            type="submit"
           >
             Send
-          </button>
+          </Button>
           <HelpButton
-            helpKey="admin.products.photo_ai"
+            helpKey="admin.product_series.photo_enhance_apply"
             type="button"
             disabled={!changed || loading || applying}
             className="bg-blue-600 text-white px-4 py-2 rounded text-sm disabled:opacity-60"

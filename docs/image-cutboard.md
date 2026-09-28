@@ -33,7 +33,9 @@ Series featured images are **not** a single-frame upload. [`SeriesFeaturedImageE
 
 1. Upload a **source** photo (no crop). Stored as `featured_image_source`. Drop, paste, or click an empty slot on **Add New Series** / **Edit** (not the list-row thumb). The crop board then walks through three frames from that source.
 2. A 3-step cutboard crops that source: Catalog 16:9 (`featured_image`) → Series page 4:5 (`featured_image_page`) → Family datasheet 1:1 (`featured_image_datasheet`).
-3. Each empty slot is the same drop / paste / choose placeholder as size Main A/B (no extra Upload button). **Replace photo** appears after a crop is saved. **Adjust crop** reopens that frame on the shared source. **Delete** (and **Delete source**) clears that field; on an existing series the clear is saved immediately. **Use a different image** on the cutboard crops a different file for the current slot only. The shared source is not replaced when a slot uses its own photo. On an existing series, each crop is saved as soon as you Apply (refresh keeps the previews). New series still save the three paths when you click Create Series.
+3. Each empty slot is the same drop / paste / choose placeholder as size Main A/B (no extra Upload button). **Replace photo** appears after a crop is saved. **Adjust crop** reopens that frame on the shared source. **Edit with AI** opens a chat on that saved crop (catalog, series page, or family datasheet). **Delete** (and **Delete source**) clears that field; on an existing series the clear is saved immediately. **Use a different image** on the cutboard crops a different file for the current slot only. The shared source is not replaced when a slot uses its own photo. On an existing series, each crop is saved as soon as you Apply (refresh keeps the previews). New series still save the three paths when you click Create Series.
+
+**Edit with AI** uses `POST /api/admin/ai/edit-product-photo`. Chat, **Upscale**, and **Apply** work on all three crops. The series-page dialog also has **Extend sides**: the browser first letterboxes the preview into the 4:5 frame (fixture unchanged, white bars on the short axis), then the same edit route outpaints only that background. Narrower-than-4:5 photos grow left and right; wider photos grow above and below. Apply writes `featured_image_page`.
 
 Public fallbacks when a chunk is empty: that surface uses source, then `featured_image`. Existing series keep working until staff re-crop.
 
@@ -51,4 +53,4 @@ The size-drawing AI **Focus the fixture** dialog stays a free-form box for the A
 
 ## Help tips
 
-`admin.image_cutboard.apply`, `admin.image_cutboard.cancel`, series source / three slots / replace / delete / use-a-different-image (`admin.product_series.featured_*`), plus the existing upload tips that mention the matching frame.
+`admin.image_cutboard.apply`, `admin.image_cutboard.cancel`, series source / three slots / replace / delete / use-a-different-image (`admin.product_series.featured_*`), photo enhance (`admin.product_series.photo_enhance`, `photo_enhance_send`, `photo_enhance_apply`, `photo_enhance_upscale`, `photo_extend_sides`), plus the existing upload tips that mention the matching frame.

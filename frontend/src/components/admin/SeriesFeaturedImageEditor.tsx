@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
+import ProductPhotoAiEditDialog from '@/components/ai/ProductPhotoAiEditDialog';
 import Button from '@/components/ui/Button';
 import ImageCutboard from '@/components/ui/ImageCutboard';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
@@ -91,6 +92,7 @@ export default function SeriesFeaturedImageEditor({
   const replaceSlotRef = useRef<SeriesFeaturedSlot | null>(null);
   const [busy, setBusy] = useState(false);
   const [wizard, setWizard] = useState<WizardState | null>(null);
+  const [aiSlot, setAiSlot] = useState<(typeof SERIES_FEATURED_SLOTS)[number] | null>(null);
 
   const sourcePath = toPublicImagePath(paths.featured_image_source);
   const sourceUrl = sourcePath || toPublicImagePath(paths.featured_image);
@@ -358,6 +360,17 @@ export default function SeriesFeaturedImageEditor({
                 ) : null}
                 {src ? (
                   <Button
+                    helpKey="admin.product_series.photo_enhance"
+                    variant="secondary"
+                    className="text-xs py-1 px-2"
+                    disabled={busy}
+                    onClick={() => setAiSlot(slot)}
+                  >
+                    Edit with AI
+                  </Button>
+                ) : null}
+                {src ? (
+                  <Button
                     helpKey="admin.product_series.featured_delete"
                     variant="danger"
                     className="text-xs py-1 px-2"
@@ -374,6 +387,17 @@ export default function SeriesFeaturedImageEditor({
       </div>
 
       {cutboard}
+      <ProductPhotoAiEditDialog
+        open={Boolean(aiSlot)}
+        imageUrl={aiSlot ? toPublicImagePath(paths[aiSlot.field]) : ''}
+        photoType={aiSlot?.title || 'photo'}
+        extendFrame={aiSlot?.slot === 'page' ? IMAGE_FRAMES.seriesPage : null}
+        onClose={() => setAiSlot(null)}
+        onApply={async (file) => {
+          if (!aiSlot) return;
+          await persist(file, aiSlot.field);
+        }}
+      />
     </div>
   );
 }

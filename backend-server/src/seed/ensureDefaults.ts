@@ -396,6 +396,31 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Remove the saved photo for this slot (or the shared source). On an existing series the clear is saved immediately. Public pages then fall back to the source or catalog crop when a slot is empty.',
   },
   {
+    helpKey: 'admin.product_series.photo_enhance',
+    title: 'Edit with AI',
+    body: 'Open a chat to enhance this photo. Describe the change (lighter background, less glare, sharper fixture) and Send. Upscale raises resolution without changing the product. Apply saves the preview into this slot. Reset or Close keeps the current file.',
+  },
+  {
+    helpKey: 'admin.product_series.photo_enhance_send',
+    title: 'Send edit',
+    body: 'Send the instruction to the image model. The preview updates in place. Send again to refine the latest preview.',
+  },
+  {
+    helpKey: 'admin.product_series.photo_enhance_apply',
+    title: 'Apply AI photo',
+    body: 'Save the latest preview into this slot. On a series featured image the file is stored immediately. On a size pack it stays on the form until Save variants. Close or Reset keeps the previous file.',
+  },
+  {
+    helpKey: 'admin.product_series.photo_enhance_upscale',
+    title: 'Upscale',
+    body: 'Ask the model to increase resolution while keeping the same product and composition. Apply still saves the preview.',
+  },
+  {
+    helpKey: 'admin.product_series.photo_extend_sides',
+    title: 'Extend sides',
+    body: 'On the series-page photo only. Fills the 4:5 placeholder by continuing the background, without stretching the fixture. When the photo is narrower than 4:5, blank canvas is added on the left and right and the model paints the ceiling or wall into those sides. When the photo is already wider than 4:5, the same button extends the background above and below so the file still matches the placeholder. Apply saves that frame.',
+  },
+  {
     helpKey: 'admin.product_types.featured_image',
     title: 'Category photo',
     body: 'Upload the category card image used on /products. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same 16:9 frame as the public category cards.',

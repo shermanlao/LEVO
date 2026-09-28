@@ -126,15 +126,18 @@ export const postStylizeProductPhoto = async (req: Request, res: Response) => {
 
 export const postEditProductPhoto = async (req: Request, res: Response) => {
   try {
-    const { imageDataUrl, instruction, photoType } = (req.body || {}) as {
+    const { imageDataUrl, instruction, photoType, outpaint } = (req.body || {}) as {
       imageDataUrl?: string;
       instruction?: string;
       photoType?: string | null;
+      outpaint?: { aspect?: string; axis?: string } | null;
     };
+    const axis = outpaint?.axis === 'horizontal' || outpaint?.axis === 'vertical' ? outpaint.axis : null;
     const result = await editProductPhoto({
       imageDataUrl: imageDataUrl || '',
       instruction: instruction || '',
       photoType,
+      outpaint: axis ? { aspect: String(outpaint?.aspect || ''), axis } : null,
     });
     res.json(result);
   } catch (error) {

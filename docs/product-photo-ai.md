@@ -20,6 +20,12 @@ Upload an optional **style reference** on `/admin/ai` (Size drawing style). When
 
 On the same series page, **Generate missing** / **Generate all** (and upload of size Main A) edits Main A into Finish × Trim × Reflector **previews**. Staff must **Confirm** (or Confirm all) before a file is uploaded and stored. Discard leaves the previous saved photo. See [appearance-photos.md](appearance-photos.md).
 
+## Edit with AI
+
+**Edit with AI** is on the three series featured crops (catalog 16:9, series page 4:5, family datasheet 1:1) and on each size-pack photo (Main A, Main B, and an uploaded size drawing). It opens a chat (`POST /api/admin/ai/edit-product-photo`). **Send** applies the typed instruction to the current preview. **Upscale** asks for a higher-resolution version of the same photo. **Apply** writes the preview back to that slot (featured crops save immediately; size photos stay on the form until **Save variants**). **Reset** or Close keeps the previous file.
+
+The series-page dialog also has **Extend sides**. The browser fits the current preview inside the 4:5 placeholder without stretching the fixture, leaving white bars on the short axis, then sends that canvas with `outpaint: { aspect: "4:5", axis }`. A photo narrower than 4:5 is extended on the left and right. A photo already wider than 4:5 is extended above and below so the file still matches the placeholder. The model is told to continue the existing background only and leave the luminaire unchanged.
+
 ## Catalog photo style
 
 Upload one house-style product photo on `/admin/ai` (**Catalog photo style**). That file is optional.
@@ -52,7 +58,7 @@ Generate / refine / stylize on a series or variant page need **Catalog** or **AI
 - `POST /api/admin/ai/generate-size-drawing` `{ imageDataUrl, size, cuthole?, description?, fixtureDescription? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/refine-size-drawing` `{ imageDataUrl, size, cuthole?, description?, fixtureDescription?, instruction }`
 - `POST /api/admin/ai/generate-appearance-photo` `{ imageDataUrl, colour?, trim_color?, reflector_finish? }` → `{ imageDataUrl, mimeType }`
-- `POST /api/admin/ai/edit-product-photo` `{ imageDataUrl, instruction, photoType? }`
+- `POST /api/admin/ai/edit-product-photo` `{ imageDataUrl, instruction, photoType?, outpaint? }` — chat edit, upscale, or series-page outpaint. `outpaint` is `{ aspect, axis: "horizontal" | "vertical" }` and does not need `instruction`.
 - `POST /api/admin/ai/stylize-product-photo` `{ imageDataUrl, imageUrl?, fixtureDescription?, placeholderSize? }` — optional Main A / B restyle. Send a data URL and/or a local `/images/` or `/uploads/` path, plus the filled series phrase. The server describes the original photo first, then runs the 3-step style prompt, including the square 1:1 placeholder size (1600×1600 if omitted). 400 if no catalog style photo is stored.
 - `POST /api/admin/ai/generate-datasheet-label` `{ text, instruction?, imageDataUrl? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/generate-description-phrase` `{ guide, seriesName, typeName?, fields?, existing? }` → `{ phrase }`
