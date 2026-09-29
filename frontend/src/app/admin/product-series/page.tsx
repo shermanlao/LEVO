@@ -14,7 +14,7 @@ import SeriesFeaturedImageEditor, {
   type SeriesFeaturedPaths,
 } from '@/components/admin/SeriesFeaturedImageEditor';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
-import { toPublicImagePath } from '@/lib/image-utils';
+import { seriesPhotoUrl } from '@/lib/image-utils';
 import SpecificationsEditor, {
   SpecPair,
   recordToSpecPairs,
@@ -618,9 +618,7 @@ export default function ProductSeriesAdminPage() {
             ) : (
               series.map((item) => {
                 const attrs = item?.attributes;
-                const imageUrl =
-                  toPublicImagePath(attrs?.featured_image) ||
-                  toPublicImagePath(attrs?.featured_image_source);
+                const imageUrl = seriesPhotoUrl(attrs);
                 return (
                 <tr
                   key={item.id}
@@ -638,7 +636,7 @@ export default function ProductSeriesAdminPage() {
                             <img
                               src={imageUrl}
                               alt=""
-                              className="absolute inset-0 h-full w-full object-cover"
+                              className="absolute inset-0 h-full w-full object-contain"
                             />
                           ) : (
                             <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">

@@ -55,10 +55,21 @@ export async function cropImageUrlToDataUrl(
   return canvas.toDataURL('image/png');
 }
 
+export type PadBox = {
+  canvasW: number;
+  canvasH: number;
+  drawW: number;
+  drawH: number;
+  dx: number;
+  dy: number;
+};
+
 export type PaddedFrame = {
   dataUrl: string;
   /** `horizontal` = blank canvas on the left and right. `vertical` = above and below. */
   axis: 'horizontal' | 'vertical' | 'none';
+  /** Where the original photo sits inside `dataUrl`. */
+  box?: PadBox;
 };
 
 /**
@@ -128,11 +139,7 @@ function fitHorizontalFrame(srcW: number, srcH: number, ratio: number, maxEdge: 
   return { canvasW, canvasH, drawW, drawH, dx, dy: 0 };
 }
 
-function drawPaddedFrame(
-  img: HTMLImageElement,
-  sourceDataUrl: string,
-  box: { canvasW: number; canvasH: number; drawW: number; drawH: number; dx: number; dy: number }
-): PaddedFrame {
+function drawPaddedFrame(img: HTMLImageElement, sourceDataUrl: string, box: PadBox): PaddedFrame {
   const axis: PaddedFrame['axis'] = box.dx > 1 ? 'horizontal' : box.dy > 1 ? 'vertical' : 'none';
   if (axis === 'none') return { dataUrl: sourceDataUrl, axis };
   const canvas = document.createElement('canvas');
@@ -143,7 +150,7 @@ function drawPaddedFrame(
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, box.canvasW, box.canvasH);
   ctx.drawImage(img, box.dx, box.dy, box.drawW, box.drawH);
-  return { dataUrl: canvas.toDataURL('image/jpeg', 0.92), axis };
+  return { dataUrl: canvas.toDataURL('image/jpeg', 0.92), axis, box };
 }
 
 export function dataUrlToFile(dataUrl: string, filename: string): File {

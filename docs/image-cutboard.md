@@ -32,7 +32,7 @@ The component is `ImageCutboard` plus `useImageCutboard()` in [`frontend/src/com
 [`SeriesFeaturedImageEditor`](../frontend/src/components/admin/SeriesFeaturedImageEditor.tsx) on `/admin/product-series` has two placeholders:
 
 1. **Series photo** (`featured_image_page`). Drop, paste, or choose a file. The upload is saved as-is. The preview box uses that file’s own ratio, so a wide admin column does not add empty side bars. **Adjust crop** opens the photo with four edges. Drag one edge at a time to cut that side; the other three stay put. Apply saves the resulting shape. This file is the series-page gallery and the datasheet hero / thumbs.
-2. **Card photo** (`featured_image`). The series and card placeholders are the same height. **Extend to 16:9** keeps that height and outpaints only the left and right background (`POST /api/admin/ai/edit-product-photo` with `outpaint`). It does not add space above or below, and the fixture is not stretched. Homepage featured series and `/products/[type]` cards use only this 16:9 file.
+2. **Card photo** (`featured_image`). The series and card placeholders are the same height. **Extend to 16:9** keeps that height and outpaints only the left and right background (`POST /api/admin/ai/edit-product-photo` with `outpaint`). The original series photo is pasted back afterward, so the top and bottom stay exactly as they were and the fixture is not stretched. Homepage featured series and `/products/[type]` cards use only this 16:9 file.
 
 Older `featured_image_datasheet` and `featured_image_source` values are still stored. Public series and datasheet views use them only when `featured_image_page` is empty.
 
@@ -41,7 +41,7 @@ On API start, a series whose series photo is empty and whose card photo (`featur
 | Surface | Field | Frame |
 |---------|-------|-------|
 | Homepage featured series and `/products/[type]` cards | `featured_image` | 16:9 |
-| `/products/[type]/[series]` gallery, family datasheet hero, option-list thumbs | `featured_image_page` | The file’s own ratio |
+| `/products/[type]/[series]` gallery, family datasheet hero, option-list thumbs, `/admin/product-series` list | `featured_image_page` | The file’s own ratio |
 
 ## Other upload locations
 
