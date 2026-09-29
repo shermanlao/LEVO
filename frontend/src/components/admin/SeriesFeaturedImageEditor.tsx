@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
@@ -91,10 +91,32 @@ export default function SeriesFeaturedImageEditor({
   const seriesInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [extending, setExtending] = useState(false);
+  const [extendNote, setExtendNote] = useState<string | null>(null);
+  const [seriesRatio, setSeriesRatio] = useState<number | null>(null);
   const [crop, setCrop] = useState<{ src: string; frame: ImageFrame; fileName: string } | null>(null);
 
   const seriesPath = toPublicImagePath(paths.featured_image_page);
   const cardPath = toPublicImagePath(paths.featured_image);
+
+  useEffect(() => {
+    if (!seriesPath) {
+      setSeriesRatio(null);
+      return;
+    }
+    let cancelled = false;
+    loadImageElement(seriesPath)
+      .then((img) => {
+        if (cancelled) return;
+        const ratio = img.naturalWidth / img.naturalHeight;
+        setSeriesRatio(ratio > 0 ? ratio : null);
+      })
+      .catch(() => {
+        if (!cancelled) setSeriesRatio(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [seriesPath]);
 
   function reportError(err: unknown) {
     onError?.(err instanceof Error ? err.message : 'Upload failed');
@@ -174,10 +196,17 @@ export default function SeriesFeaturedImageEditor({
   async function extendCard() {
     if (!seriesPath) return;
     setExtending(true);
+    setExtendNote(null);
     try {
       const extended = await outpaintToFrame(seriesPath, IMAGE_FRAMES.catalog);
+      if (!extended.extended) {
+        setExtendNote('This series photo is already 16:9, so the card does not need a new background.');
+        return;
+      }
       await persist(dataUrlToFile(extended.dataUrl, 'card-16x9.jpg'), 'featured_image');
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Extend failed';
+      setExtendNote(message);
       reportError(err);
     } finally {
       setExtending(false);
@@ -214,6 +243,7 @@ export default function SeriesFeaturedImageEditor({
             <AdminPhotoSlot
               src={seriesPath || null}
               alt="Series photo"
+              aspectRatio={seriesRatio ?? undefined}
               frameClassName="min-h-48"
               className="border border-gray-200"
             />
@@ -287,6 +317,7 @@ export default function SeriesFeaturedImageEditor({
               </Button>
             ) : null}
           </div>
+          {extendNote ? <p className="mt-2 text-xs text-gray-600">{extendNote}</p> : null}
         </div>
       </div>
 

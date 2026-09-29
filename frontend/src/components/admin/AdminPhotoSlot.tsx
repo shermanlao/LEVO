@@ -12,6 +12,8 @@ type AdminPhotoSlotProps = {
   className?: string;
   /** Override the default square frame, e.g. `aspect-video` for catalog thumbs. */
   frameClassName?: string;
+  /** Width / height of the file. When set, the box matches the photo instead of a fixed frame. */
+  aspectRatio?: number;
   emptyLabel?: string;
 };
 
@@ -31,15 +33,18 @@ export default function AdminPhotoSlot({
   compact = false,
   className = '',
   frameClassName = 'aspect-square',
+  aspectRatio,
   emptyLabel = IMAGE_INTAKE_HINT,
 }: AdminPhotoSlotProps) {
+  const fitted = typeof aspectRatio === 'number' && aspectRatio > 0;
   const [hover, setHover] = useState(false);
   const [enlarged, setEnlarged] = useState(false);
   return (
     <div
-      className={`relative bg-gray-50 rounded ${frameClassName} ${
+      className={`relative bg-gray-50 rounded ${fitted ? '' : frameClassName} ${
         compact ? 'w-36 sm:w-40 shrink-0' : 'w-full'
       } ${className}`.trim()}
+      style={fitted ? { aspectRatio: String(aspectRatio) } : undefined}
       onMouseEnter={() => {
         if (!enlarged) setHover(true);
       }}
