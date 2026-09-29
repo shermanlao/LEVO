@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
-import ImageCutboard from '@/components/ui/ImageCutboard';
+import EdgeCropBoard from '@/components/ui/EdgeCropBoard';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
 import { extractImageSrc, storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
-import { IMAGE_FRAMES, validateImageFile, type ImageFrame } from '@/lib/image-frames';
+import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
 import { loadImageElement } from '@/lib/image-cutboard';
 import { outpaintToFrame } from '@/lib/photo-outpaint';
 import { dataUrlToFile } from '@/lib/sizeDrawingCropClient';
@@ -70,17 +70,6 @@ async function uploadSeriesFile(file: File, seriesSlug?: string): Promise<string
   return path;
 }
 
-function ownAspectFrame(ratio: number): ImageFrame {
-  return {
-    key: 'seriesPage',
-    ratio: ratio > 0 ? ratio : 1,
-    className: '',
-    label: 'series photo',
-    mime: 'image/jpeg',
-    maxEdge: 1600,
-  };
-}
-
 export default function SeriesFeaturedImageEditor({
   paths,
   seriesSlug,
@@ -95,7 +84,7 @@ export default function SeriesFeaturedImageEditor({
   const [extendNote, setExtendNote] = useState<string | null>(null);
   const [seriesRatio, setSeriesRatio] = useState<number | null>(null);
   const [frameHeight, setFrameHeight] = useState<number | null>(null);
-  const [crop, setCrop] = useState<{ src: string; frame: ImageFrame; fileName: string } | null>(null);
+  const [crop, setCrop] = useState<{ src: string; fileName: string } | null>(null);
 
   const seriesPath = toPublicImagePath(paths.featured_image_page);
   const cardPath = toPublicImagePath(paths.featured_image);
@@ -192,20 +181,10 @@ export default function SeriesFeaturedImageEditor({
     }
   }
 
-  async function openAdjust() {
+  function openAdjust() {
     if (!seriesPath) return;
-    try {
-      const img = await loadImageElement(seriesPath);
-      const ratio = img.naturalWidth / img.naturalHeight;
-      closeCrop();
-      setCrop({
-        src: seriesPath,
-        frame: ownAspectFrame(ratio),
-        fileName: 'series-photo.jpg',
-      });
-    } catch (err) {
-      reportError(err);
-    }
+    closeCrop();
+    setCrop({ src: seriesPath, fileName: 'series-photo.jpg' });
   }
 
   async function extendCard() {
@@ -353,13 +332,12 @@ export default function SeriesFeaturedImageEditor({
       </div>
 
       {crop ? (
-        <ImageCutboard
+        <EdgeCropBoard
           key={crop.src}
           imageSrc={crop.src}
-          frame={crop.frame}
           sourceName={crop.fileName}
           title="Adjust series photo"
-          hint="Zoom and drag inside the photo’s own shape. The fixture is not stretched into another ratio."
+          hint="Drag each white edge on its own to cut that side. The other three edges stay put."
           confirmLabel="Apply crop"
           onCancel={closeCrop}
           onConfirm={(file) => {

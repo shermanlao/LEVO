@@ -363,12 +363,12 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.series_photo',
     title: 'Series photo',
-    body: 'Upload the photo used on the series page and on datasheets. Drop a photo onto the placeholder, paste from the clipboard, or choose a file. The file keeps its own shape. Adjust crop zooms inside that shape.',
+    body: 'Upload the photo used on the series page and on datasheets. Drop a photo onto the placeholder, paste from the clipboard, or choose a file. The file keeps its own shape. Adjust crop lets you cut each edge on its own.',
   },
   {
     helpKey: 'admin.product_series.series_photo_adjust',
     title: 'Adjust series photo',
-    body: 'Reopen the series photo and zoom or drag inside its own shape. The crop is not forced to 16:9, 4:5, or 1:1.',
+    body: 'Drag one edge at a time to cut that side of the series photo. The other three edges stay put. Apply crop saves the new shape.',
   },
   {
     helpKey: 'admin.product_series.card_extend',

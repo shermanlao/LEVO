@@ -85,6 +85,44 @@ export function clampOffset(
   };
 }
 
+export type EdgeCrop = {
+  /** 0–1 from the left of the source photo. */
+  left: number;
+  /** 0–1 from the top of the source photo. */
+  top: number;
+  /** 0–1 from the left; the right cut. */
+  right: number;
+  /** 0–1 from the top; the bottom cut. */
+  bottom: number;
+};
+
+/** Crop each side of the source photo. The result keeps whatever ratio those four edges make. */
+export async function cropImageByEdges(
+  imageSrc: string,
+  edges: EdgeCrop,
+  originalName = 'image.jpg',
+  maxEdge = 1600
+): Promise<File> {
+  const img = await loadImageElement(imageSrc);
+  const sx = Math.max(0, Math.round(edges.left * img.naturalWidth));
+  const sy = Math.max(0, Math.round(edges.top * img.naturalHeight));
+  const sw = Math.max(1, Math.round((edges.right - edges.left) * img.naturalWidth));
+  const sh = Math.max(1, Math.round((edges.bottom - edges.top) * img.naturalHeight));
+  const scale = Math.min(1, maxEdge / Math.max(sw, sh));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(sw * scale));
+  canvas.height = Math.max(1, Math.round(sh * scale));
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas unavailable');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((next) => (next ? resolve(next) : reject(new Error('Failed to crop image'))), 'image/jpeg', 0.92);
+  });
+  return new File([blob], croppedFileName(originalName, 'image/jpeg'), { type: 'image/jpeg' });
+}
+
 function croppedFileName(original: string, mime: string): string {
   const base = original.replace(/\.[^.]+$/, '') || 'image';
   const ext = mime === 'image/png' ? 'png' : 'jpg';
