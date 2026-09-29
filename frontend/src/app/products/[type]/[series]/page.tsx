@@ -3,9 +3,7 @@ import { notFound } from 'next/navigation';
 import { getProductSeriesBySlug, getProductsBySeriesSlug, getSiteContact } from '@/lib/sqlite-api';
 import {
   resolveSeriesImageUrl,
-  seriesFeaturedCatalogUrl,
-  seriesFeaturedDatasheetUrl,
-  seriesFeaturedPageUrl,
+  seriesPhotoUrl,
 } from '@/lib/image-utils';
 import SeriesProductsSection from '@/components/products/SeriesProductsSection';
 import { productRouteItems } from '@/components/layout/pageRouteItems';
@@ -51,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         stripHtml(series.attributes.description) ||
         `${name} architectural LED lighting from LEVO.`,
       path,
-      image: seriesFeaturedCatalogUrl(series.attributes) || null,
+      image: seriesPhotoUrl(series.attributes) || null,
     });
   } catch (error) {
     console.error('Error generating metadata for series:', resolvedParams.series, error);
@@ -110,7 +108,7 @@ export default async function ProductSeriesPage({ params }: Props) {
   const typeSlug = attributes.product_type?.data?.attributes?.slug || resolvedParams.type;
   const typeName = attributes.product_type?.data?.attributes?.name || 'Category';
   const seriesPath = `/products/${typeSlug}/${resolvedParams.series}`;
-  const image = seriesFeaturedCatalogUrl(attributes) || seriesFeaturedPageUrl(attributes);
+  const image = seriesPhotoUrl(attributes);
 
   return (
     <div className="container mx-auto px-4 py-4">
@@ -135,9 +133,9 @@ export default async function ProductSeriesPage({ params }: Props) {
         seriesName={attributes.name}
         seriesDescription={seriesDescription}
         seriesPhrase={typeof attributes.description_phrase === 'string' ? attributes.description_phrase : ''}
-        seriesFeaturedImage={seriesFeaturedPageUrl(attributes) || attributes.featured_image}
-        seriesImageUrl={resolveSeriesImageUrl(seriesFeaturedPageUrl(attributes) || attributes.featured_image, products)}
-        seriesThumbUrl={seriesFeaturedDatasheetUrl(attributes)}
+        seriesFeaturedImage={seriesPhotoUrl(attributes)}
+        seriesImageUrl={resolveSeriesImageUrl(seriesPhotoUrl(attributes), products)}
+        seriesThumbUrl={seriesPhotoUrl(attributes)}
         specifications={attributes.specifications}
         products={products}
         currentSeriesSlug={resolvedParams.series}

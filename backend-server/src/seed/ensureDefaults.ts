@@ -361,24 +361,39 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Required. Pick an existing LEVO series under the chosen category. Partner brand names are never used as a series.',
   },
   {
+    helpKey: 'admin.product_series.series_photo',
+    title: 'Series photo',
+    body: 'Upload the photo used on the series page and on datasheets. Drop a photo onto the placeholder, paste from the clipboard, or choose a file. The file keeps its own shape. Adjust crop zooms inside that shape.',
+  },
+  {
+    helpKey: 'admin.product_series.series_photo_adjust',
+    title: 'Adjust series photo',
+    body: 'Reopen the series photo and zoom or drag inside its own shape. The crop is not forced to 16:9, 4:5, or 1:1.',
+  },
+  {
+    helpKey: 'admin.product_series.card_extend',
+    title: 'Extend to 16:9',
+    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same size and the background is extended until the file is 16:9.',
+  },
+  {
     helpKey: 'admin.product_series.featured_image',
-    title: 'Style photo',
-    body: 'Upload the series photo here first. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file. Style with AI restyles this photo. Apply then places it into Catalog, Series page, or Family datasheet and extends the background to that frame. Adjust crop is still available on each location.',
+    title: 'Series photo',
+    body: 'Upload the photo used on the series page and on datasheets. The card photo is a separate 16:9 frame made with Extend to 16:9.',
   },
   {
     helpKey: 'admin.product_series.featured_catalog',
-    title: 'Catalog card crop',
-    body: 'Reopen the 16:9 crop used on category pages such as Downlights. Zoom and drag until the fixture fills the card. Empty bars mean the frame is not filled yet.',
+    title: 'Card photo',
+    body: 'The 16:9 card is built with Extend to 16:9 from the series photo. Homepage featured series and category cards use that file.',
   },
   {
     helpKey: 'admin.product_series.featured_page',
-    title: 'Series page crop',
-    body: 'Reopen the 4:5 crop used as the main gallery photo on the series page. Zoom and drag until the fixture fills that taller frame.',
+    title: 'Series photo',
+    body: 'The series page and datasheets use the series photo at its own ratio. Adjust crop zooms inside that file.',
   },
   {
     helpKey: 'admin.product_series.featured_datasheet',
-    title: 'Family datasheet crop',
-    body: 'Reopen the 1:1 crop used on the family datasheet hero and the option-list / SKU-dialog thumbs. Zoom and drag until the fixture fills the square.',
+    title: 'Datasheet photo',
+    body: 'Datasheet heroes and option thumbs use the series photo, the same file as the series page.',
   },
   {
     helpKey: 'admin.product_series.featured_replace',
@@ -1857,6 +1872,7 @@ export async function ensureSeriesFeaturedImageColumn(): Promise<void> {
   );
   await rewriteSeriesPhraseLumenPlaceholders();
   await backfillSeriesCatalogFields();
+  await backfillSeriesPhotoFromCard();
 }
 
 async function rewriteSeriesPhraseLumenPlaceholders(): Promise<void> {
@@ -1891,6 +1907,17 @@ async function backfillSeriesCatalogFields(): Promise<void> {
       patch.is_featured = true;
     }
     if (Object.keys(patch).length) await series.update(patch);
+  }
+}
+
+/** Series photo was added later. Copy the existing card file into it so staff do not upload again. */
+async function backfillSeriesPhotoFromCard(): Promise<void> {
+  const seriesList = await ProductSeries.findAll();
+  for (const series of seriesList) {
+    const page = optionText(series.get('featured_image_page'));
+    const card = optionText(series.get('featured_image'));
+    if (page || !card) continue;
+    await series.update({ featured_image_page: card });
   }
 }
 

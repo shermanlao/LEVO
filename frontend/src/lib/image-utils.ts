@@ -132,20 +132,21 @@ export function seriesFeaturedSourceUrl(attrs?: SeriesFeaturedAttrs | null): str
   return toPublicImagePath(attrs?.featured_image_source) || seriesFeaturedCatalogUrl(attrs);
 }
 
-export function seriesFeaturedPageUrl(attrs?: SeriesFeaturedAttrs | null): string {
+/** Series page and datasheet photo. Older crops are used only when this file is empty. */
+export function seriesPhotoUrl(attrs?: SeriesFeaturedAttrs | null): string {
   return (
     toPublicImagePath(attrs?.featured_image_page) ||
-    toPublicImagePath(attrs?.featured_image_source) ||
-    seriesFeaturedCatalogUrl(attrs)
+    toPublicImagePath(attrs?.featured_image_datasheet) ||
+    toPublicImagePath(attrs?.featured_image_source)
   );
 }
 
+export function seriesFeaturedPageUrl(attrs?: SeriesFeaturedAttrs | null): string {
+  return seriesPhotoUrl(attrs);
+}
+
 export function seriesFeaturedDatasheetUrl(attrs?: SeriesFeaturedAttrs | null): string {
-  return (
-    toPublicImagePath(attrs?.featured_image_datasheet) ||
-    toPublicImagePath(attrs?.featured_image_source) ||
-    seriesFeaturedCatalogUrl(attrs)
-  );
+  return seriesPhotoUrl(attrs);
 }
 
 /** Main catalog photo for a product list/card row. */

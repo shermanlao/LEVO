@@ -12,6 +12,7 @@ type AdminPhotoSlotProps = {
   className?: string;
   /** Override the default square frame, e.g. `aspect-video` for catalog thumbs. */
   frameClassName?: string;
+  emptyLabel?: string;
 };
 
 function HoverEnlarge({ src }: { src: string }) {
@@ -30,6 +31,7 @@ export default function AdminPhotoSlot({
   compact = false,
   className = '',
   frameClassName = 'aspect-square',
+  emptyLabel = IMAGE_INTAKE_HINT,
 }: AdminPhotoSlotProps) {
   const [hover, setHover] = useState(false);
   const [enlarged, setEnlarged] = useState(false);
@@ -57,7 +59,7 @@ export default function AdminPhotoSlot({
           />
         ) : (
           <div className="h-full flex items-center justify-center text-xs text-gray-400 text-center px-2">
-            {IMAGE_INTAKE_HINT}
+            {emptyLabel}
           </div>
         )}
       </div>

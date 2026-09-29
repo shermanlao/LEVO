@@ -226,8 +226,8 @@ export async function resolveSeriesConfig(
     featured_image_datasheet: series.get('featured_image_datasheet') || null,
     main_image_A:
       series.get('featured_image_page') ||
+      series.get('featured_image_datasheet') ||
       series.get('featured_image_source') ||
-      series.get('featured_image') ||
       null,
     product_code: seriesCode || null,
   };

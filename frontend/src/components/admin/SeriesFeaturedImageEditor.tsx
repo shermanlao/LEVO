@@ -1,34 +1,23 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
-import ProductPhotoStyleDialog from '@/components/ai/ProductPhotoStyleDialog';
 import Button from '@/components/ui/Button';
 import ImageCutboard from '@/components/ui/ImageCutboard';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
 import { extractImageSrc, storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
+import { IMAGE_FRAMES, validateImageFile, type ImageFrame } from '@/lib/image-frames';
+import { loadImageElement } from '@/lib/image-cutboard';
 import { outpaintToFrame } from '@/lib/photo-outpaint';
 import { dataUrlToFile } from '@/lib/sizeDrawingCropClient';
-import {
-  SERIES_FEATURED_SLOTS,
-  validateImageFile,
-  type SeriesFeaturedSlot,
-} from '@/lib/image-frames';
 
 export type SeriesFeaturedPaths = {
   featured_image_source: string;
   featured_image: string;
   featured_image_page: string;
   featured_image_datasheet: string;
-};
-
-type WizardState = {
-  step: number;
-  src: string;
-  fileName: string;
-  slotOnly: boolean;
 };
 
 type SeriesFeaturedImageEditorProps = {
@@ -81,6 +70,17 @@ async function uploadSeriesFile(file: File, seriesSlug?: string): Promise<string
   return path;
 }
 
+function ownAspectFrame(ratio: number): ImageFrame {
+  return {
+    key: 'seriesPage',
+    ratio: ratio > 0 ? ratio : 1,
+    className: '',
+    label: 'series photo',
+    mime: 'image/jpeg',
+    maxEdge: 1600,
+  };
+}
+
 export default function SeriesFeaturedImageEditor({
   paths,
   seriesSlug,
@@ -88,42 +88,24 @@ export default function SeriesFeaturedImageEditor({
   onChange,
   onError,
 }: SeriesFeaturedImageEditorProps) {
-  const sourceInputRef = useRef<HTMLInputElement>(null);
-  const replaceInputRef = useRef<HTMLInputElement>(null);
-  const replaceSlotRef = useRef<SeriesFeaturedSlot | null>(null);
+  const seriesInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  const [wizard, setWizard] = useState<WizardState | null>(null);
-  const [styleOpen, setStyleOpen] = useState(false);
-  const [hasPhotoStyle, setHasPhotoStyle] = useState<boolean | null>(null);
-  const [applyingSlot, setApplyingSlot] = useState<string | null>(null);
+  const [extending, setExtending] = useState(false);
+  const [crop, setCrop] = useState<{ src: string; frame: ImageFrame; fileName: string } | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    void fetch('/api/admin/ai/settings', { cache: 'no-store' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!cancelled && data) setHasPhotoStyle(Boolean(data.data?.product_photo_style_image));
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const sourcePath = toPublicImagePath(paths.featured_image_source);
-  const sourceUrl = sourcePath || toPublicImagePath(paths.featured_image);
+  const seriesPath = toPublicImagePath(paths.featured_image_page);
+  const cardPath = toPublicImagePath(paths.featured_image);
 
   function reportError(err: unknown) {
-    const message = err instanceof Error ? err.message : 'Upload failed';
-    onError?.(message);
+    onError?.(err instanceof Error ? err.message : 'Upload failed');
   }
 
-  function closeWizard(state: WizardState | null = wizard) {
-    if (state?.src.startsWith('blob:')) URL.revokeObjectURL(state.src);
-    setWizard(null);
+  function closeCrop() {
+    if (crop?.src.startsWith('blob:')) URL.revokeObjectURL(crop.src);
+    setCrop(null);
   }
 
-  async function persist(file: File, field: keyof SeriesFeaturedPaths): Promise<string> {
+  async function persist(file: File, field: 'featured_image' | 'featured_image_page'): Promise<void> {
     setBusy(true);
     try {
       const path = await uploadSeriesFile(file, seriesSlug);
@@ -136,13 +118,12 @@ export default function SeriesFeaturedImageEditor({
         });
         if (!saved.ok) throw new Error(saved.error);
       }
-      return path;
     } finally {
       setBusy(false);
     }
   }
 
-  async function clearField(field: keyof SeriesFeaturedPaths) {
+  async function clearField(field: 'featured_image' | 'featured_image_page') {
     setBusy(true);
     try {
       onChange({ [field]: '' });
@@ -161,289 +142,170 @@ export default function SeriesFeaturedImageEditor({
     }
   }
 
-  async function handleSourceFile(file: File) {
+  async function handleSeriesFile(file: File) {
     const invalid = validateImageFile(file);
     if (invalid) {
       onError?.(invalid);
       return;
     }
     try {
-      await persist(file, 'featured_image_source');
+      await persist(file, 'featured_image_page');
     } catch (err) {
       reportError(err);
     }
   }
 
-  function openStyle() {
-    if (!sourceUrl) return;
-    if (hasPhotoStyle === false) {
-      onError?.('Upload a catalog photo style on /admin/ai first.');
-      return;
+  async function openAdjust() {
+    if (!seriesPath) return;
+    try {
+      const img = await loadImageElement(seriesPath);
+      const ratio = img.naturalWidth / img.naturalHeight;
+      closeCrop();
+      setCrop({
+        src: seriesPath,
+        frame: ownAspectFrame(ratio),
+        fileName: 'series-photo.jpg',
+      });
+    } catch (err) {
+      reportError(err);
     }
-    setStyleOpen(true);
   }
 
-  async function applyStyledToSlot(slot: (typeof SERIES_FEATURED_SLOTS)[number], imageUrl: string) {
-    setApplyingSlot(slot.slot);
+  async function extendCard() {
+    if (!seriesPath) return;
+    setExtending(true);
     try {
-      const extended = await outpaintToFrame(imageUrl, slot.frame);
-      await persist(dataUrlToFile(extended.dataUrl, `${slot.slot}.jpg`), slot.field);
+      const extended = await outpaintToFrame(seriesPath, IMAGE_FRAMES.catalog);
+      await persist(dataUrlToFile(extended.dataUrl, 'card-16x9.jpg'), 'featured_image');
     } catch (err) {
       reportError(err);
     } finally {
-      setApplyingSlot(null);
+      setExtending(false);
     }
   }
-
-  async function handleSlotCrop(file: File) {
-    if (!wizard) return;
-    const slot = SERIES_FEATURED_SLOTS[wizard.step];
-    try {
-      await persist(file, slot.field);
-      if (!wizard.slotOnly && wizard.step < SERIES_FEATURED_SLOTS.length - 1) {
-        setWizard({ ...wizard, step: wizard.step + 1 });
-        return;
-      }
-      closeWizard();
-    } catch (err) {
-      reportError(err);
-    }
-  }
-
-  function openAdjust(slot: SeriesFeaturedSlot) {
-    const index = SERIES_FEATURED_SLOTS.findIndex((item) => item.slot === slot);
-    if (index < 0 || !sourceUrl) return;
-    closeWizard();
-    setWizard({
-      step: index,
-      src: sourceUrl,
-      fileName: 'series-source.jpg',
-      slotOnly: true,
-    });
-  }
-
-  function openReplace(slot: SeriesFeaturedSlot) {
-    replaceSlotRef.current = slot;
-    replaceInputRef.current?.click();
-  }
-
-  function handleReplaceFile(file: File) {
-    const slot = replaceSlotRef.current;
-    replaceSlotRef.current = null;
-    if (!slot) return;
-    const invalid = validateImageFile(file);
-    if (invalid) {
-      onError?.(invalid);
-      return;
-    }
-    const index = SERIES_FEATURED_SLOTS.findIndex((item) => item.slot === slot);
-    closeWizard();
-    setWizard({
-      step: index,
-      src: URL.createObjectURL(file),
-      fileName: file.name,
-      slotOnly: true,
-    });
-  }
-
-  const currentSlot = wizard ? SERIES_FEATURED_SLOTS[wizard.step] : null;
-
-  const replaceInput = (
-    <input
-      ref={replaceInputRef}
-      type="file"
-      accept="image/*"
-      className="hidden"
-      onChange={(event) => {
-        const file = event.target.files?.[0];
-        event.target.value = '';
-        if (file) handleReplaceFile(file);
-      }}
-    />
-  );
-
-  const cutboard =
-    wizard && currentSlot ? (
-      <ImageCutboard
-        key={`${wizard.step}:${wizard.src}`}
-        imageSrc={wizard.src}
-        frame={currentSlot.frame}
-        sourceName={wizard.fileName}
-        title={`${currentSlot.title} (${wizard.step + 1}/${SERIES_FEATURED_SLOTS.length})`}
-        hint={`${currentSlot.hint} Starts with the whole photo. Zoom and drag to fill the ${currentSlot.frame.label} frame.`}
-        confirmLabel={
-          wizard.slotOnly || wizard.step === SERIES_FEATURED_SLOTS.length - 1 ? 'Apply crop' : 'Next'
-        }
-        extraActions={
-          <Button
-            helpKey="admin.product_series.featured_different"
-            variant="secondary"
-            disabled={busy}
-            onClick={() => openReplace(currentSlot.slot)}
-          >
-            Use a different image
-          </Button>
-        }
-        onCancel={() => closeWizard()}
-        onConfirm={(file) => void handleSlotCrop(file)}
-      />
-    ) : null;
 
   return (
     <div>
       <p className="block text-gray-700 mb-2">Featured image</p>
       <input
-        ref={sourceInputRef}
+        ref={seriesInputRef}
         type="file"
         accept="image/*"
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];
           event.target.value = '';
-          if (file) void handleSourceFile(file);
+          if (file) void handleSeriesFile(file);
         }}
       />
-      {replaceInput}
-      <div className="border rounded p-3 mb-4 max-w-sm">
-        <p className="text-sm font-medium text-gray-800">Style photo</p>
-        <p className="text-xs text-gray-500 mb-2">
-          Upload here first, then style it. Apply sends that photo into a location and extends the background to that frame.
-        </p>
-        <ImageFileIntake
-          enabled={!busy}
-          clickToPick={!sourcePath}
-          helpKey="admin.product_series.featured_image"
-          className="mb-2"
-          onFile={(file) => void handleSourceFile(file)}
-        >
-          <AdminPhotoSlot src={sourcePath || null} alt="Style photo" className="border border-gray-200" />
-        </ImageFileIntake>
-        <div className="flex flex-wrap gap-2">
-          <HelpButton
-            helpKey="admin.product_series.featured_image"
-            type="button"
-            className="btn-secondary text-center py-1 px-2 text-xs font-medium"
-            disabled={busy}
-            onClick={() => sourceInputRef.current?.click()}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="border rounded p-3">
+          <p className="text-sm font-medium text-gray-800">Series photo</p>
+          <p className="text-xs text-gray-500 mb-2">
+            Shown on the series page and on datasheets. Keeps this file’s own shape.
+          </p>
+          <ImageFileIntake
+            enabled={!busy}
+            clickToPick={!seriesPath}
+            helpKey="admin.product_series.series_photo"
+            className="mb-2"
+            onFile={(file) => void handleSeriesFile(file)}
           >
-            {sourcePath ? 'Replace photo' : 'Upload photo'}
-          </HelpButton>
-          {sourcePath ? (
+            <AdminPhotoSlot
+              src={seriesPath || null}
+              alt="Series photo"
+              frameClassName="min-h-48"
+              className="border border-gray-200"
+            />
+          </ImageFileIntake>
+          <div className="flex flex-wrap gap-2">
+            <HelpButton
+              helpKey="admin.product_series.series_photo"
+              type="button"
+              className="btn-secondary text-center py-1 px-2 text-xs font-medium"
+              disabled={busy}
+              onClick={() => seriesInputRef.current?.click()}
+            >
+              {seriesPath ? 'Replace photo' : 'Upload photo'}
+            </HelpButton>
+            {seriesPath ? (
+              <Button
+                helpKey="admin.product_series.series_photo_adjust"
+                variant="secondary"
+                className="text-xs py-1 px-2"
+                disabled={busy}
+                onClick={() => void openAdjust()}
+              >
+                Adjust crop
+              </Button>
+            ) : null}
+            {seriesPath ? (
+              <Button
+                helpKey="admin.product_series.featured_delete"
+                variant="danger"
+                className="text-xs py-1 px-2"
+                disabled={busy}
+                onClick={() => void clearField('featured_image_page')}
+              >
+                Delete
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="border rounded p-3">
+          <p className="text-sm font-medium text-gray-800">Card photo</p>
+          <p className="text-xs text-gray-500 mb-2">
+            16:9 image on the homepage and on category cards such as Downlights.
+          </p>
+          <AdminPhotoSlot
+            src={cardPath || null}
+            alt="Card photo"
+            frameClassName={IMAGE_FRAMES.catalog.className}
+            emptyLabel="16:9 card. Extend the series photo to fill this frame."
+            className="border border-gray-200 mb-2"
+          />
+          <div className="flex flex-wrap gap-2">
             <Button
-              helpKey="admin.product_series.photo_style_open"
+              helpKey="admin.product_series.card_extend"
               variant="secondary"
               className="text-xs py-1 px-2"
-              disabled={busy}
-              onClick={openStyle}
+              disabled={busy || extending || !seriesPath}
+              onClick={() => void extendCard()}
             >
-              Style with AI
+              {extending ? 'Extending…' : 'Extend to 16:9'}
             </Button>
-          ) : null}
-          {sourcePath ? (
-            <Button
-              helpKey="admin.product_series.featured_delete"
-              variant="danger"
-              className="text-xs py-1 px-2"
-              disabled={busy}
-              onClick={() => void clearField('featured_image_source')}
-            >
-              Delete
-            </Button>
-          ) : null}
+            {cardPath ? (
+              <Button
+                helpKey="admin.product_series.featured_delete"
+                variant="danger"
+                className="text-xs py-1 px-2"
+                disabled={busy}
+                onClick={() => void clearField('featured_image')}
+              >
+                Delete
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {SERIES_FEATURED_SLOTS.map((slot) => {
-          const src = toPublicImagePath(paths[slot.field]);
-          return (
-            <div key={slot.slot} className="border rounded p-3">
-              <p className="text-sm font-medium text-gray-800">{slot.title}</p>
-              <p className="text-xs text-gray-500 mb-2">{slot.hint}</p>
-              <ImageFileIntake
-                enabled={!busy}
-                clickToPick={!src}
-                helpKey="admin.product_series.featured_replace"
-                className="mb-2"
-                onFile={(file) => {
-                  replaceSlotRef.current = slot.slot;
-                  handleReplaceFile(file);
-                }}
-              >
-                <AdminPhotoSlot src={src || null} alt={slot.title} frameClassName={slot.frame.className} />
-              </ImageFileIntake>
-              <div className="flex flex-wrap gap-2">
-                {src ? (
-                  <Button
-                    helpKey="admin.product_series.featured_replace"
-                    variant="secondary"
-                    className="text-xs py-1 px-2"
-                    disabled={busy}
-                    onClick={() => openReplace(slot.slot)}
-                  >
-                    Replace photo
-                  </Button>
-                ) : null}
-                {sourcePath ? (
-                  <Button
-                    helpKey="admin.product_series.photo_apply_location"
-                    variant="secondary"
-                    className="text-xs py-1 px-2"
-                    disabled={busy || applyingSlot != null}
-                    onClick={() => void applyStyledToSlot(slot, sourcePath)}
-                  >
-                    {applyingSlot === slot.slot ? 'Extending…' : 'Apply styled photo'}
-                  </Button>
-                ) : null}
-                {sourceUrl ? (
-                  <Button
-                    helpKey={slot.helpKey}
-                    variant="secondary"
-                    className="text-xs py-1 px-2"
-                    disabled={busy}
-                    onClick={() => openAdjust(slot.slot)}
-                  >
-                    Adjust crop
-                  </Button>
-                ) : null}
-                {src ? (
-                  <Button
-                    helpKey="admin.product_series.featured_delete"
-                    variant="danger"
-                    className="text-xs py-1 px-2"
-                    disabled={busy}
-                    onClick={() => void clearField(slot.field)}
-                  >
-                    Delete
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {cutboard}
-      <ProductPhotoStyleDialog
-        open={styleOpen && Boolean(sourcePath)}
-        imageUrl={sourcePath || ''}
-        photoType="Style photo"
-        applyTargets={SERIES_FEATURED_SLOTS.map((slot) => ({
-          id: slot.slot,
-          label: slot.title,
-          frame: slot.frame,
-        }))}
-        onClose={() => setStyleOpen(false)}
-        onApply={async (file) => {
-          await persist(file, 'featured_image_source');
-        }}
-        onApplyTarget={async (targetId, file, styleFile) => {
-          const slot = SERIES_FEATURED_SLOTS.find((item) => item.slot === targetId);
-          if (!slot) return;
-          await persist(styleFile, 'featured_image_source');
-          await persist(file, slot.field);
-        }}
-      />
+      {crop ? (
+        <ImageCutboard
+          key={crop.src}
+          imageSrc={crop.src}
+          frame={crop.frame}
+          sourceName={crop.fileName}
+          title="Adjust series photo"
+          hint="Zoom and drag inside the photo’s own shape. The fixture is not stretched into another ratio."
+          confirmLabel="Apply crop"
+          onCancel={closeCrop}
+          onConfirm={(file) => {
+            closeCrop();
+            void persist(file, 'featured_image_page').catch(reportError);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

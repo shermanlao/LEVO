@@ -992,7 +992,16 @@ export async function buildDatasheetPdf(productRow: Product | { get: (opts: { pl
   const qrPng = pageUrl ? await renderQrPng(pageUrl) : null;
   const qr = pageUrl && qrPng ? { png: qrPng, url: pageUrl } : null;
   const labelItems = productLabelItems(product, catalog);
-  const seriesSlug = optionText((product.series as { slug?: string } | undefined)?.slug) || optionText(product.slug);
+  const seriesRow = (product.series || {}) as Record<string, unknown>;
+  const seriesSlug = optionText(seriesRow.slug) || optionText(product.slug);
+  const hero =
+    photo ||
+    (await loadStoredImage(
+      optionText(seriesRow.featured_image_page) ||
+        optionText(seriesRow.featured_image_datasheet) ||
+        optionText(seriesRow.featured_image_source),
+      seriesSlug
+    ));
   const labelImages = await Promise.all(
     labelItems.map((label) => (label.image ? loadStoredImage(label.image, seriesSlug) : Promise.resolve(null)))
   );
@@ -1012,7 +1021,7 @@ export async function buildDatasheetPdf(productRow: Product | { get: (opts: { pl
   let leftY = CONTENT_TOP;
   let rightY = leftY;
 
-  drawImageBox(doc, photo, MARGIN, leftY, leftW);
+  drawImageBox(doc, hero, MARGIN, leftY, leftW);
   leftY += leftW + 8;
   if (sizeImage) {
     drawImageBox(doc, sizeImage, MARGIN, leftY, leftW);
@@ -1778,9 +1787,9 @@ export async function buildFamilyDatasheetPdf(
   const [logo, featuredStored, contact, catalog, appearanceRows] = await Promise.all([
     loadLevoLogo(),
     loadStoredImage(
-      optionText(series.featured_image_datasheet) ||
-        optionText(series.featured_image_source) ||
-        optionText(series.featured_image),
+      optionText(series.featured_image_page) ||
+        optionText(series.featured_image_datasheet) ||
+        optionText(series.featured_image_source),
       seriesSlug
     ),
     loadContact(),

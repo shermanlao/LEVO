@@ -167,6 +167,7 @@ export default function ImageCutboard({
           <div
             ref={viewportRef}
             className={`relative w-full max-w-xl overflow-hidden bg-black cursor-grab active:cursor-grabbing touch-none ${frame.className}`}
+            style={frame.className ? undefined : { aspectRatio: String(frame.ratio) }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}

@@ -16,9 +16,9 @@ The component is `ImageCutboard` plus `useImageCutboard()` in [`frontend/src/com
 
 | Key | Ratio | Used for |
 |-----|-------|----------|
-| `catalog` | 16:9 | Category featured images, and the series **catalog card** crop |
-| `seriesPage` | 4:5 | Series **page gallery** crop |
-| `product` | 1:1 | Size-pack Main A/B, size drawing, appearance photos, and the series **datasheet** crop |
+| `catalog` | 16:9 | Category featured images, and the series **card photo** made with Extend to 16:9 |
+| `seriesPage` | photo’s own ratio | Series photo on the series page and datasheets. Adjust crop uses that file’s shape |
+| `product` | 1:1 | Size-pack Main A/B, size drawing, and appearance photos |
 | `project` | 16:9 | Project listing thumbnail |
 | `projectSection` | 3:2 | Project gallery / section photos |
 | `hero` | 3:2 | Homepage hero |
@@ -27,23 +27,21 @@ The component is `ImageCutboard` plus `useImageCutboard()` in [`frontend/src/com
 | `icon` | 1:1 | Tab icon |
 | `label` | 1:1 | Datasheet label squares |
 
-## Series featured image (one source, three crops)
+## Series photos (two slots)
 
-Series featured images are **not** a single-frame upload. [`SeriesFeaturedImageEditor`](../frontend/src/components/admin/SeriesFeaturedImageEditor.tsx) on `/admin/product-series`:
+[`SeriesFeaturedImageEditor`](../frontend/src/components/admin/SeriesFeaturedImageEditor.tsx) on `/admin/product-series` has two placeholders:
 
-1. Upload a **style photo** (no crop). Stored as `featured_image_source`. Drop, paste, or click the empty **Style photo** placeholder on **Add New Series** / **Edit**. **Style with AI** opens the catalog-style chat. **Save style photo** writes the preview back to this placeholder. **Apply to Catalog card**, **Apply to Series page**, and **Apply to Family datasheet** extend the background to that frame and save the location. The same **Apply styled photo** button sits on each location card.
-2. **Adjust crop** still opens the cutboard for one frame: Catalog 16:9 (`featured_image`), Series page 4:5 (`featured_image_page`), Family datasheet 1:1 (`featured_image_datasheet`). Uploading a style photo does not start that three-step crop.
-3. Each empty location slot is the same drop / paste / choose placeholder as size Main A/B. **Replace photo** appears after a file is saved. **Delete** clears that field; on an existing series the clear is saved immediately. **Use a different image** on the cutboard crops a different file for the current slot only.
+1. **Series photo** (`featured_image_page`). Drop, paste, or choose a file. The upload is saved as-is. **Adjust crop** zooms inside that photo’s own shape. This file is the series-page gallery and the datasheet hero / thumbs.
+2. **Card photo** (`featured_image`). **Extend to 16:9** letterboxes the series photo and outpaints the background (`POST /api/admin/ai/edit-product-photo` with `outpaint`). The fixture is not stretched. Homepage featured series and `/products/[type]` cards use only this 16:9 file.
 
-**Apply** uses `POST /api/admin/ai/edit-product-photo` with `outpaint` after the browser letterboxes the fixture into the target ratio. The luminaire is not stretched. A photo narrower than the frame grows on the left and right (catalog 16:9 from a square style photo). A photo wider than the frame grows above and below (series page 4:5 from a square style photo). A photo that already matches is copied. Size Main A and Main B on `/admin/product-series/[id]` use the same saved style photo at 1:1. On an existing series, each apply is saved immediately. New series still save the paths when you click Create Series.
+Older `featured_image_datasheet` and `featured_image_source` values are still stored. Public series and datasheet views use them only when `featured_image_page` is empty.
 
-Public fallbacks when a chunk is empty: that surface uses source, then `featured_image`. Existing series keep working until staff re-crop.
+On API start, a series whose series photo is empty and whose card photo (`featured_image`) is set gets that card file copied into `featured_image_page`. The card file stays, so category cards keep the 16:9 image and staff do not upload again. A series that already has its own series photo is left unchanged.
 
 | Surface | Field | Frame |
 |---------|-------|-------|
-| `/products/[type]` cards | `featured_image` | 16:9 |
-| `/products/[type]/[series]` gallery | `featured_image_page` | Admin crops 4:5; public gallery shows the file’s intrinsic ratio |
-| Family datasheet hero, option-list thumbs, compact SKU dialog | `featured_image_datasheet` | 1:1 |
+| Homepage featured series and `/products/[type]` cards | `featured_image` | 16:9 |
+| `/products/[type]/[series]` gallery, family datasheet hero, option-list thumbs | `featured_image_page` | The file’s own ratio |
 
 ## Other upload locations
 
@@ -53,4 +51,4 @@ The size-drawing AI **Focus the fixture** dialog stays a free-form box for the A
 
 ## Help tips
 
-`admin.image_cutboard.apply`, `admin.image_cutboard.cancel`, series style photo / three slots / replace / delete / use-a-different-image (`admin.product_series.featured_*`), `admin.product_series.photo_style_open`, `admin.product_series.photo_apply_location`, plus the existing upload tips that mention the matching frame.
+`admin.image_cutboard.apply`, `admin.image_cutboard.cancel`, `admin.product_series.series_photo`, `admin.product_series.series_photo_adjust`, `admin.product_series.card_extend`, `admin.product_series.featured_delete`.

@@ -196,7 +196,7 @@ export default function SeriesVariantEditorPage() {
     setLdtFamily(String(attrs.ldt_family || ''));
     setProductCode(String(attrs.product_code || ''));
     setIsFeatured(Boolean(attrs.is_featured));
-    setStylePhotoUrl(toPublicImagePath(attrs.featured_image_source));
+    setStylePhotoUrl(toPublicImagePath(attrs.featured_image_page));
     const products = Array.isArray((attrs.products as { data?: unknown[] })?.data)
       ? ((attrs.products as { data: Array<{ id: number; attributes?: Record<string, unknown> }> }).data)
       : [];

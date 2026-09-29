@@ -20,9 +20,9 @@ Upload an optional **style reference** on `/admin/ai` (Size drawing style). When
 
 On the same series page, **Generate missing** / **Generate all** (and upload of size Main A) edits Main A into Finish × Trim × Reflector **previews**. Staff must **Confirm** (or Confirm all) before a file is uploaded and stored. Discard leaves the previous saved photo. See [appearance-photos.md](appearance-photos.md).
 
-## Style photo, then apply
+## Card photo
 
-On Add / Edit series, **Style photo** (`featured_image_source`) is the first placeholder. **Style with AI** opens the catalog-style chat. **Save style photo** keeps the preview on that placeholder. **Apply to Catalog card**, **Apply to Series page**, and **Apply to Family datasheet** (also **Apply styled photo** on each of those cards, and on size Main A / Main B) extend the background to that location’s frame and save the file. The fixture is not stretched. A narrower photo grows left and right. A wider photo grows above and below. Frames: catalog 16:9, series page 4:5, family datasheet and size photos 1:1. Extend uses `POST /api/admin/ai/edit-product-photo` with `outpaint: { aspect, axis }`.
+On Add / Edit series, **Extend to 16:9** builds `featured_image` from the series photo (`featured_image_page`). The browser letterboxes the fixture into 16:9, then `POST /api/admin/ai/edit-product-photo` with `outpaint` fills only the blank background. Homepage featured series and category cards use that 16:9 file. The series page and datasheets keep the series photo at its own ratio.
 
 ## Edit with AI
 
