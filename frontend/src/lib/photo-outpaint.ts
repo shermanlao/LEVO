@@ -9,8 +9,12 @@ export type OutpaintResult = {
 };
 
 /** Fit a photo into a location frame by extending the background. The fixture is not stretched. */
-export async function outpaintToFrame(imageUrl: string, frame: ImageFrame): Promise<OutpaintResult> {
-  const padded = await padImageToAspect(imageUrl, frame.ratio, frame.maxEdge);
+export async function outpaintToFrame(
+  imageUrl: string,
+  frame: ImageFrame,
+  opts?: { horizontalOnly?: boolean }
+): Promise<OutpaintResult> {
+  const padded = await padImageToAspect(imageUrl, frame.ratio, frame.maxEdge, opts);
   if (padded.axis === 'none') {
     return { dataUrl: padded.dataUrl, extended: false, axis: 'none' };
   }

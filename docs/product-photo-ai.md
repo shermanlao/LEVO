@@ -22,7 +22,7 @@ On the same series page, **Generate missing** / **Generate all** (and upload of 
 
 ## Card photo
 
-On Add / Edit series, **Extend to 16:9** builds `featured_image` from the series photo (`featured_image_page`). The browser letterboxes the fixture into 16:9, then `POST /api/admin/ai/edit-product-photo` with `outpaint` fills only the blank background. Homepage featured series and category cards use that 16:9 file. The series page and datasheets keep the series photo at its own ratio.
+On Add / Edit series, **Extend to 16:9** builds `featured_image` from the series photo (`featured_image_page`). The two placeholders share one height. The browser keeps that height and adds blank canvas only on the left and right, then `POST /api/admin/ai/edit-product-photo` with `outpaint` fills that side background. It does not add space above or below. Homepage featured series and category cards use that 16:9 file. The series page and datasheets keep the series photo at its own ratio.
 
 ## Edit with AI
 

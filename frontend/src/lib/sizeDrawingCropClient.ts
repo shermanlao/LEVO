@@ -69,7 +69,8 @@ export type PaddedFrame = {
 export async function padImageToAspect(
   imageUrl: string,
   ratio: number,
-  maxEdge = 1600
+  maxEdge = 1600,
+  opts?: { horizontalOnly?: boolean }
 ): Promise<PaddedFrame> {
   if (!(ratio > 0)) throw new Error('Frame ratio is required');
   const dataUrl = await imageUrlToDataUrl(imageUrl);
@@ -80,6 +81,10 @@ export async function padImageToAspect(
   const srcRatio = srcW / srcH;
   if (Math.abs(srcRatio - ratio) / ratio < 0.015) {
     return { dataUrl, axis: 'none' };
+  }
+  if (opts?.horizontalOnly) {
+    if (srcRatio > ratio) return { dataUrl, axis: 'none' };
+    return drawPaddedFrame(img, dataUrl, fitHorizontalFrame(srcW, srcH, ratio, maxEdge));
   }
 
   let canvasW: number;
@@ -105,16 +110,39 @@ export async function padImageToAspect(
   const drawH = Math.max(1, Math.round(srcH * scale));
   const dx = Math.round((canvasW - drawW) / 2);
   const dy = Math.round((canvasH - drawH) / 2);
-  const axis: PaddedFrame['axis'] = dx > 1 ? 'horizontal' : dy > 1 ? 'vertical' : 'none';
+  return drawPaddedFrame(img, dataUrl, { canvasW, canvasH, drawW, drawH, dx, dy });
+}
 
+/** Keep the photo's full height and add blank canvas only on the left and right. */
+function fitHorizontalFrame(srcW: number, srcH: number, ratio: number, maxEdge: number) {
+  let canvasH = Math.min(srcH, maxEdge);
+  let canvasW = Math.max(1, Math.round(canvasH * ratio));
+  if (canvasW > maxEdge) {
+    canvasW = maxEdge;
+    canvasH = Math.max(1, Math.round(canvasW / ratio));
+  }
+  const scale = canvasH / srcH;
+  const drawH = canvasH;
+  const drawW = Math.max(1, Math.round(srcW * scale));
+  const dx = Math.round((canvasW - drawW) / 2);
+  return { canvasW, canvasH, drawW, drawH, dx, dy: 0 };
+}
+
+function drawPaddedFrame(
+  img: HTMLImageElement,
+  sourceDataUrl: string,
+  box: { canvasW: number; canvasH: number; drawW: number; drawH: number; dx: number; dy: number }
+): PaddedFrame {
+  const axis: PaddedFrame['axis'] = box.dx > 1 ? 'horizontal' : box.dy > 1 ? 'vertical' : 'none';
+  if (axis === 'none') return { dataUrl: sourceDataUrl, axis };
   const canvas = document.createElement('canvas');
-  canvas.width = canvasW;
-  canvas.height = canvasH;
+  canvas.width = box.canvasW;
+  canvas.height = box.canvasH;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas unavailable');
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvasW, canvasH);
-  ctx.drawImage(img, dx, dy, drawW, drawH);
+  ctx.fillRect(0, 0, box.canvasW, box.canvasH);
+  ctx.drawImage(img, box.dx, box.dy, box.drawW, box.drawH);
   return { dataUrl: canvas.toDataURL('image/jpeg', 0.92), axis };
 }
 

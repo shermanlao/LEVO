@@ -373,7 +373,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.card_extend',
     title: 'Extend to 16:9',
-    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same size and the background is extended until the file is 16:9.',
+    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9.',
   },
   {
     helpKey: 'admin.product_series.featured_image',

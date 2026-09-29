@@ -89,10 +89,12 @@ export default function SeriesFeaturedImageEditor({
   onError,
 }: SeriesFeaturedImageEditorProps) {
   const seriesInputRef = useRef<HTMLInputElement>(null);
+  const cardFrameRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [extending, setExtending] = useState(false);
   const [extendNote, setExtendNote] = useState<string | null>(null);
   const [seriesRatio, setSeriesRatio] = useState<number | null>(null);
+  const [frameHeight, setFrameHeight] = useState<number | null>(null);
   const [crop, setCrop] = useState<{ src: string; frame: ImageFrame; fileName: string } | null>(null);
 
   const seriesPath = toPublicImagePath(paths.featured_image_page);
@@ -117,6 +119,19 @@ export default function SeriesFeaturedImageEditor({
       cancelled = true;
     };
   }, [seriesPath]);
+
+  useEffect(() => {
+    const el = cardFrameRef.current;
+    if (!el) return;
+    const measure = () => {
+      const next = Math.round(el.getBoundingClientRect().height);
+      setFrameHeight(next > 0 ? next : null);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [cardPath]);
 
   function reportError(err: unknown) {
     onError?.(err instanceof Error ? err.message : 'Upload failed');
@@ -198,9 +213,13 @@ export default function SeriesFeaturedImageEditor({
     setExtending(true);
     setExtendNote(null);
     try {
-      const extended = await outpaintToFrame(seriesPath, IMAGE_FRAMES.catalog);
+      const extended = await outpaintToFrame(seriesPath, IMAGE_FRAMES.catalog, { horizontalOnly: true });
       if (!extended.extended) {
-        setExtendNote('This series photo is already 16:9, so the card does not need a new background.');
+        setExtendNote(
+          seriesRatio && seriesRatio > IMAGE_FRAMES.catalog.ratio
+            ? 'Extend only adds background on the left and right. This photo is already wider than 16:9.'
+            : 'This series photo is already 16:9, so the card does not need a wider background.'
+        );
         return;
       }
       await persist(dataUrlToFile(extended.dataUrl, 'card-16x9.jpg'), 'featured_image');
@@ -237,16 +256,26 @@ export default function SeriesFeaturedImageEditor({
             enabled={!busy}
             clickToPick={!seriesPath}
             helpKey="admin.product_series.series_photo"
-            className="mb-2"
+            className="mb-2 w-fit max-w-full"
             onFile={(file) => void handleSeriesFile(file)}
           >
-            <AdminPhotoSlot
-              src={seriesPath || null}
-              alt="Series photo"
-              aspectRatio={seriesRatio ?? undefined}
-              frameClassName="min-h-48"
-              className="border border-gray-200"
-            />
+            <div
+              style={
+                frameHeight
+                  ? {
+                      height: frameHeight,
+                      width: Math.max(1, Math.round(frameHeight * (seriesRatio || 1))),
+                    }
+                  : undefined
+              }
+            >
+              <AdminPhotoSlot
+                src={seriesPath || null}
+                alt="Series photo"
+                frameClassName={frameHeight ? 'h-full' : 'min-h-48'}
+                className="h-full border border-gray-200"
+              />
+            </div>
           </ImageFileIntake>
           <div className="flex flex-wrap gap-2">
             <HelpButton
@@ -288,13 +317,15 @@ export default function SeriesFeaturedImageEditor({
           <p className="text-xs text-gray-500 mb-2">
             16:9 image on the homepage and on category cards such as Downlights.
           </p>
-          <AdminPhotoSlot
-            src={cardPath || null}
-            alt="Card photo"
-            frameClassName={IMAGE_FRAMES.catalog.className}
-            emptyLabel="16:9 card. Extend the series photo to fill this frame."
-            className="border border-gray-200 mb-2"
-          />
+          <div ref={cardFrameRef} className="mb-2">
+            <AdminPhotoSlot
+              src={cardPath || null}
+              alt="Card photo"
+              frameClassName={IMAGE_FRAMES.catalog.className}
+              emptyLabel="16:9 card. Extend the series photo left and right to fill this frame."
+              className="border border-gray-200"
+            />
+          </div>
           <div className="flex flex-wrap gap-2">
             <Button
               helpKey="admin.product_series.card_extend"
