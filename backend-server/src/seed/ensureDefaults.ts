@@ -362,8 +362,8 @@ export const DEFAULT_HELP_TIPS = [
   },
   {
     helpKey: 'admin.product_series.featured_image',
-    title: 'Series source photo',
-    body: 'Upload the full series photo on Add New Series or Edit. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board then walks through three frames from that source: catalog 16:9, series page 4:5, and family datasheet 1:1. Replacing the source starts those three crops again. Any slot can also Upload / Replace photo with a different file. This is not a product photo.',
+    title: 'Style photo',
+    body: 'Upload the series photo here first. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file. Style with AI restyles this photo. Apply then places it into Catalog, Series page, or Family datasheet and extends the background to that frame. Adjust crop is still available on each location.',
   },
   {
     helpKey: 'admin.product_series.featured_catalog',
@@ -591,9 +591,19 @@ export const DEFAULT_HELP_TIPS = [
     body: 'After Match catalog style generates a preview, type an edit instruction (for example warmer light or tighter crop) and Refine. Uses the same product-photo edit path as Edit photo with AI. Apply still saves the latest preview; Reset restores the original upload.',
   },
   {
+    helpKey: 'admin.product_series.photo_style_open',
+    title: 'Style with AI',
+    body: 'Restyle the uploaded photo to the catalog style on /admin/ai. Chat to refine the preview, then save it on this placeholder or apply it into a location. If no catalog style photo is stored, upload one on /admin/ai first.',
+  },
+  {
+    helpKey: 'admin.product_series.photo_apply_location',
+    title: 'Apply to this frame',
+    body: 'Place the style photo into this location. The fixture stays the same size. The background is extended to the frame: left and right when the photo is narrower, above and below when it is wider. Catalog is 16:9, the series page is 4:5, and the family datasheet and size photos are 1:1.',
+  },
+  {
     helpKey: 'admin.product_series.photo_style_apply',
-    title: 'Apply styled photo',
-    body: 'Replace the saved Main A or Main B file with the styled (and optionally refined) preview. Close or Reset keeps the original upload.',
+    title: 'Save styled photo',
+    body: 'On the style photo, save the preview back to that placeholder. On a size Main A or Main B match, replace that slot. Close or Reset keeps the previous file.',
   },
   {
     helpKey: 'admin.products.size_drawing_ai',

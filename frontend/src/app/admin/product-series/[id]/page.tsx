@@ -14,6 +14,7 @@ import AppearancePhotos from '@/components/admin/AppearancePhotos';
 import DescriptionPhraseEditor from '@/components/admin/DescriptionPhraseEditor';
 import EntityDatasheetLabelEditor from '@/components/admin/EntityDatasheetLabelEditor';
 import { adminFetchJson } from '@/lib/admin-fetch';
+import { toPublicImagePath } from '@/lib/image-utils';
 import { productMatchesSize } from '@shared/series-options';
 import { parseDatasheetLabels, type DatasheetLabel } from '@shared/datasheet-labels';
 import { APPEARANCE_NA, isAppearanceNa, isAppearanceKind, type AppearancePhotoDto } from '@shared/appearance-photos';
@@ -159,6 +160,7 @@ export default function SeriesVariantEditorPage() {
   const [catalog, setCatalog] = useState<VariantCatalogOption[]>([]);
   const [datasheetLabels, setDatasheetLabels] = useState<DatasheetLabel[]>([]);
   const [appearancePhotos, setAppearancePhotos] = useState<AppearancePhotoDto[]>([]);
+  const [stylePhotoUrl, setStylePhotoUrl] = useState('');
   const [generateTick, setGenerateTick] = useState(0);
   const [uploadedMainA, setUploadedMainA] = useState('');
   const [uploadedSourceId, setUploadedSourceId] = useState<number | undefined>();
@@ -194,6 +196,7 @@ export default function SeriesVariantEditorPage() {
     setLdtFamily(String(attrs.ldt_family || ''));
     setProductCode(String(attrs.product_code || ''));
     setIsFeatured(Boolean(attrs.is_featured));
+    setStylePhotoUrl(toPublicImagePath(attrs.featured_image_source));
     const products = Array.isArray((attrs.products as { data?: unknown[] })?.data)
       ? ((attrs.products as { data: Array<{ id: number; attributes?: Record<string, unknown> }> }).data)
       : [];
@@ -553,6 +556,7 @@ export default function SeriesVariantEditorPage() {
                                 descriptionPhrase,
                                 phraseSpecFromOptionDrafts(drafts, row)
                               )}
+                              styledSourceUrl={stylePhotoUrl}
                               mounting={(drafts.mounting_type || [])
                                 .map((item) => optionText(item.value))
                                 .filter(Boolean)

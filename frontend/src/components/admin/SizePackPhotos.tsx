@@ -5,7 +5,6 @@ import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
-import ProductPhotoAiEditDialog from '@/components/ai/ProductPhotoAiEditDialog';
 import ProductPhotoStyleDialog from '@/components/ai/ProductPhotoStyleDialog';
 import SizeDrawingAiDialog from '@/components/ai/SizeDrawingAiDialog';
 import SizeDrawingFocusDialog from '@/components/ai/SizeDrawingFocusDialog';
@@ -13,6 +12,8 @@ import { uploadAdminImage } from '@/lib/admin-fetch';
 import { storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
+import { outpaintToFrame } from '@/lib/photo-outpaint';
+import { dataUrlToFile } from '@/lib/sizeDrawingCropClient';
 import {
   formatSizeDrawingMissingMessage,
   getSizeDrawingMissingFields,
@@ -35,6 +36,8 @@ type SizePackPhotosProps = {
   description?: string;
   fixtureDescription?: string;
   mounting?: string;
+  /** Saved series style photo. Apply extends it to the 1:1 size frame. */
+  styledSourceUrl?: string;
   onChanged: (images: SizePackImages) => void;
   onMainAUploaded?: (info: { productId?: number; imagePath: string }) => void;
 };
@@ -48,6 +51,7 @@ export default function SizePackPhotos({
   description = '',
   fixtureDescription = '',
   mounting = '',
+  styledSourceUrl = '',
   onChanged,
   onMainAUploaded,
 }: SizePackPhotosProps) {
@@ -59,7 +63,7 @@ export default function SizePackPhotos({
   const [croppedDataUrl, setCroppedDataUrl] = useState('');
   const [hasPhotoStyle, setHasPhotoStyle] = useState<boolean | null>(null);
   const [styleField, setStyleField] = useState<'main_image_A' | 'main_image_B' | null>(null);
-  const [enhanceField, setEnhanceField] = useState<(typeof FIELDS)[number]['key'] | null>(null);
+  const [applyingStyle, setApplyingStyle] = useState<'main_image_A' | 'main_image_B' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +80,6 @@ export default function SizePackPhotos({
 
   const mainPhotoUrl = toPublicImagePath(images.main_image_A);
   const stylePhotoUrl = styleField ? toPublicImagePath(images[styleField]) : null;
-  const enhancePhotoUrl = enhanceField ? toPublicImagePath(images[enhanceField]) : null;
   const drawingSize = String(size || '').trim();
   const drawingCuthole = String(cuthole || '').trim();
 
@@ -125,6 +128,20 @@ export default function SizePackPhotos({
     void requestCrop(file, IMAGE_FRAMES.product).then((cropped) => {
       if (cropped) void stageFile(field, cropped).catch(() => {});
     });
+  }
+
+  async function applyStyledPhoto(field: 'main_image_A' | 'main_image_B') {
+    if (!styledSourceUrl) return;
+    setApplyingStyle(field);
+    setError(null);
+    try {
+      const extended = await outpaintToFrame(styledSourceUrl, IMAGE_FRAMES.product);
+      await stageFile(field, dataUrlToFile(extended.dataUrl, `${field}.jpg`));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Extend failed');
+    } finally {
+      setApplyingStyle(null);
+    }
   }
 
   function startSizeAi() {
@@ -176,18 +193,15 @@ export default function SizePackPhotos({
                   Generate by AI
                 </Button>
               ) : null}
-              {src ? (
+              {styledSourceUrl && (field.key === 'main_image_A' || field.key === 'main_image_B') ? (
                 <Button
-                  helpKey="admin.product_series.photo_enhance"
+                  helpKey="admin.product_series.photo_apply_location"
                   variant="secondary"
                   className="text-xs py-1 px-2"
-                  disabled={busy != null}
-                  onClick={() => {
-                    setError(null);
-                    setEnhanceField(field.key);
-                  }}
+                  disabled={busy != null || applyingStyle != null}
+                  onClick={() => void applyStyledPhoto(field.key)}
                 >
-                  Edit with AI
+                  {applyingStyle === field.key ? 'Extending…' : 'Apply styled photo'}
                 </Button>
               ) : null}
               {src && (field.key === 'main_image_A' || field.key === 'main_image_B') ? (
@@ -248,18 +262,6 @@ export default function SizePackPhotos({
         }}
         onApply={async (file) => {
           await stageFile('size_image', file);
-        }}
-      />
-      <ProductPhotoAiEditDialog
-        open={Boolean(enhanceField && enhancePhotoUrl)}
-        imageUrl={enhancePhotoUrl || ''}
-        photoType={
-          enhanceField === 'main_image_B' ? 'Main B' : enhanceField === 'size_image' ? 'Size drawing' : 'Main A'
-        }
-        onClose={() => setEnhanceField(null)}
-        onApply={async (file) => {
-          if (!enhanceField) return;
-          await stageFile(enhanceField, file);
         }}
       />
       <ProductPhotoStyleDialog
