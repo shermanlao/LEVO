@@ -365,6 +365,9 @@ export default function SeriesVariantEditorPage() {
         backHelpKey="admin.product_series.back_list"
         actions={
           <div className="flex items-center gap-3">
+            <Button helpKey="admin.product_series.edit" variant="secondary" href={`/admin/product-series/${id}/edit`}>
+              Edit
+            </Button>
             <Button helpKey="admin.dash.link.variant_options" variant="ghost" href="/admin/variant-options">
               Variant
             </Button>

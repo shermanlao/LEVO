@@ -1003,7 +1003,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.cancel_edit',
     title: 'Cancel',
-    body: 'Close the series editor without saving.',
+    body: 'Return to the series list without saving.',
   },
   {
     helpKey: 'admin.product_series.retry',
@@ -1013,7 +1013,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.edit',
     title: 'Edit series',
-    body: 'Open this series in the editor.',
+    body: 'Open this series on its own edit page.',
   },
   {
     helpKey: 'admin.product_series.delete',
@@ -1148,7 +1148,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.variants',
     title: 'Variants',
-    body: 'Open the series editor to add wattage, size, CCT, beam, dimming, and other spec option lists.',
+    body: 'Open this series on its own variants page for wattage, size, CCT, beam, dimming, and other spec option lists.',
   },
   {
     helpKey: 'admin.product_series.option_add',

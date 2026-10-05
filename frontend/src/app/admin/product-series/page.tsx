@@ -10,14 +10,12 @@ import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
 import SeriesFeaturedImageEditor, {
-  seriesFeaturedPathsFromAttrs,
   type SeriesFeaturedPaths,
 } from '@/components/admin/SeriesFeaturedImageEditor';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
 import { seriesPhotoUrl } from '@/lib/image-utils';
 import SpecificationsEditor, {
   SpecPair,
-  recordToSpecPairs,
   specPairsToRecord,
 } from '@/components/admin/SpecificationsEditor';
 
@@ -59,11 +57,8 @@ export default function ProductSeriesAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [editingSeries, setEditingSeries] = useState<ProductSeries | null>(null);
   const [createFeaturedPaths, setCreateFeaturedPaths] = useState<Partial<SeriesFeaturedPaths>>({});
-  const [editFeaturedPaths, setEditFeaturedPaths] = useState<Partial<SeriesFeaturedPaths>>({});
   const [createSpecRows, setCreateSpecRows] = useState<SpecPair[]>([]);
-  const [editSpecRows, setEditSpecRows] = useState<SpecPair[]>([]);
   
   const apiUrl = API_CONFIG.apiUrl;
 
@@ -190,59 +185,6 @@ export default function ProductSeriesAdminPage() {
     }
   };
   
-  const handleUpdateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      // Basic validation
-      if (!editingSeries?.attributes.name || !editingSeries?.attributes.slug) {
-        setError('Name and slug are required fields');
-        return;
-      }
-      
-      const seriesData: Record<string, unknown> = {
-        name: editingSeries.attributes.name,
-        description: editingSeries.attributes.description,
-        slug: editingSeries.attributes.slug,
-        specifications: specPairsToRecord(editSpecRows),
-        product_type_id: editingSeries.attributes.product_type?.data?.id || null
-      };
-
-      applyFeaturedPaths(seriesData, editFeaturedPaths);
-      
-      console.log('Sending update data:', seriesData);
-      
-      const response = await fetch(`${apiUrl}/product-series/${editingSeries.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(seriesData),
-      });
-      
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch (err) {
-        errorData = { error: 'Failed to parse response' };
-      }
-      
-      if (!response.ok) {
-        const errorMessage = errorData.error || 'Failed to update product series';
-        throw new Error(errorMessage);
-      }
-      
-      // Reset form and refresh product series
-      setEditingSeries(null);
-      setEditFeaturedPaths({});
-      fetchProductSeries();
-      
-    } catch (err: any) {
-      console.error('Error updating product series:', err);
-      setError(err.message || 'An error occurred while updating the product series');
-    }
-  };
-  
   const handleDeleteSeries = async (id: number) => {
     if (!confirm('Delete this product series? Products in it stay in the catalog but will no longer belong to a series.')) {
       return;
@@ -273,27 +215,13 @@ export default function ProductSeriesAdminPage() {
     }
   };
   
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, isNewForm: boolean) => {
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    const slug = slugify(name);
-    
-    if (isNewForm) {
-      setNewSeries({
-        ...newSeries,
-        name,
-        slug
-      });
-    } else if (editingSeries) {
-      const updatedSeries = {
-        ...editingSeries,
-        attributes: {
-          ...editingSeries.attributes,
-          name,
-          slug
-        }
-      };
-      setEditingSeries(updatedSeries);
-    }
+    setNewSeries({
+      ...newSeries,
+      name,
+      slug: slugify(name),
+    });
   };
 
   if (loading) {
@@ -404,7 +332,7 @@ export default function ProductSeriesAdminPage() {
                 <input
                   type="text"
                   value={newSeries.name}
-                  onChange={(e) => handleNameChange(e, true)}
+                  onChange={handleNameChange}
                   className="input-field"
                   required
                 />
@@ -468,129 +396,6 @@ export default function ProductSeriesAdminPage() {
             <div className="flex justify-end">
               <Button helpKey="admin.product_series.create" type="submit">
                 Create Series
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Edit form */}
-      {editingSeries && (
-        <div className="bg-white shadow-md rounded p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Edit Product Series</h2>
-          <form onSubmit={handleUpdateSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-gray-700 mb-2">Name *</label>
-                <input
-                  type="text"
-                  value={editingSeries.attributes.name}
-                  onChange={(e) => handleNameChange(e, false)}
-                  className="input-field"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2">Slug *</label>
-                <input
-                  type="text"
-                  value={editingSeries.attributes.slug}
-                  onChange={(e) => setEditingSeries({
-                    ...editingSeries,
-                    attributes: {
-                      ...editingSeries.attributes,
-                      slug: e.target.value
-                    }
-                  })}
-                  className="input-field"
-                  required
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={editingSeries.attributes.description}
-                  onChange={(e) => setEditingSeries({
-                    ...editingSeries,
-                    attributes: {
-                      ...editingSeries.attributes,
-                      description: e.target.value
-                    }
-                  })}
-                  className="w-full border border-gray-300 rounded px-3 py-2 h-32"
-                ></textarea>
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2">Product Type</label>
-                <select
-                  value={editingSeries.attributes.product_type?.data?.id || ''}
-                  onChange={(e) => {
-                    const typeId = Number(e.target.value) || null;
-                    const selectedType = productTypes.find(t => t.id === typeId);
-                    
-                    setEditingSeries({
-                      ...editingSeries,
-                      attributes: {
-                        ...editingSeries.attributes,
-                        product_type: typeId ? {
-                          data: {
-                            id: typeId,
-                            attributes: {
-                              name: selectedType?.attributes.name || ''
-                            }
-                          }
-                        } : undefined
-                      }
-                    });
-                  }}
-                  className="input-field"
-                >
-                  <option value="">None</option>
-                  {productTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.attributes.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="md:col-span-2">
-                <SeriesFeaturedImageEditor
-                  paths={editFeaturedPaths}
-                  seriesSlug={editingSeries.attributes.slug}
-                  seriesId={editingSeries.id}
-                  onChange={(next) => setEditFeaturedPaths((prev) => ({ ...prev, ...next }))}
-                  onError={setError}
-                />
-              </div>
-            </div>
-            
-            <div className="mb-6">
-              <h3 className="text-lg font-medium mb-3">Specifications</h3>
-              <SpecificationsEditor
-                specs={editSpecRows}
-                onChange={setEditSpecRows}
-                helpKeyPrefix="admin.product_series"
-              />
-            </div>
-            
-            <div className="flex justify-end space-x-3">
-              <Button
-                helpKey="admin.product_series.cancel_edit"
-                variant="secondary"
-                type="button"
-                onClick={() => {
-                  setEditingSeries(null);
-                  setEditFeaturedPaths({});
-                }}
-              >
-                Cancel
-              </Button>
-              <Button helpKey="admin.product_series.update" type="submit">
-                Update Series
               </Button>
             </div>
           </form>
@@ -673,11 +478,7 @@ export default function ProductSeriesAdminPage() {
                       <Button
                         helpKey="admin.product_series.edit"
                         variant="secondary"
-                        onClick={() => {
-                          setEditingSeries(item);
-                          setEditFeaturedPaths(seriesFeaturedPathsFromAttrs(item.attributes));
-                          setEditSpecRows(recordToSpecPairs(item.attributes.specifications));
-                        }}
+                        href={`/admin/product-series/${item.id}/edit`}
                       >
                         Edit
                       </Button>

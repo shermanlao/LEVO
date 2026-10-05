@@ -29,7 +29,7 @@ The component is `ImageCutboard` plus `useImageCutboard()` in [`frontend/src/com
 
 ## Series photos (two slots)
 
-[`SeriesFeaturedImageEditor`](../frontend/src/components/admin/SeriesFeaturedImageEditor.tsx) on `/admin/product-series` has two placeholders:
+[`SeriesFeaturedImageEditor`](../frontend/src/components/admin/SeriesFeaturedImageEditor.tsx) on **Add New Series** (`/admin/product-series`) and **Edit** (`/admin/product-series/[id]/edit`) has two placeholders:
 
 1. **Series photo** (`featured_image_page`). Drop, paste, or choose a file. The upload is saved as-is. The preview box uses that file’s own ratio, so a wide admin column does not add empty side bars. **Adjust crop** opens the photo with four edges. Drag one edge at a time to cut that side; the other three stay put. Apply saves the resulting shape. This file is the series-page gallery and the datasheet hero / thumbs.
 2. **Card photo** (`featured_image`). The series and card placeholders are the same height. **Extend to 16:9** keeps that height and outpaints only the left and right background (`POST /api/admin/ai/edit-product-photo` with `outpaint`). The original series photo is pasted back afterward, so the top and bottom stay exactly as they were and the fixture is not stretched. The side strips are recolored to match the photo’s left and right edges. Homepage featured series and `/products/[type]` cards use only this 16:9 file.
