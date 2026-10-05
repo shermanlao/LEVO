@@ -26,7 +26,7 @@ On Add / Edit series, **Extend to 16:9** builds `featured_image` from the series
 
 ## Edit with AI
 
-On Add / Edit series, click the **Series photo** or the **Card photo** to open **Edit photo with AI** (the same chat as a LIGHTX product photo). Describe the change and Send, or Upscale. Apply uploads the preview into that slot and, on an existing series, saves it immediately. Reset or Close keeps the current file. Empty placeholders still drop, paste, or choose a file. Size drawings still use **Generate by AI** and its refine chat. Size Main A / Main B can still **Match catalog style** on that slot. Other admin thumbs still enlarge on click.
+On Add / Edit series, click the **Series photo** or the **Card photo** to open **Edit photo with AI** (the same chat as a LIGHTX product photo). The dialog is drawn outside the series form, and **Send** is not a form submit, so it does not reload the page. Describe the change and Send, or Upscale. Apply uploads the preview into that slot and, on an existing series, saves it immediately. Reset or Close keeps the current file. Empty placeholders still drop, paste, or choose a file. Size drawings still use **Generate by AI** and its refine chat. Size Main A / Main B can still **Match catalog style** on that slot. Other admin thumbs still enlarge on click.
 
 ## Catalog photo style
 

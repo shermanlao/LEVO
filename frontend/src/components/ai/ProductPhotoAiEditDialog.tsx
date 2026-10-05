@@ -82,11 +82,13 @@ export default function ProductPhotoAiEditDialog({
     }
   }
 
-  async function handleSend(e: FormEvent) {
-    e.preventDefault();
-    if (!instruction.trim()) return;
-    await runEdit(instruction.trim());
+  async function handleSend(e?: FormEvent) {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (!instruction.trim() || loading) return;
+    const text = instruction.trim();
     setInstruction('');
+    await runEdit(text);
   }
 
   async function handleExtendSides() {
@@ -150,7 +152,11 @@ export default function ProductPhotoAiEditDialog({
         </>
       }
     >
-      <form onSubmit={handleSend} className="space-y-3">
+      <form
+        onSubmit={(event) => void handleSend(event)}
+        onClick={(event) => event.stopPropagation()}
+        className="space-y-3"
+      >
         <textarea
           className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
           rows={4}
@@ -164,7 +170,8 @@ export default function ProductPhotoAiEditDialog({
             variant="primary"
             className="text-sm"
             disabled={loading || !instruction.trim()}
-            type="submit"
+            type="button"
+            onClick={() => void handleSend()}
           >
             Send
           </Button>

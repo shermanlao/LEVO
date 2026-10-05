@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 type Props = {
   title: string;
@@ -25,8 +26,14 @@ export default function AiImageWorkbenchDialog({
   onReset,
   extraHeader,
 }: Props) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full p-6 max-h-[92vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4 gap-3">
           <div>
@@ -59,6 +66,7 @@ export default function AiImageWorkbenchDialog({
         </div>
         {error ? <p className="text-sm text-red-600 mt-3">{error}</p> : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
