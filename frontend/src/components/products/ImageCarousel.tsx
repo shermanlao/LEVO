@@ -3,7 +3,61 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import HelpButton from '@/components/admin/HelpButton';
+import { measureNearWhiteEdgeCrop, type EdgeCrop } from '@/lib/image-edge-crop';
 import { collectProductGalleryImages, shouldSkipImageOptimize } from '@/lib/image-utils';
+
+const edgeCropCache = new Map<string, EdgeCrop | null>();
+
+function FramedPhoto({
+  src,
+  alt,
+  crop,
+  onError,
+  layout = 'width',
+}: {
+  src: string;
+  alt: string;
+  crop: EdgeCrop;
+  onError?: () => void;
+  layout?: 'width' | 'square' | 'zoom';
+}) {
+  const frameStyle: React.CSSProperties =
+    layout === 'zoom'
+      ? {
+          aspectRatio: String(crop.aspect),
+          width: `min(100%, calc(min(80dvh, calc(100dvh - 6rem)) * ${crop.aspect}))`,
+        }
+      : layout === 'square'
+        ? {
+            aspectRatio: String(crop.aspect),
+            width: crop.aspect >= 1 ? '100%' : 'auto',
+            height: crop.aspect >= 1 ? 'auto' : '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
+          }
+        : { aspectRatio: String(crop.aspect) };
+
+  return (
+    <div
+      className={`relative overflow-hidden ${layout === 'width' ? 'w-full' : ''} ${layout === 'zoom' ? 'mx-auto max-w-full' : ''}`}
+      style={frameStyle}
+    >
+      <img
+        src={src}
+        alt={alt}
+        draggable={false}
+        className="absolute max-w-none select-none"
+        style={{
+          width: `${(1 / crop.width) * 100}%`,
+          height: `${(1 / crop.height) * 100}%`,
+          left: `${(-crop.left / crop.width) * 100}%`,
+          top: `${(-crop.top / crop.height) * 100}%`,
+        }}
+        onError={onError}
+      />
+    </div>
+  );
+}
 
 interface ImageCarouselProps {
   product: any;
@@ -20,6 +74,9 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
   const [selectedUrl, setSelectedUrl] = useState<string | null>(images[0]?.url ?? null);
   const [failed, setFailed] = useState(false);
   const [showZoom, setShowZoom] = useState(false);
+  const [edgeCrop, setEdgeCrop] = useState<EdgeCrop | null>(null);
+  const [cropReady, setCropReady] = useState(false);
+  const [measuredUrl, setMeasuredUrl] = useState<string | null>(null);
   const hideImage = (id: string) => {
     setHiddenIds((prev) => {
       if (prev.has(id)) return prev;
@@ -38,6 +95,49 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
 
   useEffect(() => {
     setFailed(false);
+  }, [selectedUrl]);
+
+  useEffect(() => {
+    if (!selectedUrl) {
+      setEdgeCrop(null);
+      setCropReady(false);
+      setMeasuredUrl(null);
+      return;
+    }
+    const cached = edgeCropCache.get(selectedUrl);
+    if (cached !== undefined) {
+      setEdgeCrop(cached);
+      setMeasuredUrl(selectedUrl);
+      setCropReady(true);
+      return;
+    }
+    let cancelled = false;
+    let done = false;
+    setCropReady(false);
+    const probe = new window.Image();
+    const finish = () => {
+      if (cancelled || done) return;
+      done = true;
+      const crop = measureNearWhiteEdgeCrop(probe);
+      edgeCropCache.set(selectedUrl, crop);
+      setEdgeCrop(crop);
+      setMeasuredUrl(selectedUrl);
+      setCropReady(true);
+    };
+    probe.onload = finish;
+    probe.onerror = () => {
+      if (cancelled || done) return;
+      done = true;
+      edgeCropCache.set(selectedUrl, null);
+      setEdgeCrop(null);
+      setMeasuredUrl(selectedUrl);
+      setCropReady(true);
+    };
+    probe.src = selectedUrl;
+    if (probe.complete && probe.naturalWidth) finish();
+    return () => {
+      cancelled = true;
+    };
   }, [selectedUrl]);
 
   useEffect(() => {
@@ -75,6 +175,8 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
   }
 
   const selected = visibleImages.find((img) => img.url === selectedUrl) || visibleImages[0];
+  const cropMatches = cropReady && measuredUrl === selectedUrl;
+  const activeCrop = cropMatches ? edgeCrop : null;
 
   const thumbs = visibleImages.length > 1 ? (
     <div
@@ -138,7 +240,28 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
           }
           aria-label={`Zoom ${selected.alt}`}
         >
-          {compact ? (
+          {!cropMatches ? (
+            <div className={compact ? 'w-full h-full bg-gray-50' : 'w-full aspect-square bg-gray-50'} />
+          ) : activeCrop ? (
+            compact ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <FramedPhoto
+                  src={selectedUrl}
+                  alt={selected.alt}
+                  crop={activeCrop}
+                  layout="square"
+                  onError={() => setFailed(true)}
+                />
+              </div>
+            ) : (
+              <FramedPhoto
+                src={selectedUrl}
+                alt={selected.alt}
+                crop={activeCrop}
+                onError={() => setFailed(true)}
+              />
+            )
+          ) : compact ? (
             <Image
               src={selectedUrl}
               alt={selected.alt}
@@ -210,14 +333,23 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ product, compact = false 
           <div className="relative w-full max-w-4xl max-h-full" onClick={(event) => event.stopPropagation()}>
             <div className="bg-white w-full overflow-hidden rounded-lg shadow-2xl">
               <div className="relative w-full flex items-center justify-center max-h-[min(80dvh,calc(100dvh-6rem))]">
-                <Image
-                  src={selectedUrl}
-                  alt={`${product?.attributes?.name || 'Product'} product view - zoomed`}
-                  width={1600}
-                  height={1600}
-                  unoptimized={shouldSkipImageOptimize(selectedUrl)}
-                  className="object-contain max-w-full max-h-[min(80dvh,calc(100dvh-6rem))] w-auto h-auto"
-                />
+                {activeCrop ? (
+                  <FramedPhoto
+                    src={selectedUrl}
+                    alt={`${product?.attributes?.name || 'Product'} product view - zoomed`}
+                    crop={activeCrop}
+                    layout="zoom"
+                  />
+                ) : (
+                  <Image
+                    src={selectedUrl}
+                    alt={`${product?.attributes?.name || 'Product'} product view - zoomed`}
+                    width={1600}
+                    height={1600}
+                    unoptimized={shouldSkipImageOptimize(selectedUrl)}
+                    className="object-contain max-w-full max-h-[min(80dvh,calc(100dvh-6rem))] w-auto h-auto"
+                  />
+                )}
               </div>
             </div>
           </div>

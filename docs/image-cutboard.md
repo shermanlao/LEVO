@@ -41,7 +41,7 @@ On API start, a series whose series photo is empty and whose card photo (`featur
 | Surface | Field | Frame |
 |---------|-------|-------|
 | Homepage featured series and `/products/[type]` cards | `featured_image` | 16:9 |
-| `/products/[type]/[series]` gallery, family datasheet hero, option-list thumbs, `/admin/product-series` list | `featured_image_page` | The file’s own ratio |
+| `/products/[type]/[series]` gallery, family datasheet hero, option-list thumbs, `/admin/product-series` list | `featured_image_page` | The file’s own ratio. The series-page gallery trims large pure-white edges before layout |
 
 ## Other upload locations
 

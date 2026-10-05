@@ -385,7 +385,7 @@ export default function SeriesConfigurator({
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-8 items-start">
         {liveGallery || gallery ? (
-          <div className="w-full lg:w-[min(100%,22rem)] xl:w-[26rem] shrink-0 min-w-0">
+          <div className="w-full max-w-[300px] lg:w-[16.5rem] lg:max-w-none xl:w-[18.75rem] shrink-0 min-w-0">
             {liveGallery || gallery}
           </div>
         ) : null}
