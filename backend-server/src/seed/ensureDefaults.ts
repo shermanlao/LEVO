@@ -363,7 +363,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.series_photo',
     title: 'Series photo',
-    body: 'Upload the photo used on the series page and on datasheets. Drop a photo onto the placeholder, paste from the clipboard, or choose a file. The file keeps its own shape. Adjust crop lets you cut each edge on its own.',
+    body: 'Upload the photo used on the series page and on datasheets. Drop a photo onto the placeholder, paste from the clipboard, or choose a file. The file keeps its own shape. Click the photo to edit it with AI. Adjust crop lets you cut each edge on its own.',
   },
   {
     helpKey: 'admin.product_series.series_photo_adjust',
@@ -383,7 +383,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.featured_catalog',
     title: 'Card photo',
-    body: 'The 16:9 card is built with Extend to 16:9 from the series photo. Homepage featured series and category cards use that file.',
+    body: 'The 16:9 card is built with Extend to 16:9 from the series photo. Homepage featured series and category cards use that file. Click the photo to edit it with AI.',
   },
   {
     helpKey: 'admin.product_series.featured_page',
@@ -413,7 +413,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.photo_enhance',
     title: 'Edit with AI',
-    body: 'Open a chat to enhance this photo. Describe the change (lighter background, less glare, sharper fixture) and Send. Upscale raises resolution without changing the product. Apply saves the preview into this slot. Reset or Close keeps the current file.',
+    body: 'Click the series photo or the card photo to open this chat. Describe the change (lighter background, less glare, sharper fixture) and Send. Upscale raises resolution without changing the product. Apply saves the preview into this slot. Reset or Close keeps the current file.',
   },
   {
     helpKey: 'admin.product_series.photo_enhance_send',

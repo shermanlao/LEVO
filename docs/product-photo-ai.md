@@ -22,11 +22,11 @@ On the same series page, **Generate missing** / **Generate all** (and upload of 
 
 ## Card photo
 
-On Add / Edit series, **Extend to 16:9** builds `featured_image` from the series photo (`featured_image_page`). The two placeholders share one height. The browser keeps that height and adds blank canvas only on the left and right, then `POST /api/admin/ai/edit-product-photo` with `outpaint` fills that side background. The original series photo is pasted back at the same height, so the top and bottom cannot change. Each side strip is recolored to the photo’s own edge so the ceiling matches. Homepage featured series and category cards use that 16:9 file. The series page and datasheets keep the series photo at its own ratio.
+On Add / Edit series, **Extend to 16:9** builds `featured_image` from the series photo (`featured_image_page`). The two placeholders share one height. The browser keeps that height and adds blank canvas only on the left and right, then `POST /api/admin/ai/edit-product-photo` with `outpaint` fills that side background. The original series photo is pasted back at the same height, so the top and bottom cannot change. Each side strip is recolored to the photo’s own edge so the ceiling matches. Homepage featured series, category cards, and the `/admin/product-series` list use that 16:9 file. The series page and datasheets keep the series photo at its own ratio.
 
 ## Edit with AI
 
-Per-location **Edit with AI** is no longer on the featured crops or size photos. Size drawings still use **Generate by AI** and its refine chat. Size Main A / Main B can still **Match catalog style** on that slot.
+On Add / Edit series, click the **Series photo** or the **Card photo** to open **Edit photo with AI** (the same chat as a LIGHTX product photo). Describe the change and Send, or Upscale. Apply uploads the preview into that slot and, on an existing series, saves it immediately. Reset or Close keeps the current file. Empty placeholders still drop, paste, or choose a file. Size drawings still use **Generate by AI** and its refine chat. Size Main A / Main B can still **Match catalog style** on that slot. Other admin thumbs still enlarge on click.
 
 ## Catalog photo style
 

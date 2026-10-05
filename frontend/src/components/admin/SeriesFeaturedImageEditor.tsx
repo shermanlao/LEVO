@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
+import ProductPhotoAiEditDialog from '@/components/ai/ProductPhotoAiEditDialog';
 import Button from '@/components/ui/Button';
 import EdgeCropBoard from '@/components/ui/EdgeCropBoard';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
@@ -85,6 +86,11 @@ export default function SeriesFeaturedImageEditor({
   const [seriesRatio, setSeriesRatio] = useState<number | null>(null);
   const [frameHeight, setFrameHeight] = useState<number | null>(null);
   const [crop, setCrop] = useState<{ src: string; fileName: string } | null>(null);
+  const [aiEdit, setAiEdit] = useState<{
+    field: 'featured_image' | 'featured_image_page';
+    src: string;
+    photoType: string;
+  } | null>(null);
 
   const seriesPath = toPublicImagePath(paths.featured_image_page);
   const cardPath = toPublicImagePath(paths.featured_image);
@@ -229,7 +235,7 @@ export default function SeriesFeaturedImageEditor({
         <div className="border rounded p-3">
           <p className="text-sm font-medium text-gray-800">Series photo</p>
           <p className="text-xs text-gray-500 mb-2">
-            Shown on the series page and on datasheets. Keeps this file’s own shape.
+            Shown on the series page and on datasheets. Keeps this file’s own shape. Click the photo to edit it with AI.
           </p>
           <ImageFileIntake
             enabled={!busy}
@@ -253,6 +259,19 @@ export default function SeriesFeaturedImageEditor({
                 alt="Series photo"
                 frameClassName={frameHeight ? 'h-full' : 'min-h-48'}
                 className="h-full border border-gray-200"
+                helpKey="admin.product_series.photo_enhance"
+                onImageClick={
+                  seriesPath
+                    ? () => {
+                        if (busy) return;
+                        setAiEdit({
+                          field: 'featured_image_page',
+                          src: seriesPath,
+                          photoType: 'series_photo',
+                        });
+                      }
+                    : undefined
+                }
               />
             </div>
           </ImageFileIntake>
@@ -294,7 +313,7 @@ export default function SeriesFeaturedImageEditor({
         <div className="border rounded p-3">
           <p className="text-sm font-medium text-gray-800">Card photo</p>
           <p className="text-xs text-gray-500 mb-2">
-            16:9 image on the homepage and on category cards such as Downlights.
+            16:9 image on the homepage and on category cards such as Downlights. Click the photo to edit it with AI.
           </p>
           <div ref={cardFrameRef} className="mb-2">
             <AdminPhotoSlot
@@ -303,6 +322,19 @@ export default function SeriesFeaturedImageEditor({
               frameClassName={IMAGE_FRAMES.catalog.className}
               emptyLabel="16:9 card. Extend the series photo left and right to fill this frame."
               className="border border-gray-200"
+              helpKey="admin.product_series.photo_enhance"
+              onImageClick={
+                cardPath
+                  ? () => {
+                      if (busy) return;
+                      setAiEdit({
+                        field: 'featured_image',
+                        src: cardPath,
+                        photoType: 'card_photo',
+                      });
+                    }
+                  : undefined
+              }
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -330,6 +362,18 @@ export default function SeriesFeaturedImageEditor({
           {extendNote ? <p className="mt-2 text-xs text-gray-600">{extendNote}</p> : null}
         </div>
       </div>
+
+      {aiEdit ? (
+        <ProductPhotoAiEditDialog
+          open
+          imageUrl={aiEdit.src}
+          photoType={aiEdit.photoType}
+          onClose={() => setAiEdit(null)}
+          onApply={async (file) => {
+            await persist(file, aiEdit.field);
+          }}
+        />
+      ) : null}
 
       {crop ? (
         <EdgeCropBoard

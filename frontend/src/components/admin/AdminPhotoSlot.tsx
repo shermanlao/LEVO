@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import HelpButton from '@/components/admin/HelpButton';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
 
@@ -15,6 +16,10 @@ type AdminPhotoSlotProps = {
   /** Width / height of the file. When set, the box matches the photo instead of a fixed frame. */
   aspectRatio?: number;
   emptyLabel?: string;
+  /** When set, a filled photo opens this action instead of the enlarge lightbox. */
+  onImageClick?: () => void;
+  /** Tip for the clickable photo. Required with `onImageClick`. */
+  helpKey?: string;
 };
 
 function HoverEnlarge({ src }: { src: string }) {
@@ -26,7 +31,7 @@ function HoverEnlarge({ src }: { src: string }) {
   );
 }
 
-/** Admin photo cell: hover shows a larger preview; click opens the lightbox. Empty slots show drop / paste / choose. */
+/** Admin photo cell: hover shows a larger preview; click opens the lightbox. Pass `onImageClick` to open another dialog instead. Empty slots show drop / paste / choose. */
 export default function AdminPhotoSlot({
   src,
   alt = '',
@@ -35,6 +40,8 @@ export default function AdminPhotoSlot({
   frameClassName = 'aspect-square',
   aspectRatio,
   emptyLabel = IMAGE_INTAKE_HINT,
+  onImageClick,
+  helpKey,
 }: AdminPhotoSlotProps) {
   const fitted = typeof aspectRatio === 'number' && aspectRatio > 0;
   const [hover, setHover] = useState(false);
@@ -52,23 +59,43 @@ export default function AdminPhotoSlot({
     >
       <div className="absolute inset-0 overflow-hidden rounded bg-gray-50">
         {src ? (
-          <ImageLightbox
-            src={src}
-            alt={alt}
-            preserveAspectRatio
-            unoptimized
-            onOpenChange={(open) => {
-              setEnlarged(open);
-              if (open) setHover(false);
-            }}
-          />
+          onImageClick && helpKey ? (
+            <HelpButton
+              helpKey={helpKey}
+              aria-label={`Edit ${alt} with AI`}
+              className="group relative h-full w-full cursor-pointer border-0 bg-transparent p-0"
+              onClick={(event) => {
+                event.stopPropagation();
+                setHover(false);
+                onImageClick();
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt={alt}
+                className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+              />
+            </HelpButton>
+          ) : (
+            <ImageLightbox
+              src={src}
+              alt={alt}
+              preserveAspectRatio
+              unoptimized
+              onOpenChange={(open) => {
+                setEnlarged(open);
+                if (open) setHover(false);
+              }}
+            />
+          )
         ) : (
           <div className="h-full flex items-center justify-center text-xs text-gray-400 text-center px-2">
             {emptyLabel}
           </div>
         )}
       </div>
-      {src && hover && !enlarged ? <HoverEnlarge src={src} /> : null}
+      {src && hover && !enlarged && !onImageClick ? <HoverEnlarge src={src} /> : null}
     </div>
   );
 }
