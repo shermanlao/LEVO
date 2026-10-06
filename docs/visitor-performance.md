@@ -6,13 +6,15 @@ Public catalog HTML, JSON, and product photos are cached so repeat visitors do n
 
 | Surface | Policy |
 | --- | --- |
-| Catalog / projects / contact HTML | `export const revalidate = 120` on public pages and the root layout |
+| Catalog / projects / contact HTML | `export const revalidate = 120` on public pages and the root layout. The root layout must not call `cookies()` or set `dynamic = 'force-dynamic'` — that disables this cache for every page |
 | Server `fetch` to Express | `{ next: { revalidate: 120, tags } }` in [`sqlite-api.ts`](../frontend/src/lib/sqlite-api.ts) |
-| Public Next GET proxy (`/api/products`, types, series, projects) | Same 120s tags; `Cache-Control: public, s-maxage=120, stale-while-revalidate=600` |
+| Public Next GET proxy (`/api/products`, types, series, projects) | Same 120s tags; `Cache-Control: public, max-age=120, s-maxage=120, stale-while-revalidate=600` |
 | Product / AI image routes | `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` plus `ETag` from mtime+size |
-| Admin `/api/admin/backend/*` | `cache: 'no-store'`. After a successful POST/PUT/PATCH/DELETE, [`revalidateAfterAdminWrite`](../frontend/src/lib/catalog-revalidate.ts) runs |
+| Admin `/api/admin/backend/*` and `/admin` pages | `cache: 'no-store'` / `dynamic = 'force-dynamic'` on the admin layout. After a successful POST/PUT/PATCH/DELETE, [`revalidateAfterAdminWrite`](../frontend/src/lib/catalog-revalidate.ts) runs |
 
 Tags: `catalog` (products, types, series, uploads), `projects`, `contact`.
+
+The under-construction gate does not read the staff cookie on the server. [`PublicCatalogGate`](../frontend/src/components/layout/PublicCatalogGate.tsx) receives `constructionOn` from the cached contact payload and asks `/api/admin/me` in the browser (same request the header already makes). Signed-out visitors stay on UNDER CONSTRUCTION. Signed-in staff see the catalog after that check. `/admin` stays dynamic so staff screens are not stored in the public page cache.
 
 Do not add `_nocache` query params on public catalog reads. Admin image preview may still append `?t=` via `resolveProductDisplaySrc`.
 

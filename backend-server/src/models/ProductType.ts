@@ -26,6 +26,10 @@ ProductType.init({
     type: DataTypes.STRING,
     allowNull: true,
   },
+  featured_image_source: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   datasheet_labels: {
     type: DataTypes.TEXT,
     allowNull: true,

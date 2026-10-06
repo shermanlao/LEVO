@@ -1,20 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
 import { API_CONFIG } from '@/lib/api-config';
-import { resolveImageUrl, storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
+import { resolveImageUrl, toPublicImagePath } from '@/lib/image-utils';
 import { asStrapiList } from '@/lib/strapi-entity';
 import { slugify } from '@/lib/slugify';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
-import HelpButton from '@/components/admin/HelpButton';
-import ImageFileIntake from '@/components/ui/ImageFileIntake';
-import { useImageCutboard } from '@/components/ui/ImageCutboard';
-import { IMAGE_FRAMES, assignFileToInput, validateImageFile } from '@/lib/image-frames';
-import { IMAGE_INTAKE_HINT } from '@/lib/image-file-intake';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
+import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
+import { IMAGE_FRAMES } from '@/lib/image-frames';
+import TypeFeaturedImageEditor, {
+  type TypeFeaturedPaths,
+} from '@/components/admin/TypeFeaturedImageEditor';
 
 interface ProductType {
   id: number;
@@ -24,17 +25,18 @@ interface ProductType {
     slug: string;
     seo_title?: string;
     seo_description?: string;
-    featured_image?: {
-      data: {
-        id: number;
-        attributes: {
-          url: string;
-        }
-      }
-    };
+    featured_image?: unknown;
+    featured_image_source?: unknown;
     createdAt: string;
     updatedAt: string;
   };
+}
+
+function applyFeaturedPaths(target: Record<string, unknown>, paths: Partial<TypeFeaturedPaths>) {
+  (Object.keys(paths) as Array<keyof TypeFeaturedPaths>).forEach((key) => {
+    if (paths[key] === undefined) return;
+    target[key] = paths[key] || null;
+  });
 }
 
 export default function ProductTypesAdminPage() {
@@ -42,18 +44,8 @@ export default function ProductTypesAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [editingType, setEditingType] = useState<ProductType | null>(null);
-  
-  // File input refs
-  const featuredImageRef = useRef<HTMLInputElement>(null);
-  const editFeaturedImageRef = useRef<HTMLInputElement>(null);
-  const { requestCrop, cutboard } = useImageCutboard();
+  const [createFeaturedPaths, setCreateFeaturedPaths] = useState<Partial<TypeFeaturedPaths>>({});
 
-  // Image preview states
-  const [featuredImagePreview, setFeaturedImagePreview] = useState<string | null>(null);
-  const [editFeaturedImagePreview, setEditFeaturedImagePreview] = useState<string | null>(null);
-  
-  // New product type form state
   const [newType, setNewType] = useState({
     name: '',
     description: '',
@@ -61,58 +53,14 @@ export default function ProductTypesAdminPage() {
     seo_title: '',
     seo_description: '',
   });
-  
-  // Get API URLs from configuration
+
   const { apiUrl } = API_CONFIG.getApiUrls();
-  
-  // Helper function to safely extract image URL from various data structures
+
   const extractImageUrl = (type: ProductType): string | null => {
     const src = toPublicImagePath(type?.attributes?.featured_image);
     return src || null;
   };
-  
-  const uploadTypeImage = async (file: File) => {
-    const formData = new FormData();
-    formData.append('files', file);
-    const response = await fetch(`${apiUrl}/upload`, {
-      method: 'POST',
-      body: formData,
-    });
-    if (!response.ok) throw new Error('Failed to upload category image');
-    const data = await response.json();
-    const fileInfo = data.files?.[0] || data[0];
-    return storedProductImagePath(fileInfo) || '';
-  };
 
-  const takeTypeImage = async (file: File, mode: 'create' | 'edit') => {
-    const invalid = validateImageFile(file);
-    if (invalid) {
-      setError(invalid);
-      return;
-    }
-    const cropped = await requestCrop(file, IMAGE_FRAMES.catalog);
-    if (!cropped) return;
-    if (mode === 'create') {
-      assignFileToInput(featuredImageRef.current, cropped);
-      setFeaturedImagePreview(URL.createObjectURL(cropped));
-      return;
-    }
-    assignFileToInput(editFeaturedImageRef.current, cropped);
-    setEditFeaturedImagePreview(URL.createObjectURL(cropped));
-  };
-
-  const handleFeaturedImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (file) await takeTypeImage(file, 'create');
-  };
-  
-  const handleEditFeaturedImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (file) await takeTypeImage(file, 'edit');
-  };
-  
   const fetchProductTypes = async () => {
     setLoading(true);
     setError(null);
@@ -135,30 +83,25 @@ export default function ProductTypesAdminPage() {
   useEffect(() => {
     fetchProductTypes();
   }, []);
-  
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const payload: Record<string, unknown> = { ...newType };
-      const createFile = featuredImageRef.current?.files?.[0];
-      if (createFile) {
-        const featuredImage = await uploadTypeImage(createFile);
-        if (featuredImage) payload.featured_image = featuredImage;
-      }
+      applyFeaturedPaths(payload, createFeaturedPaths);
 
       const response = await fetch(`${apiUrl}/product-types`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create product type');
       }
-      
-      // Reset form and refresh product types
+
       setNewType({
         name: '',
         description: '',
@@ -166,61 +109,14 @@ export default function ProductTypesAdminPage() {
         seo_title: '',
         seo_description: '',
       });
-      setFeaturedImagePreview(null);
+      setCreateFeaturedPaths({});
       setIsCreating(false);
+      showSaveNotice('Product type created.');
       fetchProductTypes();
-      
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while creating the product type');
-    }
-  };
-  
-  const handleUpdateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!editingType) return;
-    
-    try {
-      console.log(`Attempting to update product type ID: ${editingType.id}`);
-      
-      const typeData: Record<string, unknown> = {
-        name: editingType.attributes.name,
-        description: editingType.attributes.description,
-        slug: editingType.attributes.slug,
-        seo_title: editingType.attributes.seo_title || '',
-        seo_description: editingType.attributes.seo_description || '',
-      };
-
-      const editFile = editFeaturedImageRef.current?.files?.[0];
-      if (editFile) {
-        const featuredImage = await uploadTypeImage(editFile);
-        if (featuredImage) typeData.featured_image = featuredImage;
-      }
-
-      const apiResponse = await fetch(`${apiUrl}/product-types/${editingType.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(typeData),
-      });
-
-      if (!apiResponse.ok) {
-        throw new Error(`Failed to update product type: ${apiResponse.statusText}`);
-      }
-      
-      // Refresh the product types list
-      fetchProductTypes();
-      
-      // Clear editing state
-      setEditingType(null);
-    } catch (error: unknown) {
-      console.error('Error updating product type:', error);
-      // Safely extract error message based on error type
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Unknown error occurred';
-      setError(`Failed to update product type: ${errorMessage}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred while creating the product type';
+      setError(message);
+      showSaveNotice(message, 'error');
     }
   };
 
@@ -237,47 +133,40 @@ export default function ProductTypesAdminPage() {
         throw new Error(errorData.error || 'Failed to delete product type');
       }
       fetchProductTypes();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Product type delete error:', err);
-      setError(err.message || 'An error occurred while deleting the product type');
+      setError(err instanceof Error ? err.message : 'An error occurred while deleting the product type');
     }
   };
-  
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, isNewForm: boolean) => {
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    const slug = slugify(name);
-    
-    if (isNewForm) {
-      setNewType({
-        ...newType,
-        name,
-        slug
-      });
-    } else if (editingType) {
-      setEditingType({
-        ...editingType,
-        attributes: {
-          ...editingType.attributes,
-          name,
-          slug
-        }
-      });
-    }
+    setNewType({
+      ...newType,
+      name,
+      slug: slugify(name),
+    });
   };
-  
+
   return (
     <div>
       <AdminPageHeader
         title="Product Types Management"
         actions={
-          <Button helpKey="admin.product_types.add" onClick={() => setIsCreating(!isCreating)}>
+          <Button
+            helpKey="admin.product_types.add"
+            onClick={() => {
+              if (isCreating) setCreateFeaturedPaths({});
+              setIsCreating(!isCreating);
+            }}
+          >
             {isCreating ? 'Cancel' : 'Add New Type'}
           </Button>
         }
       />
-      
+
       {error && <AlertBanner>{error}</AlertBanner>}
-      
+
       {isCreating && (
         <div className="bg-white shadow-md rounded p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Create New Product Type</h2>
@@ -288,18 +177,18 @@ export default function ProductTypesAdminPage() {
                 <input
                   type="text"
                   value={newType.name}
-                  onChange={(e) => handleNameChange(e, true)}
+                  onChange={handleNameChange}
                   className="input-field"
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-gray-700 mb-2">Slug *</label>
                 <input
                   type="text"
                   value={newType.slug}
-                  onChange={(e) => setNewType({...newType, slug: e.target.value})}
+                  onChange={(e) => setNewType({ ...newType, slug: e.target.value })}
                   className="input-field"
                   required
                 />
@@ -307,55 +196,22 @@ export default function ProductTypesAdminPage() {
                   Auto-generated from name, but you can customize it
                 </p>
               </div>
-              
+
               <div className="md:col-span-2">
-                <label className="block text-gray-700 mb-2">Featured Image</label>
-                <input
-                  type="file"
-                  ref={featuredImageRef}
-                  onChange={handleFeaturedImageChange}
-                  accept="image/*"
-                  className="hidden"
+                <TypeFeaturedImageEditor
+                  paths={createFeaturedPaths}
+                  typeSlug={newType.slug}
+                  onChange={(next) => setCreateFeaturedPaths((prev) => ({ ...prev, ...next }))}
+                  onError={setError}
                 />
-                <HelpButton
-                  helpKey="admin.product_types.featured_image"
-                  type="button"
-                  className="btn-secondary text-center py-2 px-3 text-sm font-medium"
-                  onClick={() => featuredImageRef.current?.click()}
-                >
-                  {featuredImagePreview ? 'Replace image' : 'Upload image'}
-                </HelpButton>
-                <p className="text-xs text-gray-500 mt-1">16:9 crop, same as the public category card.</p>
-                <AdminHoverPreview src={featuredImagePreview} className="mt-2 w-full max-w-xs">
-                  <ImageFileIntake
-                    clickToPick={!featuredImagePreview}
-                    helpKey="admin.product_types.featured_image"
-                    onFile={(file) => void takeTypeImage(file, 'create')}
-                  >
-                    <div className={`relative w-full border border-gray-300 overflow-hidden bg-gray-50 ${IMAGE_FRAMES.catalog.className}`}>
-                      {featuredImagePreview ? (
-                        <Image 
-                          src={featuredImagePreview}
-                          alt="Featured image preview"
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <span className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
-                          {IMAGE_INTAKE_HINT}
-                        </span>
-                      )}
-                    </div>
-                  </ImageFileIntake>
-                </AdminHoverPreview>
               </div>
             </div>
-            
+
             <div className="mb-6">
               <label className="block text-gray-700 mb-2">Description</label>
               <textarea
                 value={newType.description}
-                onChange={(e) => setNewType({...newType, description: e.target.value})}
+                onChange={(e) => setNewType({ ...newType, description: e.target.value })}
                 className="w-full border border-gray-300 rounded px-3 py-2 h-32"
               ></textarea>
             </div>
@@ -391,7 +247,7 @@ export default function ProductTypesAdminPage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end">
               <Button helpKey="admin.product_types.create" type="submit">
                 Create Product Type
@@ -400,164 +256,7 @@ export default function ProductTypesAdminPage() {
           </form>
         </div>
       )}
-      
-      {editingType && (
-        <div className="bg-white shadow-md rounded p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Edit Product Type</h2>
-          <form onSubmit={handleUpdateSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-gray-700 mb-2">Name *</label>
-                <input
-                  type="text"
-                  value={editingType.attributes.name}
-                  onChange={(e) => handleNameChange(e, false)}
-                  className="input-field"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2">Slug *</label>
-                <input
-                  type="text"
-                  value={editingType.attributes.slug}
-                  onChange={(e) => setEditingType({
-                    ...editingType,
-                    attributes: {
-                      ...editingType.attributes,
-                      slug: e.target.value
-                    }
-                  })}
-                  className="input-field"
-                  required
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Auto-generated from name, but you can customize it
-                </p>
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-gray-700 mb-2">Featured Image</label>
-                <input
-                  type="file"
-                  ref={editFeaturedImageRef}
-                  onChange={handleEditFeaturedImageChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <HelpButton
-                  helpKey="admin.product_types.featured_image"
-                  type="button"
-                  className="btn-secondary text-center py-2 px-3 text-sm font-medium"
-                  onClick={() => editFeaturedImageRef.current?.click()}
-                >
-                  {editFeaturedImagePreview || extractImageUrl(editingType)
-                    ? 'Replace image'
-                    : 'Upload image'}
-                </HelpButton>
-                <p className="text-xs text-gray-500 mt-1">16:9 crop, same as the public category card.</p>
-                <AdminHoverPreview
-                  src={
-                    editFeaturedImagePreview ||
-                    (extractImageUrl(editingType) ? resolveImageUrl(extractImageUrl(editingType)) : null)
-                  }
-                  className="mt-2 w-full max-w-xs"
-                >
-                  <ImageFileIntake
-                    clickToPick={!editFeaturedImagePreview && !extractImageUrl(editingType)}
-                    helpKey="admin.product_types.featured_image"
-                    onFile={(file) => void takeTypeImage(file, 'edit')}
-                  >
-                    <div className={`relative w-full border border-gray-300 overflow-hidden bg-gray-50 ${IMAGE_FRAMES.catalog.className}`}>
-                      {editFeaturedImagePreview || extractImageUrl(editingType) ? (
-                        <Image 
-                          src={editFeaturedImagePreview || resolveImageUrl(extractImageUrl(editingType))}
-                          alt="Featured image"
-                          fill
-                          className="object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/images/placeholder.jpg';
-                          }}
-                        />
-                      ) : (
-                        <span className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
-                          {IMAGE_INTAKE_HINT}
-                        </span>
-                      )}
-                    </div>
-                  </ImageFileIntake>
-                </AdminHoverPreview>
-              </div>
-            </div>
-            
-            <div className="mb-6">
-              <label className="block text-gray-700 mb-2">Description</label>
-              <textarea
-                value={editingType.attributes.description}
-                onChange={(e) => setEditingType({
-                  ...editingType,
-                  attributes: {
-                    ...editingType.attributes,
-                    description: e.target.value
-                  }
-                })}
-                className="w-full border border-gray-300 rounded px-3 py-2 h-32"
-              ></textarea>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-gray-700 mb-2">
-                  SEO title{' '}
-                  <HelpButton helpKey="admin.product_types.seo_title" type="button" className="text-xs text-gray-500">
-                    ?
-                  </HelpButton>
-                </label>
-                <input
-                  type="text"
-                  value={editingType.attributes.seo_title || ''}
-                  onChange={(e) =>
-                    setEditingType({
-                      ...editingType,
-                      attributes: { ...editingType.attributes, seo_title: e.target.value },
-                    })
-                  }
-                  className="input-field"
-                  data-help-key="admin.product_types.seo_title"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 mb-2">
-                  SEO description{' '}
-                  <HelpButton helpKey="admin.product_types.seo_description" type="button" className="text-xs text-gray-500">
-                    ?
-                  </HelpButton>
-                </label>
-                <textarea
-                  value={editingType.attributes.seo_description || ''}
-                  onChange={(e) =>
-                    setEditingType({
-                      ...editingType,
-                      attributes: { ...editingType.attributes, seo_description: e.target.value },
-                    })
-                  }
-                  className="w-full border border-gray-300 rounded px-3 py-2 h-24"
-                  data-help-key="admin.product_types.seo_description"
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <Button helpKey="admin.product_types.update" type="submit">
-                Update Product Type
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
-      
-      {/* Product Types Table */}
       <div className="bg-white shadow-md rounded overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -592,7 +291,7 @@ export default function ProductTypesAdminPage() {
                     <AdminHoverPreview src={extractImageUrl(type) ? resolveImageUrl(extractImageUrl(type)) : null} className="w-20">
                     <div className={`relative w-20 overflow-hidden ${IMAGE_FRAMES.catalog.className}`}>
                       {extractImageUrl(type) ? (
-                        <Image 
+                        <Image
                           src={resolveImageUrl(extractImageUrl(type))}
                           alt={type.attributes?.name || 'Product type'}
                           fill
@@ -619,12 +318,13 @@ export default function ProductTypesAdminPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => setEditingType(type)}
+                    <HelpLink
+                      helpKey="admin.product_types.edit"
+                      href={`/admin/product-types/${type.id}/edit`}
                       className="text-indigo-600 hover:text-indigo-900 mr-4"
                     >
                       Edit
-                    </button>
+                    </HelpLink>
                     <button
                       onClick={() => handleDeleteType(type.id)}
                       className="text-red-600 hover:text-red-900"
@@ -638,7 +338,6 @@ export default function ProductTypesAdminPage() {
           </tbody>
         </table>
       </div>
-      {cutboard}
     </div>
   );
-} 
+}

@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AdminTable from '@/components/ui/AdminTable';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { SelectField, TextInput } from '@/components/ui/FormField';
@@ -127,9 +128,12 @@ export default function AdminUsersPage() {
       setNewUser(EMPTY_FORM);
       setCreating(false);
       setSuccess('User created.');
+      showSaveNotice('User created.');
       await loadUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create user');
+      const message = err instanceof Error ? err.message : 'Could not create user';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -184,9 +188,12 @@ export default function AdminUsersPage() {
       setEditingId(null);
       setEditUser(EMPTY_FORM);
       setSuccess('User saved.');
+      showSaveNotice('User saved.');
       await loadUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save user');
+      const message = err instanceof Error ? err.message : 'Could not save user';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setSaving(false);
     }

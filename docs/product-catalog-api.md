@@ -10,7 +10,7 @@ Public series lookup uses `GET /api/product-series/by-slug/:slug` (not `/api/pro
 
 | Method | Path | Notes |
 |--------|------|--------|
-| `GET` | `/api/product-types` | All types (Strapi-like). List rows include `attributes.series_count` so `/products` can hide types with no series |
+| `GET` | `/api/product-types` | All types (Strapi-like). List rows include `attributes.series_count` so `/products` can hide types with no series. `featured_image` is the 16:9 `/products` card; `featured_image_source` is the original type photo used to build that card |
 | `GET` | `/api/product-series` | Series list with nested `product_type` and `options` (no products, no appearance photos). Optional `q`, `featured=1`, `type` / `type_slug`, `product_type_id` |
 | `GET` | `/api/product-series/featured` | Featured series for the homepage |
 | `GET` | `/api/product-series/by-slug/:slug` | By series slug, including `attributes.products.data` (size packs) |
@@ -23,7 +23,7 @@ Product endpoints:
 
 | Method | Path | Notes |
 |--------|------|--------|
-| `GET` | `/api/products` | List payload (`serializeProductListItem`). Optional `q`, `series` (or `filters[series][slug]`), and `filters[product_type][slug]`. Cached `public, s-maxage=120, stale-while-revalidate=600` |
+| `GET` | `/api/products` | List payload (`serializeProductListItem`). Optional `q`, `series` (or `filters[series][slug]`), and `filters[product_type][slug]`. Cached `public, max-age=120, s-maxage=120, stale-while-revalidate=600` |
 | `GET` | `/api/products/featured` | Legacy; homepage now uses featured series |
 | `GET` | `/api/products/by-slug/:slug` | By product slug |
 | `GET` | `/api/products/by-path/:type/:series/:slug` | Looks up by **slug** (type/series in the URL are for the public path; mismatch still returns the product so the page can redirect) |

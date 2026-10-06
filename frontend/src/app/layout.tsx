@@ -1,21 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { cookies } from "next/headers";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import BackToTop from "@/components/layout/BackToTop";
+import SaveNotice from "@/components/ui/SaveNotice";
 import VisitorBeacon from "@/components/layout/VisitorBeacon";
 import PublicCatalogGate from "@/components/layout/PublicCatalogGate";
 import JsonLd from "@/components/layout/JsonLd";
 import { getSiteContact, type SiteContact } from "@/lib/sqlite-api";
-import { ADMIN_SESSION_COOKIE, verifySessionValue } from "@/lib/admin-session";
 import { siteOrigin } from "@/lib/seo";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo-jsonld";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export const viewport: Viewport = {
   viewportFit: 'cover',
@@ -78,10 +77,7 @@ export default async function RootLayout({
     console.error('RootLayout - Failed to load contact details:', error);
   }
 
-  const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
-  const staffSession = await verifySessionValue(token);
   const constructionOn = contact ? contact.public_under_construction !== false : true;
-  const hidePublicCatalog = constructionOn && !staffSession;
 
   const company = contact?.company_name?.trim() || 'LEVO Lighting';
   const sameAs = [
@@ -118,12 +114,13 @@ export default async function RootLayout({
           companyShortName={contact?.company_short_name}
         />
         <main className="container mx-auto py-4 px-4">
-          <PublicCatalogGate hidePublicCatalog={hidePublicCatalog}>
+          <PublicCatalogGate constructionOn={constructionOn}>
             {children}
           </PublicCatalogGate>
         </main>
         <Footer contact={contact} />
         <BackToTop />
+        <SaveNotice />
         <VisitorBeacon />
       </body>
     </html>

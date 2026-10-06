@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import AiImageWorkbenchDialog from './AiImageWorkbenchDialog';
 import type { ImageFrame } from '@/lib/image-frames';
 import { dataUrlToFile, imageUrlToDataUrl, padImageToAspect } from '@/lib/sizeDrawingCropClient';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 
 type Props = {
   open: boolean;
@@ -185,9 +186,12 @@ export default function ProductPhotoAiEditDialog({
               setApplying(true);
               try {
                 await onApply(dataUrlToFile(preview, `${photoType}.png`));
+                showSaveNotice('Photo saved.');
                 onClose();
               } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to apply');
+                const message = err instanceof Error ? err.message : 'Failed to apply';
+                setError(message);
+                showSaveNotice(message, 'error');
               } finally {
                 setApplying(false);
               }

@@ -25,6 +25,7 @@ import AiTokenUsageLog from './AiTokenUsageLog';
 import VisitorEvent from './VisitorEvent';
 import ProductCodeSequence from './ProductCodeSequence';
 import { pruneOldVisitorEvents } from '../controllers/dashboardController';
+import { unifyExistingSeriesCards } from '../lib/unifySeriesCardGrey';
 
 // Project has many paragraphs
 Project.hasMany(ProjectParagraph, { foreignKey: 'project_id', as: 'paragraphs', onDelete: 'CASCADE' });
@@ -71,6 +72,7 @@ async function syncDatabase() {
     await backfillLightxProductCodes();
     await ensurePhotometricBeamLibrary();
     await backfillMissingProductLdtFiles();
+    await unifyExistingSeriesCards();
     await pruneOldVisitorEvents();
     console.log('All models were synchronized successfully.');
   } catch (error) {

@@ -12,6 +12,7 @@ import NotFoundView from '@/components/layout/NotFoundView';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
 import { PROJECT_CATEGORY_ORDER } from '@/lib/project-categories';
 
@@ -182,16 +183,19 @@ export default function EditProjectPage() {
       setProject(editedProject);
       setIsEditing(false);
       setSaveStatus({ message: 'Project updated successfully!', type: 'success' });
+      showSaveNotice('Project updated successfully!');
       
       setTimeout(() => {
         setSaveStatus(null);
       }, 3000);
     } catch (err) {
       console.error('Error updating project:', err);
+      const message = err instanceof Error ? err.message : 'Failed to update project. Please try again.';
       setSaveStatus({
-        message: err instanceof Error ? err.message : 'Failed to update project. Please try again.',
+        message,
         type: 'error',
       });
+      showSaveNotice(message, 'error');
     }
   };
 

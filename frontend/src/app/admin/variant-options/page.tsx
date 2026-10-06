@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import { adminFetchJson } from '@/lib/admin-fetch';
 import DatasheetLabelManager from '@/components/admin/DatasheetLabelManager';
@@ -110,9 +111,11 @@ export default function VariantOptionsAdminPage() {
     setSaving(false);
     if (!result.ok) {
       setError(result.error);
+      showSaveNotice(result.error, 'error');
       return;
     }
     setSuccess('Variant options saved.');
+    showSaveNotice('Variant options saved.');
     await load();
   }
 

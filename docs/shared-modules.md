@@ -20,6 +20,7 @@ LEVO keeps duplicated logic in one place instead of copying it across the Next.j
 | `production-secrets.ts` | Local default names, production fail-fast, `INTERNAL_API_HEADER` |
 | `safe-href.ts` | `safeHttpUrl` / `safePublicHref` for stored links |
 | `image-magic.ts` | JPEG/PNG/GIF/WebP magic-byte check |
+| `catalog-card-grey.ts` | Shared 16:9 card ceiling grey `#D6D6D4` and `unifyCatalogCardGrey` (side strips plus ceiling pixels; trim / lamps / fixture holes stay) |
 | `admin-roles.ts` | `system` / `admin` / `operation`, page keys, default matrix, path → page mapping, `roleCanOpenPage`, `pagesForAiApi` (catalog generate vs AI settings), and `matrixWithNewDefaultPages` |
 | `admin-session-cookie.ts` | HMAC cookie create/verify (`username.role.exp.epoch.sig`), `safeAdminNextPath`, `adminLoginHref`, and `cookieIsSecure` (`Secure` only for HTTPS `SITE_ORIGIN`) |
 | `admin-backend-path.ts` | Admin BFF path allowlist; public catalog GET/HEAD vs 405 |
@@ -35,7 +36,7 @@ Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend w
 - `use-admin-me.ts` — shared `/api/admin/me` fetch (username, role, pages) for the header and admin page gate. Distinguishes `unauthorized` (send to login) from `unreachable` (API down).
 - `site-contact-display.ts` — omit blank email / phone / address / hours / website on the public footer and Contact Us page. Construction mode is `PublicCatalogGate` in the root layout (public pages only; `/admin` stays open).
 - `image-utils.ts` — the only image URL builder (`toPublicImagePath`, `shouldSkipImageOptimize`, `productImageUrl`, `resolveSeriesImageUrl`, `uniqueSeriesPhotoUrls`, plus `seriesFeaturedCatalogUrl` / `seriesFeaturedPageUrl` / `seriesFeaturedDatasheetUrl`)
-- `image-frames.ts` — placeholder aspect ratios, `SERIES_FEATURED_SLOTS`, and `validateImageFile` / `assignFileToInput` for the upload crop board
+- `image-frames.ts` — placeholder aspect ratios, `SERIES_FEATURED_SLOTS`, and `validateImageFile` / `assignFileToInput` for the upload crop board. Series and type featured photos use `FeaturedCardImageEditor` (own-ratio source + 16:9 extend) instead of the crop board.
 - `image-file-intake.ts` — `IMAGE_INTAKE_HINT`, `isImageFile`, and extractors for drag / clipboard / file-picker photos used by `ImageFileIntake`
 - `image-cutboard.ts` — canvas crop of a zoomed/panned image into a framed File (zoom 1 = contain)
 - `strapi-entity.ts` — `{ id, attributes }` unwrap + `catalogSeriesHref` / `catalogProductHref`
@@ -52,6 +53,7 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `strapiSerialize.ts` — media envelope + type envelope + `parseSpecs`
 - `productMedia.extractStoredImageUrl` — image values on type/series/product writes
 - `photometric/persistProductLdt.ts` — stamp and store a product `.ldt` on create/update (`ldt_file`)
+- `unifySeriesCardGrey.ts` — rewrite saved 16:9 `featured_image` files to the shared ceiling grey on API start (`unifyExistingSeriesCards`). Skips files whose corners already match. Series-page photos are not touched.
 - `photometric/writeProductLdtFile.ts` — write/resolve/delete `/uploads/product-ldt/{series}/{id}.ldt`
 - `seriesConfig.ts` — load/replace/merge `series_options`, batch `loadSeriesOptionsForIds` for list pages, resolve a series + query into a spec (options + size-pack photos), upsert size packs (optional `pack_id` keeps photos on that product when the label changes; `main_image_A` / `main_image_B` / `size_image` on a size option write those columns on Save variants), upsert matching rows into `variant_option_catalog`
 - `variantCatalog.ts` — load/replace/upsert/backfill global option labels and SKU codes

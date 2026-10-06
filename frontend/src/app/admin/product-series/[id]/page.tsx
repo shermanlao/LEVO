@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import HelpButton from '@/components/admin/HelpButton';
 import OptionTag from '@/components/ui/OptionTag';
@@ -346,9 +347,11 @@ export default function SeriesVariantEditorPage() {
     setSaving(false);
     if (!result.ok) {
       setError(result.error);
+      showSaveNotice(result.error, 'error');
       return;
     }
     setSuccess('Variants saved.');
+    showSaveNotice('Variants saved.');
     await load();
   }
 

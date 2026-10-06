@@ -8,6 +8,7 @@ import { adminFetchJson } from '@/lib/admin-fetch';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import NotFoundView from '@/components/layout/NotFoundView';
 import SeriesFeaturedImageEditor, {
   seriesFeaturedPathsFromAttrs,
@@ -114,6 +115,7 @@ export default function EditProductSeriesPage() {
     if (!name.trim() || !slug.trim()) {
       setError('Name and slug are required fields');
       setSuccess(null);
+      showSaveNotice('Name and slug are required fields', 'error');
       return;
     }
     setSaving(true);
@@ -135,9 +137,11 @@ export default function EditProductSeriesPage() {
     setSaving(false);
     if (!result.ok) {
       setError(result.error);
+      showSaveNotice(result.error, 'error');
       return;
     }
     setSuccess('Series updated.');
+    showSaveNotice('Series updated.');
   }
 
   if (!Number.isInteger(id) || id <= 0 || missing) {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
 import { PROJECT_CATEGORY_ORDER } from '@/lib/project-categories';
 
@@ -115,9 +116,10 @@ export default function ProjectsAdminPage() {
         }),
       });
       if (!res.ok) {
-        setError(
-          'Creating projects via this form is not supported by the API, or the request was rejected. Add projects through the database or extend POST /api/projects on the server.'
-        );
+        const message =
+          'Creating projects via this form is not supported by the API, or the request was rejected. Add projects through the database or extend POST /api/projects on the server.';
+        setError(message);
+        showSaveNotice(message, 'error');
         return;
       }
       const json = await res.json().catch(() => ({}));
@@ -138,6 +140,7 @@ export default function ProjectsAdminPage() {
         },
       ]);
       setIsCreating(false);
+      showSaveNotice('Project created.');
       setNewProject({
         title: '',
         subtitle: '',
@@ -150,7 +153,9 @@ export default function ProjectsAdminPage() {
       });
     } catch (err) {
       console.error('Error creating project:', err);
-      setError('Failed to create project. Please try again.');
+      const message = 'Failed to create project. Please try again.';
+      setError(message);
+      showSaveNotice(message, 'error');
     }
   };
 

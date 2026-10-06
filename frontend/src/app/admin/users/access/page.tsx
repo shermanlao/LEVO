@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AdminTable from '@/components/ui/AdminTable';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import {
   ADMIN_PAGES,
@@ -92,8 +93,11 @@ export default function AdminPageAccessPage() {
       setMatrix(next);
       setSaved(next);
       setSuccess('Page access saved.');
+      showSaveNotice('Page access saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save page access');
+      const message = err instanceof Error ? err.message : 'Could not save page access';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -113,8 +117,11 @@ export default function AdminPageAccessPage() {
       setMatrix(next);
       setSaved(next);
       setSuccess('Page access reset to defaults.');
+      showSaveNotice('Page access reset to defaults.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not reset page access');
+      const message = err instanceof Error ? err.message : 'Could not reset page access';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setSaving(false);
     }

@@ -5,6 +5,7 @@ import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
 import AiImageWorkbenchDialog from './AiImageWorkbenchDialog';
 import { dataUrlToFile } from '@/lib/sizeDrawingCropClient';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 
 type Props = {
   open: boolean;
@@ -128,9 +129,12 @@ export default function SizeDrawingAiDialog({
               setApplying(true);
               try {
                 await onApply(dataUrlToFile(preview, 'size-drawing.png'));
+                showSaveNotice('Size drawing saved.');
                 onClose();
               } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to apply');
+                const message = err instanceof Error ? err.message : 'Failed to apply';
+                setError(message);
+                showSaveNotice(message, 'error');
               } finally {
                 setApplying(false);
               }

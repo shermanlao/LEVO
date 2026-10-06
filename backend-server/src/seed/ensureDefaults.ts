@@ -373,7 +373,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.card_extend',
     title: 'Extend to 16:9',
-    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9.',
+    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. The side strips and the ceiling use one shared catalogue grey (#D6D6D4) so every card matches.',
   },
   {
     helpKey: 'admin.product_series.featured_image',
@@ -438,7 +438,27 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_types.featured_image',
     title: 'Category photo',
-    body: 'Upload the category card image used on /products. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. The crop board uses the same 16:9 frame as the public category cards.',
+    body: 'Upload the original type photo, then Extend to 16:9 for the /products card. Drop a photo onto the placeholder, paste from the clipboard, or choose a file. Click a filled photo to edit it with AI.',
+  },
+  {
+    helpKey: 'admin.product_types.type_photo',
+    title: 'Type photo',
+    body: 'Upload the original category photo. Drop a photo onto the placeholder, paste from the clipboard, or choose a file. The file keeps its own shape. Click the photo to edit it with AI. Adjust crop lets you cut each edge on its own.',
+  },
+  {
+    helpKey: 'admin.product_types.type_photo_adjust',
+    title: 'Adjust type photo',
+    body: 'Drag one edge at a time to cut that side of the type photo. The other three edges stay put. Apply crop saves the new shape.',
+  },
+  {
+    helpKey: 'admin.product_types.card_extend',
+    title: 'Extend to 16:9',
+    body: 'Build the /products category-card photo from the type photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. The side strips and the ceiling use one shared catalogue grey (#D6D6D4) so every card matches.',
+  },
+  {
+    helpKey: 'admin.product_types.featured_delete',
+    title: 'Delete this photo',
+    body: 'Remove the saved photo for this slot. On an existing type the clear is saved immediately. Public /products uses the 16:9 card; if that card is empty the category shows a placeholder.',
   },
   {
     helpKey: 'admin.image_cutboard.apply',
@@ -959,6 +979,21 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.product_types.update',
     title: 'Update product type',
     body: 'Save changes to this category.',
+  },
+  {
+    helpKey: 'admin.product_types.edit',
+    title: 'Edit product type',
+    body: 'Open this category on its own edit page.',
+  },
+  {
+    helpKey: 'admin.product_types.cancel_edit',
+    title: 'Cancel',
+    body: 'Return to the product type list without saving.',
+  },
+  {
+    helpKey: 'admin.product_types.back_list',
+    title: 'Back to product types',
+    body: 'Return to the product type list.',
   },
   {
     helpKey: 'admin.product_types.datasheet_labels',
@@ -1785,6 +1820,19 @@ export async function ensureProductTypeColumns(): Promise<void> {
       type: DataTypes.TEXT,
       allowNull: true,
     });
+  }
+  if (!table.featured_image_source) {
+    await qi.addColumn('product_types', 'featured_image_source', {
+      type: DataTypes.STRING,
+      allowNull: true,
+    });
+  }
+  const types = await ProductType.findAll();
+  for (const row of types) {
+    const source = String(row.get('featured_image_source') || '').trim();
+    const card = String(row.get('featured_image') || '').trim();
+    if (source || !card) continue;
+    await row.update({ featured_image_source: card });
   }
 }
 

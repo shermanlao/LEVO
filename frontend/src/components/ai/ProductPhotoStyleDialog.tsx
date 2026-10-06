@@ -7,6 +7,7 @@ import AiImageWorkbenchDialog from './AiImageWorkbenchDialog';
 import { IMAGE_FRAMES, type ImageFrame } from '@/lib/image-frames';
 import { outpaintToFrame } from '@/lib/photo-outpaint';
 import { dataUrlToFile, imageUrlToJpegDataUrl } from '@/lib/sizeDrawingCropClient';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 
 export type StyleApplyTarget = {
   id: string;
@@ -138,13 +139,15 @@ export default function ProductPhotoStyleDialog({
       const styleFile = dataUrlToFile(preview, 'style-photo.jpg');
       const slotFile = dataUrlToFile(extended.dataUrl, `${target.id}.jpg`);
       await onApplyTarget(target.id, slotFile, styleFile);
-      setStatus(
-        extended.extended
-          ? `Saved to ${target.label}. The background was extended to ${target.frame.label} without stretching the fixture.`
-          : `Saved to ${target.label}. The photo already matched ${target.frame.label}.`
-      );
+      const message = extended.extended
+        ? `Saved to ${target.label}. The background was extended to ${target.frame.label} without stretching the fixture.`
+        : `Saved to ${target.label}. The photo already matched ${target.frame.label}.`;
+      setStatus(message);
+      showSaveNotice(message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to apply');
+      const message = err instanceof Error ? err.message : 'Failed to apply';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setApplyingTarget(null);
     }
@@ -200,9 +203,12 @@ export default function ProductPhotoStyleDialog({
                 await onApply(
                   dataUrlToFile(preview, `${photoType}${preview.startsWith('data:image/jpeg') ? '.jpg' : '.png'}`)
                 );
+                showSaveNotice('Style photo saved.');
                 onClose();
               } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to apply');
+                const message = err instanceof Error ? err.message : 'Failed to apply';
+                setError(message);
+                showSaveNotice(message, 'error');
               } finally {
                 setApplying(false);
               }

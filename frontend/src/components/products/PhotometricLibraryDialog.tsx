@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import HelpButton from '@/components/admin/HelpButton';
 import { saveProductLdtOptions } from '@/lib/ldt-options';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 
 type LdtOptions = {
   family: 'circular' | 'linear';
@@ -124,9 +125,12 @@ export default function PhotometricLibraryDialog({ productId, open, onClose, onS
     try {
       const { photometricImage } = await saveProductLdtOptions(productId, family, beamDegrees);
       onSaved(photometricImage);
+      showSaveNotice('Photometric image saved.');
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save photometric image');
+      const message = err instanceof Error ? err.message : 'Failed to save photometric image';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setConfirming(false);
     }

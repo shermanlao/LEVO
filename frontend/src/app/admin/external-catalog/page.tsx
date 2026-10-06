@@ -6,6 +6,7 @@ import AdminLogoutButton from '@/components/admin/AdminLogoutButton';
 import HelpButton from '@/components/admin/HelpButton';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import { adminFetchJson } from '@/lib/admin-fetch';
 
@@ -76,8 +77,11 @@ export default function ExternalCatalogSettingsPage() {
       setSettings(result.data.data);
       setApiPassword('');
       setMessage('Partner API settings saved.');
+      showSaveNotice('Partner API settings saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save settings');
+      const message = err instanceof Error ? err.message : 'Failed to save settings';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setSaving(false);
     }

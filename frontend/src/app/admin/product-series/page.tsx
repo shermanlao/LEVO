@@ -8,12 +8,13 @@ import { slugify } from '@/lib/slugify';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
 import SeriesFeaturedImageEditor, {
   type SeriesFeaturedPaths,
 } from '@/components/admin/SeriesFeaturedImageEditor';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
-import { seriesPhotoUrl } from '@/lib/image-utils';
+import { seriesFeaturedCatalogUrl } from '@/lib/image-utils';
 import SpecificationsEditor, {
   SpecPair,
   specPairsToRecord,
@@ -130,6 +131,7 @@ export default function ProductSeriesAdminPage() {
       // Basic validation
       if (!newSeries.name || !newSeries.slug) {
         setError('Name and slug are required fields');
+        showSaveNotice('Name and slug are required fields', 'error');
         return;
       }
       
@@ -165,6 +167,8 @@ export default function ProductSeriesAdminPage() {
         const errorMessage = errorData.error || 'Failed to create product series';
         throw new Error(errorMessage);
       }
+
+      showSaveNotice('Series created.');
       
       // Reset form and refresh product series
       setNewSeries({
@@ -181,7 +185,9 @@ export default function ProductSeriesAdminPage() {
       
     } catch (err: any) {
       console.error('Error creating product series:', err);
-      setError(err.message || 'An error occurred while creating the product series');
+      const message = err.message || 'An error occurred while creating the product series';
+      setError(message);
+      showSaveNotice(message, 'error');
     }
   };
   
@@ -423,7 +429,7 @@ export default function ProductSeriesAdminPage() {
             ) : (
               series.map((item) => {
                 const attrs = item?.attributes;
-                const imageUrl = seriesPhotoUrl(attrs);
+                const imageUrl = seriesFeaturedCatalogUrl(attrs);
                 return (
                 <tr
                   key={item.id}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
 import { FileDownloadIcon } from './ProductFileIcons';
 import { saveProductLdtOptions } from '@/lib/ldt-options';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import { getLdtUrl } from '@/lib/sqlite-api';
 
 type LdtOptions = {
@@ -159,8 +160,11 @@ export default function ProductLdtDownload({
           : prev
       );
       onOptionsSaved?.(photometricImage);
+      showSaveNotice('Polar options saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save polar options');
+      const message = err instanceof Error ? err.message : 'Failed to save polar options';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setSaving(false);
     }

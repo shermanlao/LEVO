@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import SiteAssetUploader from '@/components/admin/SiteAssetUploader';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { SelectField, TextareaField, TextInput } from '@/components/ui/FormField';
@@ -126,8 +127,11 @@ export default function AdminSiteSettingsPage() {
       if (!res.ok) throw new Error(json.error || 'Failed to save site settings');
       apply(json.data as SiteContact);
       setMessage('Site settings saved.');
+      showSaveNotice('Site settings saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save site settings');
+      const message = err instanceof Error ? err.message : 'Failed to save site settings';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setSaving(false);
     }

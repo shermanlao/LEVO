@@ -5,6 +5,7 @@ import HelpButton from '@/components/admin/HelpButton';
 import StyleReferenceUploader from '@/components/ai/StyleReferenceUploader';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AlertBanner from '@/components/ui/AlertBanner';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import type { AiFeatureRouting, AiSettings, AiUsage } from '@/lib/ai-settings-types';
 
@@ -109,8 +110,11 @@ export default function AiSettingsPage() {
       setProductPhotoStylePrompt(data.data.product_photo_style_prompt || '');
       setKeys({});
       setMessage('AI settings saved.');
+      showSaveNotice('AI settings saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      const message = err instanceof Error ? err.message : 'Failed to save';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setSaving(false);
     }

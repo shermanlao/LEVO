@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
+import { showSaveNotice } from '@/components/ui/SaveNotice';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
 import { storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
@@ -182,8 +183,11 @@ export default function AppearancePhotos({
     try {
       const file = dataUrlToFile(dataUrl, `appearance-${key.replace(/\|/g, '-')}.png`);
       await savePhoto(combo, file, true);
+      showSaveNotice('Appearance photo saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      const message = err instanceof Error ? err.message : 'Save failed';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       setBusyKey(null);
     }
@@ -205,8 +209,11 @@ export default function AppearancePhotos({
         const file = dataUrlToFile(dataUrl, `appearance-${key.replace(/\|/g, '-')}.png`);
         await savePhoto(combo, file, true);
       }
+      showSaveNotice('Appearance photos saved.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      const message = err instanceof Error ? err.message : 'Save failed';
+      setError(message);
+      showSaveNotice(message, 'error');
     } finally {
       queueRef.current = false;
       setBusyKey(null);

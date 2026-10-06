@@ -1,6 +1,6 @@
 export const CATALOG_REVALIDATE_SECONDS = 120;
 
-export const PUBLIC_LIST_CACHE = 'public, s-maxage=120, stale-while-revalidate=600';
+export const PUBLIC_LIST_CACHE = 'public, max-age=120, s-maxage=120, stale-while-revalidate=600';
 
 export const PUBLIC_CACHE_CONTROL = PUBLIC_LIST_CACHE;
 

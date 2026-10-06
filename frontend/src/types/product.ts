@@ -21,6 +21,7 @@ export interface ProductType {
     featured_image: {
       data: Media | null;
     };
+    featured_image_source?: unknown;
     series: {
       data: ProductSeries[];
     };

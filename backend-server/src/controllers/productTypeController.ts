@@ -17,6 +17,7 @@ function serializeProductType(
     description: string | null;
     slug: string;
     featured_image: string | null;
+    featured_image_source: string | null;
     datasheet_labels: unknown;
     seo_title: string | null;
     seo_description: string | null;
@@ -28,6 +29,7 @@ function serializeProductType(
       description: p.description ?? '',
       slug: p.slug,
       featured_image: strapiMedia(p.featured_image),
+      featured_image_source: strapiMedia(p.featured_image_source),
       datasheet_labels: parseDatasheetLabels(p.datasheet_labels),
       seo_title: p.seo_title ?? '',
       seo_description: p.seo_description ?? '',
@@ -51,6 +53,9 @@ function typeWritePayload(body: Record<string, unknown>) {
   const payload: Record<string, unknown> = { ...body };
   if (payload.featured_image !== undefined) {
     payload.featured_image = extractStoredImageUrl(payload.featured_image);
+  }
+  if (payload.featured_image_source !== undefined) {
+    payload.featured_image_source = extractStoredImageUrl(payload.featured_image_source);
   }
   if (body.datasheet_labels !== undefined) {
     payload.datasheet_labels = stringifyDatasheetLabels(parseDatasheetLabels(body.datasheet_labels));
