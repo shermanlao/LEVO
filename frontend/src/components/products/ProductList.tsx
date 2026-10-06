@@ -109,9 +109,26 @@ function listColumns(rows: SeriesComboPreview[]): ListColumn[] {
     .map(toColumn);
 }
 
+const COMPACT_COL_REM = 6.5;
+const FILES_COL_REM = 6.75;
+const WIDE_COL_MIN_REM = 14;
+/** Short spec columns stay content-tight. SKU and size share the leftover width. */
+const COMPACT_COL = 'w-[6.5rem] whitespace-nowrap';
+const FILES_COL = 'w-[6.75rem]';
+const COMPACT_CELL =
+  '[&>span]:flex [&>span]:max-w-full [&>span]:flex-wrap [&>span>span]:min-w-0 [&>span>span]:break-words';
+
 function columnWidthClass(key: string): string {
-  if (key === SIZE_KIND) return 'w-[11%]';
-  return '';
+  if (key === SIZE_KIND) return '';
+  return COMPACT_COL;
+}
+
+function tableMinWidth(columns: ListColumn[]): string {
+  const hasSize = columns.some((column) => column.key === SIZE_KIND);
+  const compactCount = columns.length - (hasSize ? 1 : 0);
+  const wideCount = 1 + (hasSize ? 1 : 0);
+  const rem = 4 + wideCount * WIDE_COL_MIN_REM + FILES_COL_REM + compactCount * COMPACT_COL_REM;
+  return `${rem}rem`;
 }
 
 function SizeValue({ row }: { row: SeriesComboPreview }) {
@@ -280,13 +297,24 @@ export default function ProductList({
       </ul>
 
       <div className="hidden lg:block table-wrap min-w-0">
-        <table className="w-full table-fixed divide-y divide-gray-200">
+        <table
+          className="w-full table-fixed divide-y divide-gray-200"
+          style={{ minWidth: tableMinWidth(columns) }}
+        >
+          <colgroup>
+            <col className="w-16" />
+            <col />
+            {columns.map((column) => (
+              <col key={column.key} className={columnWidthClass(column.key) || undefined} />
+            ))}
+            <col className={FILES_COL} />
+          </colgroup>
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className={`${TH} w-16`}>
                 <span className="sr-only">Image</span>
               </th>
-              <th scope="col" className={`${TH} w-[11%]`}>
+              <th scope="col" className={TH}>
                 SKU
               </th>
               {columns.map((column) => (
@@ -298,7 +326,7 @@ export default function ProductList({
                   {column.label}
                 </th>
               ))}
-              <th scope="col" className={`${TH} w-[11%]`}>
+              <th scope="col" className={`${TH} ${FILES_COL}`}>
                 Files
               </th>
             </tr>
@@ -337,11 +365,14 @@ export default function ProductList({
                     </HelpButton>
                   </td>
                   {columns.map((column) => (
-                    <td key={column.key} className={`${TD} min-w-0`}>
+                    <td
+                      key={column.key}
+                      className={`${TD} min-w-0 ${column.key === SIZE_KIND ? '' : COMPACT_CELL}`}
+                    >
                       <SpecValue row={row} kind={column.key} />
                     </td>
                   ))}
-                  <td className={TD}>
+                  <td className={`${TD} ${FILES_COL}`}>
                     <ComboFileButtons row={row} seriesSlug={seriesSlug} />
                   </td>
                 </tr>
