@@ -6,6 +6,7 @@ import { editProductPhoto } from '../lib/ai/productPhotoAiEdit';
 import { stylizeProductPhoto } from '../lib/ai/productPhotoStyleAi';
 import { generateDatasheetLabel } from '../lib/ai/datasheetLabelAi';
 import { generateDescriptionPhrase } from '../lib/ai/descriptionPhraseAi';
+import { generateSeo } from '../lib/ai/seoAi';
 
 function respondAiFailure(res: Response, error: unknown) {
   const raw = errorMessage(error);
@@ -138,6 +139,30 @@ export const postEditProductPhoto = async (req: Request, res: Response) => {
       instruction: instruction || '',
       photoType,
       outpaint: axis ? { aspect: String(outpaint?.aspect || ''), axis } : null,
+    });
+    res.json(result);
+  } catch (error) {
+    respondAiFailure(res, error);
+  }
+};
+
+export const postGenerateSeo = async (req: Request, res: Response) => {
+  try {
+    const { kind, name, description, notes, existingTitle, existingDescription } = (req.body || {}) as {
+      kind?: string;
+      name?: string;
+      description?: string;
+      notes?: string;
+      existingTitle?: string;
+      existingDescription?: string;
+    };
+    const result = await generateSeo({
+      kind: kind || '',
+      name,
+      description,
+      notes,
+      existingTitle,
+      existingDescription,
     });
     res.json(result);
   } catch (error) {

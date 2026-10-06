@@ -1,6 +1,6 @@
 # SEO and marketing (public site)
 
-How the public catalog is exposed to search engines and social shares. Staff edit default title, description, Open Graph image, and About copy on `/admin/settings`. Per-category, per-series, and per-project SEO snippets are optional on those admin editors.
+How the public catalog is exposed to search engines and social shares. Staff edit default title, description, Open Graph image, and About copy on `/admin/settings`. Per-category, per-series, and per-project SEO snippets are optional on those admin editors. Each of those SEO blocks has **Generate SEO**, which fills the title and description from the page copy already on the form. Review the text, then save. The button needs a text AI key on `/admin/ai` (same chat failover as description phrases). It does not write the database until you save.
 
 ## Go-live checklist
 
@@ -43,6 +43,17 @@ Dynamic: browsable product types (with at least one series), series at `/product
 - Layout: `Organization` + `WebSite` (social URLs as `sameAs` when set).
 - Series: `Product` + `BreadcrumbList`.
 - Category / products / projects / about / project detail: `BreadcrumbList` where applicable; project detail also emits `CreativeWork`.
+
+## Generate SEO in admin
+
+**Generate SEO** sits under the SEO title and description on:
+
+- `/admin/product-series/[id]` (save with **Save variants**)
+- `/admin/product-types` create form and `/admin/product-types/[id]/edit`
+- `/admin/projects/[id]` while editing
+- `/admin/settings` (site default title and description)
+
+The request is `POST /api/admin/ai/generate-seo`. Catalog, Projects, or Settings page access is enough. Series, category, and project titles stay within 60 characters because the public title template adds the company name. The site default title stays within 70 characters and can include the company name. Descriptions stay within 160 characters.
 
 ## Marketing surfaces tied to SEO
 

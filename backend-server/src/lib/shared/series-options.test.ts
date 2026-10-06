@@ -4,6 +4,7 @@ import {
   MAX_CARTESIAN_COMBO_ROWS,
   cartesianComboRows,
   comboCount,
+  compareOptionValues,
   groupOptionsByKind,
 } from './series-options';
 
@@ -44,5 +45,42 @@ describe('series option cartesian', () => {
     assert.equal(grouped.size[0].cutout_size, 'Ø80mm');
     assert.equal(grouped.size[0].main_image_A, '/uploads/a.jpg');
     assert.equal(grouped.size[0].size_image, '/uploads/d.png');
+  });
+
+  it('lists finish and reflector as white, then black, then other', () => {
+    const finishes = ['Black', 'Silver', 'White', 'Gold', 'Black/White', 'Matt White', 'White/Black'];
+    const grouped = groupOptionsByKind([
+      ...finishes.map((value, sort_order) => ({ kind: 'colour', value, sort_order })),
+      ...finishes.map((value, sort_order) => ({ kind: 'reflector_finish', value, sort_order })),
+      ...['Black/White', 'Black/White/Silver', 'Silver/Black/White', 'White', 'White/Black'].map(
+        (value, sort_order) => ({ kind: 'trim_color', value, sort_order })
+      ),
+    ]);
+    const expected = ['White', 'Matt White', 'White/Black', 'Black', 'Black/White', 'Gold', 'Silver'];
+    assert.deepEqual(grouped.colour.map((option) => option.value), expected);
+    assert.deepEqual(grouped.reflector_finish.map((option) => option.value), expected);
+    assert.deepEqual(grouped.trim_color.map((option) => option.value), [
+      'White',
+      'White/Black',
+      'Black/White',
+      'Black/White/Silver',
+      'Silver/Black/White',
+    ]);
+    assert.ok(compareOptionValues('wattage', '10W', '2W') > 0);
+  });
+
+  it('builds combo rows with white finish before black', () => {
+    const rows = cartesianComboRows(
+      groupOptionsByKind([
+        { kind: 'colour', value: 'Black', sort_order: 0 },
+        { kind: 'colour', value: 'White', sort_order: 1 },
+        { kind: 'cct', value: '3000K', sort_order: 0 },
+        { kind: 'cct', value: '2700K', sort_order: 1 },
+      ])
+    );
+    assert.deepEqual(
+      rows.map((row) => `${row.selection.colour}|${row.selection.cct}`),
+      ['White|2700K', 'White|3000K', 'Black|2700K', 'Black|3000K']
+    );
   });
 });

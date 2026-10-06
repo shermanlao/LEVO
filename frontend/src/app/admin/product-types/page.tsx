@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { showSaveNotice } from '@/components/ui/SaveNotice';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
+import SeoGenerateButton from '@/components/admin/SeoGenerateButton';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
 import TypeFeaturedImageEditor, {
   type TypeFeaturedPaths,
@@ -246,6 +247,18 @@ export default function ProductTypesAdminPage() {
                   data-help-key="admin.product_types.seo_description"
                 />
               </div>
+              <SeoGenerateButton
+                className="md:col-span-2"
+                kind="product_type"
+                helpKey="admin.product_types.seo_ai"
+                name={newType.name}
+                description={newType.description}
+                existingTitle={newType.seo_title}
+                existingDescription={newType.seo_description}
+                onGenerated={({ title, description }) =>
+                  setNewType((prev) => ({ ...prev, seo_title: title, seo_description: description }))
+                }
+              />
             </div>
 
             <div className="flex justify-end">

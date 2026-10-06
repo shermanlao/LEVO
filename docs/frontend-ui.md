@@ -68,7 +68,8 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `SiteNav` | Header links. On `/admin` (not login): Home plus Catalog / Projects / Settings / AI / Users hover menus from `admin-nav.ts`, filtered by the signed-in role’s page access. Public pages keep Products / Projects / Contact Us. `HeaderAuthButton` sits at the end of the row as stroke icons matching Search: a user icon (`catalog.header.login` → `/admin/login`) when signed out; an **Admin** tag (`catalog.header.admin` → `/admin`) plus a logout icon (`admin.logout`) when signed in. Hidden on `/admin/login`. Search, auth icons, and the Admin tag share the same `h-6` / `items-center` / `leading-none` row as the nav text so they stay on one line and do not sit above or below the labels. |
 | `AdminNavSectionBody` | Shared Catalog / Projects / Settings / AI / Users link lists for the dashboard cards and header hover panels |
 | `StatTile` | Dashboard number + label; optional `href` + `helpKey` |
-| `OptionTag` | Catalog option chip on series variants. Outline = available; filled black = selected. Requires `helpKey`. |
+| `OptionTag` | Compact catalog chip. Filled black = selected. Requires `helpKey`. On series variants the filled chips sit under each dropdown and remove that option when clicked. Datasheet extra icons still use them as the picker. |
+| `VariantOptionPicker` | Series variants page (`/admin/product-series/[id]`). One multi-select menu per kind, laid out four across from `xl` and three from `lg`. **Select options** opens the catalog list (`admin.product_series.option_menu`); click a row to add or remove it. Chosen values, including Finish / Trim / Reflector **N/A**, show as chips under the menu. |
 | `SpecificationsEditor` | Series/product key-value specs |
 | Size packs | Series variants page (`SizePackPhotos`); `/admin/products` redirects to series |
 

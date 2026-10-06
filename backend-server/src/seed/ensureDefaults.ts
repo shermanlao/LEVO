@@ -1227,8 +1227,8 @@ export const DEFAULT_HELP_TIPS = [
   },
   {
     helpKey: 'admin.product_series.option_remove',
-    title: 'Remove tag',
-    body: 'Click a selected tag to remove it from this series. Listed products are not deleted.',
+    title: 'Remove option',
+    body: 'Remove this option from the series. Listed products are not deleted. On the variants page, click the selected chip under the menu, or click the option again in the menu.',
   },
   {
     helpKey: 'admin.product_series.save_variants',
@@ -1246,14 +1246,19 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Return to the product series list.',
   },
   {
+    helpKey: 'admin.product_series.option_menu',
+    title: 'Select options',
+    body: 'Open the list for this variant and click one or more catalog options. The menu stays open while you pick. Selected options appear under the menu. Click Save variants to store them.',
+  },
+  {
     helpKey: 'admin.product_series.option_pick',
-    title: 'Add tag',
-    body: 'Click a tag to add this catalog option to the series.',
+    title: 'Add option',
+    body: 'Add this catalog option to the series. On the variants page, open Select options and click the row. You can pick more than one before closing the menu.',
   },
   {
     helpKey: 'admin.product_series.option_new',
     title: 'Add new option',
-    body: 'Create a new option and SKU code on the Variant page, then click its tag on this series.',
+    body: 'Create a new option and SKU code on the Variant page, then choose it from Select options on this series.',
   },
   {
     helpKey: 'admin.product_series.featured',

@@ -32,7 +32,7 @@ Example: Photo A tagged White, Photo B tagged White and `L172.5 x W92 x H76mm`. 
 
 ## N/A
 
-Finish, Trim, and Reflector each have an **N/A** chip on the series page (not a `/admin/variant-options` catalog row).
+Finish, Trim, and Reflector each have **N/A** in the options menu on the series variants page (not a `/admin/variant-options` catalog row). Choosing it shows an N/A chip under that variant.
 
 - Exclusive with real values
 - Stored as series option value `N/A`

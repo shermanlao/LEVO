@@ -14,12 +14,16 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   helpKey: string;
   variant?: keyof typeof VARIANT_CLASS;
   href?: string;
+  target?: string;
+  rel?: string;
 };
 
 export default function Button({
   helpKey,
   variant = 'primary',
   href,
+  target,
+  rel,
   className = '',
   type,
   children,
@@ -28,7 +32,7 @@ export default function Button({
   const classes = `${VARIANT_CLASS[variant] || VARIANT_CLASS.primary} ${className}`.trim();
   if (href) {
     return (
-      <HelpLink helpKey={helpKey} href={href} className={classes}>
+      <HelpLink helpKey={helpKey} href={href} className={classes} target={target} rel={rel}>
         {children}
       </HelpLink>
     );

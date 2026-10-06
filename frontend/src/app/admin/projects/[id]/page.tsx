@@ -14,6 +14,7 @@ import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { showSaveNotice } from '@/components/ui/SaveNotice';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
+import SeoGenerateButton from '@/components/admin/SeoGenerateButton';
 import { PROJECT_CATEGORY_ORDER } from '@/lib/project-categories';
 
 interface Project {
@@ -685,6 +686,26 @@ export default function EditProjectPage() {
               />
               <p className="mt-1 text-sm text-gray-500">Optional. Empty uses the project description.</p>
             </div>
+
+            <SeoGenerateButton
+              className="md:col-span-2"
+              kind="project"
+              helpKey="admin.projects.seo_ai"
+              name={editedProject.title}
+              description={editedProject.description}
+              notes={[
+                editedProject.subtitle ? `Subtitle: ${editedProject.subtitle}` : '',
+                editedProject.location ? `Location: ${editedProject.location}` : '',
+                editedProject.category ? `Category: ${editedProject.category}` : '',
+              ]
+                .filter(Boolean)
+                .join('\n')}
+              existingTitle={editedProject.seo_title}
+              existingDescription={editedProject.seo_description}
+              onGenerated={({ title, description }) =>
+                setEditedProject({ ...editedProject, seo_title: title, seo_description: description })
+              }
+            />
             
             {/* Project Thumbnail Image Uploader */}
             <div className="md:col-span-2">

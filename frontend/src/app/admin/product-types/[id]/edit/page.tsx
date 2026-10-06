@@ -11,6 +11,7 @@ import AlertBanner from '@/components/ui/AlertBanner';
 import { showSaveNotice } from '@/components/ui/SaveNotice';
 import NotFoundView from '@/components/layout/NotFoundView';
 import HelpButton from '@/components/admin/HelpButton';
+import SeoGenerateButton from '@/components/admin/SeoGenerateButton';
 import TypeFeaturedImageEditor, {
   typeFeaturedPathsFromAttrs,
   type TypeFeaturedPaths,
@@ -234,6 +235,19 @@ export default function EditProductTypePage() {
                   data-help-key="admin.product_types.seo_description"
                 />
               </div>
+              <SeoGenerateButton
+                className="md:col-span-2"
+                kind="product_type"
+                helpKey="admin.product_types.seo_ai"
+                name={name}
+                description={description}
+                existingTitle={seoTitle}
+                existingDescription={seoDescription}
+                onGenerated={({ title, description: nextDescription }) => {
+                  setSeoTitle(title);
+                  setSeoDescription(nextDescription);
+                }}
+              />
             </div>
 
             <div className="flex justify-end space-x-3">

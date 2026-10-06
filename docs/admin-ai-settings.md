@@ -8,7 +8,7 @@ SQLite table `ai_provider_settings` (singleton):
 
 - Default provider, base URL, model
 - Per-provider API keys (`xai`, `openai`, `google`, `openrouter`) encrypted with `AI_SETTINGS_ENCRYPTION_KEY` (or `ADMIN_SESSION_SECRET` / a local fallback)
-- Feature routing for `size_drawing_generate`, `product_photo_edit`, `appearance_photo_generate`, `datasheet_label_generate`, and `description_phrase_generate`. Catalog photo style uses the `product_photo_edit` provider (no extra dropdown).
+- Feature routing for `size_drawing_generate`, `product_photo_edit`, `appearance_photo_generate`, `datasheet_label_generate`, `description_phrase_generate`, and `seo_generate`. Catalog photo style uses the `product_photo_edit` provider (no extra dropdown).
 - Organization parsing hints (injected into size-drawing and photo-edit prompts)
 - Size drawing generate and refine prompt templates (`size_drawing_prompt`, `size_drawing_refine_prompt`). Empty stored values fall back to the built-in defaults. Placeholders: `{{size}}`, `{{cuthole_line}}`, `{{description_line}}`, `{{phrase_line}}`, `{{hints_line}}`, `{{instruction}}` (refine only). Generate/refine always prepends a 2D elevation lock so the 3D main photo is not copied as an isometric sketch, and always injects the series Description and filled Phrase template.
 - Optional size-drawing **style reference** photo (`size_drawing_style_image`). Upload on `/admin/ai` stores `/images/ai/size-drawing-style.{png|jpg|webp|gif}`. The placeholder accepts drop, clipboard paste, or a chosen file. Generate by AI sends that image first (style) and the product crop second (outline).
@@ -20,7 +20,7 @@ Env `AI_API_KEY` + `AI_PROVIDER` override the matching provider when set. Option
 
 ## Failover
 
-Feature primary → org default → `xai` → `openai` → `openrouter` → `google` (skip missing keys). **Size drawing, photo edit, and datasheet labels still only execute on xAI Imagine or Google Gemini Image.** Description phrases and the Match catalog style “describe the original photo” step use chat completions and can run on any configured provider.
+Feature primary → org default → `xai` → `openai` → `openrouter` → `google` (skip missing keys). **Size drawing, photo edit, and datasheet labels still only execute on xAI Imagine or Google Gemini Image.** Description phrases, SEO titles, and the Match catalog style “describe the original photo” step use chat completions and can run on any configured provider.
 
 ## Usage
 
@@ -34,7 +34,7 @@ Cost:
 
 Image calls often have no token count (xAI bills per image). Tokens on the page are the sum of provider-reported token fields only.
 
-Generate, refine, stylize, appearance, datasheet-label, and description-phrase routes also accept **Catalog** page access, because those buttons sit on series and variant pages. Keys, prompts, usage, and style-reference uploads stay on this AI page.
+Generate, refine, stylize, appearance, datasheet-label, and description-phrase routes also accept **Catalog** page access, because those buttons sit on series and variant pages. **Generate SEO** (`POST /api/admin/ai/generate-seo`) also accepts Catalog, Projects, or Settings, because those editors have the button. Keys, prompts, usage, and style-reference uploads stay on this AI page.
 
 If Size drawing AI shows **Forbidden**, the signed-in role is missing both Catalog and AI. After a deploy that first added the AI page, restart the API so missing default pages are granted; or open **Page access** and tick AI / Catalog.
 
@@ -49,5 +49,6 @@ If Size drawing AI shows **Forbidden**, the signed-in role is missing both Catal
 - `GET /api/admin/ai/usage?period=30d`
 - `POST /api/admin/ai/generate-datasheet-label` `{ text, instruction?, imageDataUrl? }` — Variant page badge generate/refine
 - `POST /api/admin/ai/generate-description-phrase` `{ guide, seriesName, typeName?, fields?, existing? }` → `{ phrase }` — series variants page phrase template from guide words
+- `POST /api/admin/ai/generate-seo` `{ kind, name?, description?, notes?, existingTitle?, existingDescription? }` → `{ title, description }` — `kind` is `series`, `product_type`, `project`, or `site`. Fills the SEO fields on that admin editor. Page titles stay within 60 characters (the public template adds the company name). The site default title stays within 70 characters and may include the company name. Descriptions stay within 160 characters.
 
 PUT body may include `provider_keys: { xai: "…" }` (plaintext once; never returned), `feature_model_routing`, `size_drawing_prompt`, `size_drawing_refine_prompt`, and `product_photo_style_prompt`. GET returns filled defaults when those prompt columns are empty, plus `size_drawing_prompt_default` / `size_drawing_refine_prompt_default` / `product_photo_style_prompt_default` for Reset.

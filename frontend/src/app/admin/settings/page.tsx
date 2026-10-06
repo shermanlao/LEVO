@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import SiteAssetUploader from '@/components/admin/SiteAssetUploader';
+import SeoGenerateButton from '@/components/admin/SeoGenerateButton';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
@@ -486,6 +487,19 @@ export default function AdminSiteSettingsPage() {
                 label="Default description"
                 value={form.seo_description || ''}
                 onChange={(e) => patch({ seo_description: e.target.value })}
+              />
+              <SeoGenerateButton
+                className="md:col-span-2"
+                kind="site"
+                helpKey="admin.settings.seo_ai"
+                name={form.company_name || ''}
+                description={[form.slogan, form.hero_title, form.hero_subtitle, form.about_title, form.about_body]
+                  .filter(Boolean)
+                  .join('\n')}
+                notes={[form.featured_heading, form.why_heading].filter(Boolean).join('\n')}
+                existingTitle={form.seo_title}
+                existingDescription={form.seo_description}
+                onGenerated={({ title, description }) => patch({ seo_title: title, seo_description: description })}
               />
             </div>
             <div className="mt-6">

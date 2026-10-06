@@ -1,19 +1,20 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import VariantOptionPicker from '@/components/admin/VariantOptionPicker';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import HelpButton from '@/components/admin/HelpButton';
-import OptionTag from '@/components/ui/OptionTag';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
 import { TextInput, SelectField } from '@/components/ui/FormField';
 import PartnerImportPanel from '@/components/admin/PartnerImportPanel';
 import SizePackPhotos from '@/components/admin/SizePackPhotos';
 import AppearancePhotos from '@/components/admin/AppearancePhotos';
 import DescriptionPhraseEditor from '@/components/admin/DescriptionPhraseEditor';
+import SeoGenerateButton from '@/components/admin/SeoGenerateButton';
 import EntityDatasheetLabelEditor from '@/components/admin/EntityDatasheetLabelEditor';
 import { adminFetchJson } from '@/lib/admin-fetch';
 import { toPublicImagePath } from '@/lib/image-utils';
@@ -133,10 +134,6 @@ function flattenDrafts(drafts: Record<string, DraftOption[]>): SeriesOptionDto[]
   return out;
 }
 
-function tagLabel(option: { value: string; code?: string }): string {
-  return option.code ? `${option.value} · ${option.code}` : option.value;
-}
-
 export default function SeriesVariantEditorPage() {
   const params = useParams();
   const id = Number(params?.id);
@@ -152,6 +149,7 @@ export default function SeriesVariantEditorPage() {
   const [seoDescription, setSeoDescription] = useState('');
   const [typeId, setTypeId] = useState<number>(0);
   const [typeName, setTypeName] = useState('');
+  const [typeSlug, setTypeSlug] = useState('');
   const [ldtFamily, setLdtFamily] = useState('');
   const [productCode, setProductCode] = useState('');
   const [isFeatured, setIsFeatured] = useState(false);
@@ -187,9 +185,10 @@ export default function SeriesVariantEditorPage() {
     setSeoDescription(String(attrs.seo_description || ''));
     setTypeId(Number(attrs.product_type_id || (attrs.product_type as { data?: { id?: number } })?.data?.id) || 0);
     const nestedType = attrs.product_type as {
-      data?: { attributes?: { name?: string } };
+      data?: { attributes?: { name?: string; slug?: string } };
     } | undefined;
     setTypeName(String(nestedType?.data?.attributes?.name || ''));
+    setTypeSlug(String(nestedType?.data?.attributes?.slug || ''));
     setDatasheetLabels(parseDatasheetLabels(attrs.datasheet_labels));
     setLdtFamily(String(attrs.ldt_family || ''));
     setProductCode(String(attrs.product_code || ''));
@@ -426,6 +425,17 @@ export default function SeriesVariantEditorPage() {
               label="Show on site"
               disabled={savingVisibility || loading}
             />
+            {typeSlug.trim() && slug.trim() ? (
+              <Button
+                helpKey="admin.product_series.view_product"
+                variant="secondary"
+                href={`/products/${encodeURIComponent(typeSlug.trim())}/${encodeURIComponent(slug.trim())}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View product
+              </Button>
+            ) : null}
             <Button helpKey="admin.product_series.edit" variant="secondary" href={`/admin/product-series/${id}/edit`}>
               Edit
             </Button>
@@ -469,6 +479,22 @@ export default function SeriesVariantEditorPage() {
               onChange={(e) => setSeoDescription(e.target.value)}
               data-help-key="admin.product_series.seo_description"
               hint="Optional search snippet. Empty uses the series description."
+            />
+            <SeoGenerateButton
+              className="md:col-span-2"
+              kind="series"
+              helpKey="admin.product_series.seo_ai"
+              name={name}
+              description={description}
+              notes={[typeName ? `Product type: ${typeName}` : '', descriptionPhrase ? `Phrase: ${descriptionPhrase}` : '']
+                .filter(Boolean)
+                .join('\n')}
+              existingTitle={seoTitle}
+              existingDescription={seoDescription}
+              onGenerated={({ title, description: nextDescription }) => {
+                setSeoTitle(title);
+                setSeoDescription(nextDescription);
+              }}
             />
             <DescriptionPhraseEditor
               value={descriptionPhrase}
@@ -529,39 +555,37 @@ export default function SeriesVariantEditorPage() {
           />
 
           <div className="space-y-8 mb-8">
-            {fields.map((field) => {
+            {fields
+              .filter((field) => field.key === SIZE_KIND)
+              .map((field) => {
               const rows = drafts[field.key] || [];
-              const tags = tagsForKind(field.key);
               return (
-                <Fragment key={field.key}>
+                <div key={field.key} className="space-y-8">
                 <div className="bg-white shadow-md rounded p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">{variantKindLabel(field.key)}</h2>
-                    {field.key === SIZE_KIND ? (
-                      <Button
-                        helpKey="admin.product_series.size_add"
-                        variant="secondary"
-                        onClick={() =>
-                          setDrafts((prev) => ({
-                            ...prev,
-                            [field.key]: [...(prev[field.key] || []), emptyDraft()],
-                          }))
-                        }
-                      >
-                        Add size
-                      </Button>
-                    ) : null}
+                    <Button
+                      helpKey="admin.product_series.size_add"
+                      variant="secondary"
+                      onClick={() =>
+                        setDrafts((prev) => ({
+                          ...prev,
+                          [field.key]: [...(prev[field.key] || []), emptyDraft()],
+                        }))
+                      }
+                    >
+                      Add size
+                    </Button>
                   </div>
-                  {field.key === SIZE_KIND ? (
-                    rows.length === 0 ? (
-                      <p className="text-sm text-gray-500">No sizes yet. Add a label, dimensions, and cutout for this series.</p>
-                    ) : (
-                      <div className="space-y-6">
-                        {rows.map((row, index) => (
-                          <div
-                            key={`${field.key}-${index}`}
-                            className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end border border-gray-100 rounded p-3"
-                          >
+                  {rows.length === 0 ? (
+                    <p className="text-sm text-gray-500">No sizes yet. Add a label, dimensions, and cutout for this series.</p>
+                  ) : (
+                    <div className="space-y-6">
+                      {rows.map((row, index) => (
+                        <div
+                          key={`${field.key}-${index}`}
+                          className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end border border-gray-100 rounded p-3"
+                        >
                             <div className="md:col-span-3">
                               <TextInput
                                 label="Label"
@@ -628,92 +652,57 @@ export default function SeriesVariantEditorPage() {
                           </div>
                         ))}
                       </div>
-                    )
-                  ) : tags.length === 0 && !isAppearanceKind(field.key) ? (
-                    <p className="text-sm text-gray-500">
-                      No options yet.{' '}
-                      <Button
-                        helpKey="admin.dash.link.variant_options"
-                        variant="ghost"
-                        href="/admin/variant-options"
-                        className="text-blue-600 hover:underline"
-                      >
-                        Add them on Variant
-                      </Button>
-                    </p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {isAppearanceKind(field.key) ? (
-                        <OptionTag
-                          helpKey="admin.product_series.appearance_na"
-                          selected={(drafts[field.key] || []).some((row) => isAppearanceNa(row.value))}
-                          onClick={() => toggleAppearanceNa(field.key)}
-                        >
-                          N/A
-                        </OptionTag>
-                      ) : null}
-                      {tags.map((tag) => (
-                        <OptionTag
-                          key={`${field.key}-${tag.value}`}
-                          helpKey={tag.selected ? 'admin.product_series.option_remove' : 'admin.product_series.option_pick'}
-                          selected={tag.selected}
-                          onClick={() => toggleTag(field.key, tag)}
-                        >
-                          {tagLabel(tag)}
-                        </OptionTag>
-                      ))}
-                    </div>
                   )}
-
-                  {isAppearanceKind(field.key) && tags.length === 0 ? (
-                    <p className="text-sm text-gray-500 mt-3">
-                      No catalog values yet.{' '}
-                      <Button
-                        helpKey="admin.dash.link.variant_options"
-                        variant="ghost"
-                        href="/admin/variant-options"
-                        className="text-blue-600 hover:underline"
-                      >
-                        Add them on Variant
-                      </Button>
-                      {' '}or set N/A if this series has no {variantKindLabel(field.key).toLowerCase()}.
-                    </p>
-                  ) : null}
-
-                  {field.key === 'wattage'
-                    ? rows.map((row, index) => (
-                        <div
-                          key={`${field.key}-extra-${index}`}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4"
-                        >
-                          <TextInput
-                            label={`${row.value || 'Wattage'} source lumen`}
-                            value={row.lumen}
-                            onChange={(e) => updateRow(field.key, index, { lumen: e.target.value })}
-                          />
-                          <TextInput
-                            label="System lumen"
-                            value={row.system_lumen}
-                            onChange={(e) => updateRow(field.key, index, { system_lumen: e.target.value })}
-                          />
-                        </div>
-                      ))
-                    : null}
                 </div>
-                {field.key === SIZE_KIND ? (
-                  <AppearancePhotos
-                    seriesId={id}
-                    seriesSlug={slug}
-                    options={flattenDrafts(drafts)}
-                    photos={appearancePhotos}
-                    seriesImageUrl={stylePhotoUrl}
-                    fixtureDescription={fillPhraseTemplate(descriptionPhrase, phraseSpecFromOptionDrafts(drafts))}
-                    onPhotosChange={setAppearancePhotos}
-                  />
-                ) : null}
-                </Fragment>
+                <AppearancePhotos
+                  seriesId={id}
+                  seriesSlug={slug}
+                  options={flattenDrafts(drafts)}
+                  photos={appearancePhotos}
+                  seriesImageUrl={stylePhotoUrl}
+                  fixtureDescription={fillPhraseTemplate(descriptionPhrase, phraseSpecFromOptionDrafts(drafts))}
+                  onPhotosChange={setAppearancePhotos}
+                />
+                </div>
               );
             })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+              {fields
+                .filter((field) => field.key !== SIZE_KIND)
+                .map((field) => {
+                  const rows = drafts[field.key] || [];
+                  const label = variantKindLabel(field.key);
+                  return (
+                    <div key={field.key} className="min-w-0 rounded bg-white p-4 shadow-md">
+                      <h2 className="mb-3 text-base font-semibold">{label}</h2>
+                      <VariantOptionPicker
+                        label={label}
+                        tags={tagsForKind(field.key)}
+                        includeNa={isAppearanceKind(field.key)}
+                        naSelected={(drafts[field.key] || []).some((row) => isAppearanceNa(row.value))}
+                        onToggle={(tag) => toggleTag(field.key, tag)}
+                        onToggleNa={() => toggleAppearanceNa(field.key)}
+                      />
+                      {field.key === 'wattage'
+                        ? rows.map((row, index) => (
+                            <div key={`${field.key}-extra-${index}`} className="mt-3 space-y-3">
+                              <TextInput
+                                label={`${row.value || 'Wattage'} source lumen`}
+                                value={row.lumen}
+                                onChange={(e) => updateRow(field.key, index, { lumen: e.target.value })}
+                              />
+                              <TextInput
+                                label="System lumen"
+                                value={row.system_lumen}
+                                onChange={(e) => updateRow(field.key, index, { system_lumen: e.target.value })}
+                              />
+                            </div>
+                          ))
+                        : null}
+                    </div>
+                  );
+                })}
+            </div>
           </div>
 
           <PartnerImportPanel

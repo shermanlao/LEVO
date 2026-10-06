@@ -175,6 +175,7 @@ export function pagesForAiApi(method: string, suffix: string): AdminPageKey[] {
     .split('/')
     .filter(Boolean)
     .join('/');
+  if (path === 'generate-seo') return ['catalog', 'projects', 'settings', 'ai'];
   if (path === 'settings' && method.toUpperCase() === 'GET') return ['catalog', 'ai'];
   if (AI_CATALOG_API_PATHS.has(path)) return ['catalog', 'ai'];
   return ['ai'];

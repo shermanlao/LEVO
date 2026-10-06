@@ -126,10 +126,41 @@ export function parseOptionNumber(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+const FINISH_SORT_KINDS = new Set(['colour', 'trim_color', 'reflector_finish']);
+
+function finishPartIsWhite(text: string): boolean {
+  return /\bwhite\b|\bwh\b|ral\s*90(?:03|16)/.test(text);
+}
+
+function finishPartIsBlack(text: string): boolean {
+  return /\bblack\b|\bbk\b|ral\s*9005/.test(text);
+}
+
+/**
+ * White, then black, then every other finish.
+ * A slash-separated name follows its first colour (White/Black with white, Black/White with black).
+ * A plain White or Black comes before longer names in the same colour.
+ */
+function finishSortKey(value: string): [number, number] {
+  const text = value.trim().toLowerCase();
+  const lead = text.split(/[/+,|]+/)[0]?.trim() || text;
+  const exact = /^(white|wh|black|bk|ral\s*9016|ral\s*9003|ral\s*9005)$/.test(text);
+  if (finishPartIsWhite(lead) && !finishPartIsBlack(lead)) return [0, exact ? 0 : 1];
+  if (finishPartIsBlack(lead) && !finishPartIsWhite(lead)) return [1, exact ? 0 : 1];
+  return [2, 0];
+}
+
 /** Ascending numeric / natural order for visitor filters and combo rows (10W, 12W, 15W). */
-export function compareOptionValues(_kind: string, left: unknown, right: unknown): number {
+export function compareOptionValues(kind: string, left: unknown, right: unknown): number {
   const a = optionText(left);
   const b = optionText(right);
+  if (FINISH_SORT_KINDS.has(kind)) {
+    const [bucketA, exactA] = finishSortKey(a);
+    const [bucketB, exactB] = finishSortKey(b);
+    if (bucketA !== bucketB) return bucketA - bucketB;
+    if (exactA !== exactB) return exactA - exactB;
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  }
   const na = parseOptionNumber(a);
   const nb = parseOptionNumber(b);
   if (na != null && nb != null && na !== nb) return na - nb;
