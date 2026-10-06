@@ -36,6 +36,14 @@ export async function ensureIndex(sql: string): Promise<void> {
   }
 }
 
+export async function dropIndexIfExists(name: string): Promise<void> {
+  try {
+    await sequelize.query(`DROP INDEX IF EXISTS ${name}`);
+  } catch (error) {
+    console.warn(`Could not drop index: ${name}`, error);
+  }
+}
+
 export const integerId = {
   type: DataTypes.INTEGER,
   allowNull: false,

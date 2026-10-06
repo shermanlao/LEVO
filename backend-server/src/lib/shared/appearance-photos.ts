@@ -1,6 +1,7 @@
 import { APPEARANCE_NA, isAppearanceNa, formatSpecValue } from './product-specs';
 import {
   optionText,
+  SIZE_KIND,
   valuesEqual,
   variantKindLabel,
   type SeriesOptionDto,
@@ -11,10 +12,14 @@ export { APPEARANCE_NA, isAppearanceNa };
 export const APPEARANCE_KINDS = ['colour', 'trim_color', 'reflector_finish'] as const;
 export type AppearanceKind = (typeof APPEARANCE_KINDS)[number];
 
+export const PHOTO_TAG_KINDS = [...APPEARANCE_KINDS, 'size'] as const;
+export type PhotoTagKind = (typeof PHOTO_TAG_KINDS)[number];
+
 export type AppearanceCombo = {
   colour: string;
   trim_color: string;
   reflector_finish: string;
+  size: string;
 };
 
 export type AppearancePhotoDto = AppearanceCombo & {
@@ -35,7 +40,15 @@ export function isAppearanceKind(kind: string): boolean {
   return (APPEARANCE_KINDS as readonly string[]).includes(kind);
 }
 
-function uniqueAxisValues(kind: AppearanceKind, list: SeriesOptionDto[]): string[] {
+export function isPhotoTagKind(kind: string): kind is PhotoTagKind {
+  return (PHOTO_TAG_KINDS as readonly string[]).includes(kind);
+}
+
+function optionKind(kind: PhotoTagKind): string {
+  return kind === 'size' ? SIZE_KIND : kind;
+}
+
+function uniqueAxisValues(kind: string, list: SeriesOptionDto[]): string[] {
   const unique: string[] = [];
   for (const option of list) {
     const value = optionText(option.value);
@@ -48,9 +61,10 @@ function uniqueAxisValues(kind: AppearanceKind, list: SeriesOptionDto[]): string
 
 export function appearanceAxisValues(
   grouped: Record<string, SeriesOptionDto[]>,
-  kind: AppearanceKind
+  kind: PhotoTagKind
 ): string[] {
-  return uniqueAxisValues(kind, grouped[kind] || []);
+  const axis = optionKind(kind);
+  return uniqueAxisValues(axis, grouped[axis] || []);
 }
 
 export function appearanceKindInUse(
@@ -63,7 +77,7 @@ export function appearanceKindInUse(
 export function appearanceComboRows(grouped: Record<string, SeriesOptionDto[]>): AppearanceCombo[] {
   const axes = APPEARANCE_KINDS.filter((kind) => appearanceKindInUse(grouped, kind));
   if (!axes.length) return [];
-  let rows: AppearanceCombo[] = [{ colour: '', trim_color: '', reflector_finish: '' }];
+  let rows: AppearanceCombo[] = [{ colour: '', trim_color: '', reflector_finish: '', size: '' }];
   for (const kind of axes) {
     const values = appearanceAxisValues(grouped, kind);
     const next: AppearanceCombo[] = [];
@@ -77,10 +91,14 @@ export function appearanceComboRows(grouped: Record<string, SeriesOptionDto[]>):
   return rows;
 }
 
-export function normalizeAppearanceCombo(input: Partial<AppearanceCombo> | Record<string, unknown>): AppearanceCombo {
-  const combo: AppearanceCombo = { colour: '', trim_color: '', reflector_finish: '' };
-  for (const kind of APPEARANCE_KINDS) {
-    const value = optionText((input as Record<string, unknown>)[kind]);
+export function normalizeAppearanceCombo(
+  input: Partial<AppearanceCombo> | Record<string, unknown>
+): AppearanceCombo {
+  const rec = input as Record<string, unknown>;
+  const combo: AppearanceCombo = { colour: '', trim_color: '', reflector_finish: '', size: '' };
+  for (const kind of PHOTO_TAG_KINDS) {
+    const raw = kind === 'size' ? rec.size ?? rec.dimensions : rec[kind];
+    const value = optionText(raw);
     combo[kind] = value && !isAppearanceNa(value) ? value : '';
   }
   return combo;
@@ -88,15 +106,29 @@ export function normalizeAppearanceCombo(input: Partial<AppearanceCombo> | Recor
 
 export function appearanceComboKey(combo: AppearanceCombo): string {
   const n = normalizeAppearanceCombo(combo);
-  return `${n.colour}|${n.trim_color}|${n.reflector_finish}`;
+  return `${n.colour}|${n.trim_color}|${n.reflector_finish}|${n.size}`;
 }
 
-function fieldMatches(stored: string, wanted: string, kind: AppearanceKind): boolean {
+export function countPhotoTags(photo: AppearanceCombo | Record<string, unknown>): number {
+  const n = normalizeAppearanceCombo(photo);
+  return PHOTO_TAG_KINDS.reduce((count, kind) => count + (n[kind] ? 1 : 0), 0);
+}
+
+function fieldMatches(stored: string, wanted: string, kind: PhotoTagKind): boolean {
   const a = optionText(stored);
   const b = optionText(wanted);
-  if (!a && !b) return true;
-  if (!a || !b) return false;
-  return valuesEqual(kind, a, b);
+  if (!a) return true;
+  if (!b) return false;
+  return valuesEqual(optionKind(kind), a, b);
+}
+
+export function photoTagsCompatible(
+  photo: AppearanceCombo | Record<string, unknown>,
+  selection: Record<string, unknown>
+): boolean {
+  const stored = normalizeAppearanceCombo(photo);
+  const want = normalizeAppearanceCombo(selection);
+  return PHOTO_TAG_KINDS.every((kind) => fieldMatches(stored[kind], want[kind], kind));
 }
 
 export function findExactAppearancePhoto(
@@ -111,13 +143,25 @@ export function findExactAppearancePhoto(
   );
 }
 
+export function photoTagsOnSeries(
+  photo: AppearanceCombo | Record<string, unknown>,
+  grouped: Record<string, SeriesOptionDto[]>
+): boolean {
+  const tags = normalizeAppearanceCombo(photo);
+  return PHOTO_TAG_KINDS.every((kind) => {
+    const value = tags[kind];
+    if (!value) return true;
+    const values = appearanceAxisValues(grouped, kind);
+    return values.some((item) => valuesEqual(optionKind(kind), item, value));
+  });
+}
+
 export function unusedAppearancePhotos(
   photos: AppearancePhotoDto[] | null | undefined,
-  combos: AppearanceCombo[]
+  grouped: Record<string, SeriesOptionDto[]>
 ): AppearancePhotoDto[] {
-  const keys = new Set(combos.map((combo) => appearanceComboKey(combo)));
   return (photos || []).filter(
-    (photo) => optionText(photo.main_image_A) && !keys.has(appearanceComboKey(photo))
+    (photo) => optionText(photo.main_image_A) && !photoTagsOnSeries(photo, grouped)
   );
 }
 
@@ -125,38 +169,29 @@ export function familyAppearancePhotoRows(
   grouped: Record<string, SeriesOptionDto[]>,
   photos: AppearancePhotoDto[] | null | undefined
 ): Array<{ combo: AppearanceCombo; photo: AppearancePhotoDto }> {
-  return appearanceComboRows(grouped)
-    .map((combo) => {
-      const photo = findExactAppearancePhoto(photos, combo);
-      return photo ? { combo, photo } : null;
-    })
-    .filter((row): row is { combo: AppearanceCombo; photo: AppearancePhotoDto } => Boolean(row));
+  return (photos || [])
+    .filter((photo) => optionText(photo.main_image_A) && photoTagsOnSeries(photo, grouped))
+    .map((photo) => ({ combo: normalizeAppearanceCombo(photo), photo }));
+}
+
+export function rankAppearancePhotos(
+  photos: AppearancePhotoDto[] | null | undefined,
+  selection: Record<string, unknown>
+): AppearancePhotoDto[] {
+  return (photos || [])
+    .filter((photo) => optionText(photo.main_image_A) && photoTagsCompatible(photo, selection))
+    .sort((a, b) => {
+      const tagDiff = countPhotoTags(b) - countPhotoTags(a);
+      if (tagDiff) return tagDiff;
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
+    });
 }
 
 export function findAppearancePhoto(
   photos: AppearancePhotoDto[] | null | undefined,
   selection: Record<string, unknown>
 ): AppearancePhotoDto | null {
-  const list = (photos || []).filter((photo) => optionText(photo.main_image_A));
-  if (!list.length) return null;
-  const want = normalizeAppearanceCombo(selection);
-
-  const matchKeys = (keys: AppearanceKind[]) =>
-    list.find((photo) => keys.every((kind) => fieldMatches(photo[kind], want[kind], kind))) || null;
-
-  const exact = matchKeys([...APPEARANCE_KINDS]);
-  if (exact) return exact;
-  const noReflector = matchKeys(['colour', 'trim_color']);
-  if (noReflector) return noReflector;
-  if (want.colour) {
-    const finishOnly = list.find((photo) => fieldMatches(photo.colour, want.colour, 'colour'));
-    if (finishOnly) return finishOnly;
-  }
-  if (want.trim_color) {
-    const trimOnly = list.find((photo) => fieldMatches(photo.trim_color, want.trim_color, 'trim_color'));
-    if (trimOnly) return trimOnly;
-  }
-  return null;
+  return rankAppearancePhotos(photos, selection)[0] || null;
 }
 
 export function appearanceComboLabel(combo: AppearanceCombo): string {
@@ -167,6 +202,7 @@ export function appearanceComboLabel(combo: AppearanceCombo): string {
   if (n.reflector_finish) {
     parts.push(`${n.reflector_finish} ${variantKindLabel('reflector_finish').toLowerCase()}`);
   }
+  if (n.size) parts.push(n.size);
   return parts.join(' · ') || 'Appearance';
 }
 
@@ -188,7 +224,7 @@ export function appearancePromptInstruction(combo: AppearanceCombo): string {
 
 export function appearancePromptPreview(combo: AppearanceCombo): string {
   const n = normalizeAppearanceCombo(combo);
-  return APPEARANCE_KINDS.map((kind) => {
+  return PHOTO_TAG_KINDS.map((kind) => {
     const value = n[kind];
     if (!value) return null;
     return `${formatSpecValue(value) || value}`;

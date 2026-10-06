@@ -57,6 +57,7 @@ export interface ProductSeries {
     ldt_family?: string | null;
     product_code?: string | null;
     is_featured?: boolean;
+    show_on_site?: boolean;
     option_count?: number;
     datasheet_labels?: unknown;
     createdAt: string;

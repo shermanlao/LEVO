@@ -9,7 +9,7 @@ import ExternalCatalogSource, {
 } from '../models/ExternalCatalogSource';
 import sequelize from '../database';
 import { DataTypes } from 'sequelize';
-import { ensureIndex, ensureTable, integerId } from '../lib/dbSchema';
+import { dropIndexIfExists, ensureIndex, ensureTable, integerId } from '../lib/dbSchema';
 import { hashPassword } from '../lib/adminPassword';
 import {
   fallbackStaffEmail,
@@ -373,7 +373,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.card_extend',
     title: 'Extend to 16:9',
-    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. The side strips and the ceiling use one shared catalogue grey (#D6D6D4) so every card matches.',
+    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. Side strips keep plaster grain and take the catalogue grey colour (#D6D6D4). The original ceiling is not flattened — details stay, grey tone is a light match only.',
   },
   {
     helpKey: 'admin.product_series.featured_image',
@@ -453,7 +453,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_types.card_extend',
     title: 'Extend to 16:9',
-    body: 'Build the /products category-card photo from the type photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. The side strips and the ceiling use one shared catalogue grey (#D6D6D4) so every card matches.',
+    body: 'Build the /products category-card photo from the type photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. Side strips keep plaster grain and take the catalogue grey colour (#D6D6D4). The original ceiling is not flattened — details stay, grey tone is a light match only.',
   },
   {
     helpKey: 'admin.product_types.featured_delete',
@@ -1053,7 +1053,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.delete',
     title: 'Delete series',
-    body: 'Permanently remove this series.',
+    body: 'Permanently remove this series and every product in it. Only system and admin accounts see this button.',
   },
   {
     helpKey: 'admin.projects.create',
@@ -1236,6 +1236,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Show this series in the homepage featured section.',
   },
   {
+    helpKey: 'admin.product_series.show_on_site',
+    title: 'Show on site',
+    body: 'When on, this series appears on the public catalog, search, sitemap, and homepage featured list. Turn it off to hide the series from visitors. Existing series stay on until you switch this off.',
+  },
+  {
     helpKey: 'admin.product_series.size_photo_a',
     title: 'Size main photo A',
     body: 'Main photo for this series size. Used on the public option table and datasheet. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. After a photo is saved, click it to enlarge. The crop board uses the same square frame as the product photo slots. Click Save variants to store it on the size pack.',
@@ -1278,12 +1283,22 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_photos',
     title: 'Appearance photos',
-    body: 'Product photos for Finish, Trim, and Reflector combinations. Generate from size Main A, then Confirm to save. Visitors and datasheets only see confirmed photos.',
+    body: 'Upload as many product photos as you need. Tag each with Finish, Trim, Reflector, and/or Size. A variant uses the photo whose tags all match and that has the most tags, then the next, down to an untagged photo, then size Main A.',
+  },
+  {
+    helpKey: 'admin.product_series.appearance_add',
+    title: 'Add appearance photo',
+    body: 'Upload another product photo. The crop board uses the same square frame as the catalog slot. Tag it after it saves so the right variants pick it up.',
+  },
+  {
+    helpKey: 'admin.product_series.appearance_tag',
+    title: 'Appearance photo tag',
+    body: 'Click a Finish, Trim, Reflector, or Size value to tag this photo. Click again to clear. Empty tags mean any value. A tagged value must match the variant or this photo is skipped.',
   },
   {
     helpKey: 'admin.product_series.appearance_generate',
     title: 'Generate by AI',
-    body: 'Recolor the size Main A photo for this Finish / Trim / Reflector combination. The preview stays pending until you Confirm. Discard keeps the previous saved photo.',
+    body: 'Recolor the size Main A photo using this photo’s Finish, Trim, and Reflector tags. Size is not sent to the model. The preview stays pending until you Confirm. Discard keeps the previous saved photo.',
   },
   {
     helpKey: 'admin.product_series.appearance_generate_missing',
@@ -1308,7 +1323,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_confirm_all',
     title: 'Confirm all appearance photos',
-    body: 'Save every pending AI preview on this series. Use after Generate missing or Generate all.',
+    body: 'Save every pending AI preview on this series.',
   },
   {
     helpKey: 'admin.product_series.appearance_discard_all',
@@ -1318,12 +1333,12 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_upload',
     title: 'Upload appearance photo',
-    body: 'Replace this combination with a real product photo. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. The crop board uses the same square frame as the appearance slot. Staff uploads are not overwritten by Generate missing or Generate all.',
+    body: 'Replace this photo. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. The crop board uses the same square frame as the catalog slot. Tags on this photo stay in place.',
   },
   {
     helpKey: 'admin.product_series.appearance_remove',
     title: 'Remove appearance photo',
-    body: 'Clear this combination photo. The catalog falls back to the size Main A photo.',
+    body: 'Delete this photo from the series. Variants that used it pick the next most specific tagged photo, or size Main A.',
   },
   {
     helpKey: 'admin.product_series.appearance_cancel',
@@ -1889,6 +1904,14 @@ export async function ensureSeriesFeaturedImageColumn(): Promise<void> {
   }
   await ensureIndex('CREATE INDEX IF NOT EXISTS product_series_product_type_id ON product_series (product_type_id)');
   await ensureIndex('CREATE INDEX IF NOT EXISTS product_series_is_featured ON product_series (is_featured)');
+  if (!table.show_on_site) {
+    await qi.addColumn('product_series', 'show_on_site', {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    });
+  }
+  await ensureIndex('CREATE INDEX IF NOT EXISTS product_series_show_on_site ON product_series (show_on_site)');
   if (!table.datasheet_labels) {
     await qi.addColumn('product_series', 'datasheet_labels', {
       type: DataTypes.TEXT,
@@ -1999,13 +2022,21 @@ export async function ensureSeriesAppearancePhotos(): Promise<void> {
     colour: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
     trim_color: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
     reflector_finish: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
+    size: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
     main_image_A: { type: DataTypes.STRING, allowNull: false, defaultValue: '' },
     source_product_id: { type: DataTypes.INTEGER, allowNull: true },
     generated_by_ai: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   });
-  await ensureIndex(
-    'CREATE UNIQUE INDEX IF NOT EXISTS series_appearance_photos_combo ON series_appearance_photos (series_id, colour, trim_color, reflector_finish)'
-  );
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('series_appearance_photos');
+  if (!table.size) {
+    await qi.addColumn('series_appearance_photos', 'size', {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+    });
+  }
+  await dropIndexIfExists('series_appearance_photos_combo');
 }
 
 export async function ensureVariantOptionCatalog(): Promise<void> {

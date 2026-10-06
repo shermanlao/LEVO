@@ -19,6 +19,8 @@ import SpecificationsEditor, {
   SpecPair,
   specPairsToRecord,
 } from '@/components/admin/SpecificationsEditor';
+import { useAdminMe } from '@/lib/use-admin-me';
+import { canDeleteProductSeries } from '@shared/admin-roles';
 
 interface ProductSeries {
   id: number;
@@ -39,6 +41,7 @@ interface ProductSeries {
     featured_image_page?: unknown;
     featured_image_datasheet?: unknown;
     specifications?: Record<string, string>;
+    show_on_site?: boolean;
     createdAt: string;
     updatedAt: string;
   };
@@ -53,6 +56,8 @@ interface ProductType {
 
 export default function ProductSeriesAdminPage() {
   const router = useRouter();
+  const { me } = useAdminMe();
+  const showDelete = canDeleteProductSeries(me?.role);
   const [series, setSeries] = useState<ProductSeries[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,7 +197,7 @@ export default function ProductSeriesAdminPage() {
   };
   
   const handleDeleteSeries = async (id: number) => {
-    if (!confirm('Delete this product series? Products in it stay in the catalog but will no longer belong to a series.')) {
+    if (!confirm('Delete this product series and every product in it? This cannot be undone.')) {
       return;
     }
     
@@ -457,7 +462,12 @@ export default function ProductSeriesAdminPage() {
                         </div>
                       </AdminHoverPreview>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{attrs?.name || 'Untitled'}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {attrs?.name || 'Untitled'}
+                          {attrs?.show_on_site === false ? (
+                            <span className="ml-2 text-xs font-medium text-gray-500">Hidden</span>
+                          ) : null}
+                        </div>
                         <div className="text-xs text-gray-500">{attrs?.slug || ''}</div>
                       </div>
                     </div>
@@ -488,13 +498,15 @@ export default function ProductSeriesAdminPage() {
                       >
                         Edit
                       </Button>
-                      <Button
-                        helpKey="admin.product_series.delete"
-                        variant="danger"
-                        onClick={() => handleDeleteSeries(item.id)}
-                      >
-                        Delete
-                      </Button>
+                      {showDelete ? (
+                        <Button
+                          helpKey="admin.product_series.delete"
+                          variant="danger"
+                          onClick={() => handleDeleteSeries(item.id)}
+                        >
+                          Delete
+                        </Button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

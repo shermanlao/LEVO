@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAllowedAdminBackendPath, proxyToExpress, requirePageAccess } from '@/lib/admin-backend';
+import { getLiveAdminAccess, isAllowedAdminBackendPath, proxyToExpress, requirePageAccess } from '@/lib/admin-backend';
 import { revalidateAfterAdminWrite } from '@/lib/catalog-revalidate';
-import { pageKeyForBackendPath } from '@shared/admin-roles';
+import { canDeleteProductSeries, pageKeyForBackendPath } from '@shared/admin-roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +17,15 @@ async function handle(request: NextRequest, context: RouteContext) {
   if (pageKey) {
     const forbidden = await requirePageAccess(request, pageKey);
     if (forbidden) return forbidden;
+  }
+  if (request.method === 'DELETE' && /^product-series\/\d+$/.test(suffix)) {
+    const access = await getLiveAdminAccess(request);
+    if (!access) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!canDeleteProductSeries(access.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
   }
   const response = await proxyToExpress(request, `/api/${suffix}`);
   const mutating = request.method !== 'GET' && request.method !== 'HEAD';

@@ -29,6 +29,11 @@ SeriesAppearancePhoto.init(
       allowNull: false,
       defaultValue: '',
     },
+    size: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
     main_image_A: {
       type: DataTypes.STRING,
       allowNull: false,

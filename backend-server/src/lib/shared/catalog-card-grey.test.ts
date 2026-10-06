@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   CARD_CEILING_GREY,
   catalogCeilingBlend,
+  luma,
   unifyCatalogCardGrey,
 } from './catalog-card-grey';
 
@@ -34,14 +35,46 @@ describe('catalog card grey', () => {
     assert.equal(catalogCeilingBlend(40, 40, 40), 0);
   });
 
-  it('shifts a darker ceiling to the shared grey and paints the side strips', () => {
+  it('paints a blank white side strip to the shared grey', () => {
+    const width = 20;
+    const height = 4;
+    const data = fill(width, height, [255, 255, 255]);
+    for (let y = 0; y < height; y++) {
+      for (let x = 6; x < 14; x++) {
+        const i = (y * width + x) * 4;
+        data[i] = 180;
+        data[i + 1] = 180;
+        data[i + 2] = 176;
+      }
+    }
+    unifyCatalogCardGrey(data, width, height, { dx: 6, drawW: 8, feather: 0 });
+    assert.deepEqual(pixel(data, width, 1, 1), [CARD_CEILING_GREY.r, CARD_CEILING_GREY.g, CARD_CEILING_GREY.b]);
+    assert.deepEqual(pixel(data, width, 18, 1), [CARD_CEILING_GREY.r, CARD_CEILING_GREY.g, CARD_CEILING_GREY.b]);
+  });
+
+  it('keeps side-strip brightness so AI plaster grain is not flattened', () => {
     const width = 20;
     const height = 4;
     const data = fill(width, height, [180, 180, 176]);
     unifyCatalogCardGrey(data, width, height, { dx: 6, drawW: 8, feather: 0 });
-    assert.deepEqual(pixel(data, width, 1, 1), [CARD_CEILING_GREY.r, CARD_CEILING_GREY.g, CARD_CEILING_GREY.b]);
-    assert.deepEqual(pixel(data, width, 10, 1), [CARD_CEILING_GREY.r, CARD_CEILING_GREY.g, CARD_CEILING_GREY.b]);
-    assert.deepEqual(pixel(data, width, 18, 1), [CARD_CEILING_GREY.r, CARD_CEILING_GREY.g, CARD_CEILING_GREY.b]);
+    const side = pixel(data, width, 1, 1);
+    assert.ok(Math.abs(luma(side[0], side[1], side[2]) - luma(180, 180, 176)) <= 2);
+    assert.ok(Math.abs(side[0] - side[1]) <= 1);
+  });
+
+  it('keeps ceiling grain in the original photo instead of flattening it', () => {
+    const width = 12;
+    const height = 2;
+    const data = fill(width, height, [185, 185, 183]);
+    const bright = (0 * width + 6) * 4;
+    data[bright] = 205;
+    data[bright + 1] = 205;
+    data[bright + 2] = 203;
+    unifyCatalogCardGrey(data, width, height);
+    const dim = pixel(data, width, 2, 0);
+    const lit = pixel(data, width, 6, 0);
+    const delta = luma(lit[0], lit[1], lit[2]) - luma(dim[0], dim[1], dim[2]);
+    assert.ok(delta > 12, `expected grain to remain, got luma delta ${delta}`);
   });
 
   it('keeps a white trim pixel and a warm lamp pixel', () => {

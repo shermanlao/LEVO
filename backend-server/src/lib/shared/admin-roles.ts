@@ -82,6 +82,11 @@ export function canManageUsers(role: AdminRole | string | null | undefined): boo
   return role === 'system' || role === 'admin';
 }
 
+/** Series delete removes the series and every product in it. Operation cannot do this. */
+export function canDeleteProductSeries(role: AdminRole | string | null | undefined): boolean {
+  return role === 'system' || role === 'admin';
+}
+
 export function canManagePermissions(role: AdminRole | string | null | undefined): boolean {
   return role === 'system' || role === 'admin';
 }

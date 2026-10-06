@@ -18,8 +18,8 @@ import {
   SpecField,
   SpecRow,
 } from './productSpecs';
-import { isAppearanceNa } from './shared/product-specs';
-import { familyAppearancePhotoRows } from './shared/appearance-photos';
+import { familyAppearancePhotoRows, appearanceComboLabel } from './shared/appearance-photos';
+import { seriesShownOnSite } from './seriesVisibility';
 import {
   SIZE_KIND,
   composeDatasheetSku,
@@ -1765,6 +1765,7 @@ export async function buildFamilyDatasheetPdf(
     include: [{ model: ProductType, as: 'type' }],
   });
   if (!seriesRow) return null;
+  if (!seriesShownOnSite(seriesRow.get('show_on_site'))) return null;
 
   const series = seriesRow.get({ plain: true }) as Record<string, unknown> & {
     type?: { name?: string; slug?: string };
@@ -1857,13 +1858,10 @@ export async function buildFamilyDatasheetPdf(
 
   const appearanceImages = (
     await Promise.all(
-      familyAppearancePhotoRows(grouped, appearanceRows).map(async ({ photo }) => {
+      familyAppearancePhotoRows(grouped, appearanceRows).map(async ({ combo, photo }) => {
         const image = await loadStoredImage(photo.main_image_A, seriesSlug);
         if (!image) return null;
-        const bits = [photo.colour, photo.trim_color, photo.reflector_finish].filter(
-          (value) => value && !isAppearanceNa(value)
-        );
-        return { label: bits.join(' · ') || 'Appearance', image };
+        return { label: appearanceComboLabel(combo), image };
       })
     )
   ).filter((row): row is { label: string; image: Buffer } => Boolean(row));
@@ -1971,6 +1969,7 @@ export async function buildFamilyInstallationPdf(
     include: [{ model: ProductType, as: 'type' }],
   });
   if (!seriesRow) return null;
+  if (!seriesShownOnSite(seriesRow.get('show_on_site'))) return null;
 
   const series = seriesRow.get({ plain: true }) as Record<string, unknown> & {
     type?: { name?: string; slug?: string };

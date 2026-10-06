@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { Product, ProductSeries, ProductType, SeriesAppearancePhoto } from '../models';
 import SeriesOption from '../models/SeriesOption';
+import sequelize from '../database';
 import { asyncHandler, deleteSuccess, notFound } from '../lib/asyncHandler';
+import { deleteProductLdtFile } from '../lib/photometric/writeProductLdtFile';
 import { serializeProductListItem } from '../lib/serializeProduct';
 import { setPublicListCache } from '../lib/publicCache';
 import { parseSpecs, serializeTypeEnvelope, strapiMedia } from '../lib/strapiSerialize';
@@ -18,6 +20,7 @@ import { loadVariantCatalog, type VariantCatalogOption } from '../lib/variantCat
 import type { SeriesOptionDto } from '../lib/shared/series-options';
 import { Op, type Includeable, type WhereOptions } from 'sequelize';
 import { clearGeneratedPdfCache } from '../lib/generatedPdfCache';
+import { isStaffCatalogRequest, publicSeriesVisibleWhere, seriesShownOnSite } from '../lib/seriesVisibility';
 
 const SERIES_INCLUDE = [{ model: ProductType, as: 'type' }];
 
@@ -57,6 +60,7 @@ function seriesWritePayload(body: Record<string, unknown>) {
   if (body.ldt_family !== undefined) payload.ldt_family = body.ldt_family || null;
   if (body.product_code !== undefined) payload.product_code = body.product_code || null;
   if (body.is_featured !== undefined) payload.is_featured = Boolean(body.is_featured);
+  if (body.show_on_site !== undefined) payload.show_on_site = seriesShownOnSite(body.show_on_site);
   if (body.datasheet_labels !== undefined) {
     payload.datasheet_labels = stringifyDatasheetLabels(parseDatasheetLabels(body.datasheet_labels));
   }
@@ -110,6 +114,7 @@ async function serializeProductSeries(row: any, productsOrOpts?: any[] | Seriali
       ldt_family: p.ldt_family ?? null,
       product_code: p.product_code ?? null,
       is_featured: Boolean(p.is_featured),
+      show_on_site: seriesShownOnSite(p.show_on_site),
       datasheet_labels: parseDatasheetLabels(p.datasheet_labels),
       seo_title: p.seo_title ?? '',
       seo_description: p.seo_description ?? '',
@@ -168,6 +173,7 @@ export const getAllProductSeries = asyncHandler(async (req: Request, res: Respon
   const typeId = Number(req.query.product_type_id || '');
   const clauses: WhereOptions[] = [];
   if (featured) clauses.push({ is_featured: true });
+  if (!isStaffCatalogRequest(req)) clauses.push(publicSeriesVisibleWhere());
   if (Number.isInteger(typeId) && typeId > 0) clauses.push({ product_type_id: typeId });
   if (q) {
     const like = `%${q.replace(/[%_]/g, '')}%`;
@@ -189,9 +195,12 @@ export const getAllProductSeries = asyncHandler(async (req: Request, res: Respon
   res.json({ data: await serializeSeriesList(series) });
 });
 
-export const getFeaturedProductSeries = asyncHandler(async (_req: Request, res: Response) => {
+export const getFeaturedProductSeries = asyncHandler(async (req: Request, res: Response) => {
+  const where: WhereOptions = isStaffCatalogRequest(req)
+    ? { is_featured: true }
+    : { [Op.and]: [{ is_featured: true }, publicSeriesVisibleWhere()] };
   const series = await ProductSeries.findAll({
-    where: { is_featured: true },
+    where,
     include: SERIES_INCLUDE,
   });
   setPublicListCache(res);
@@ -201,6 +210,9 @@ export const getFeaturedProductSeries = asyncHandler(async (_req: Request, res: 
 export const getProductSeriesById = asyncHandler(async (req: Request, res: Response) => {
   const series = await ProductSeries.findByPk(req.params.id, { include: SERIES_INCLUDE });
   if (!series) return notFound(res, 'Product series');
+  if (!isStaffCatalogRequest(req) && !seriesShownOnSite(series.get('show_on_site'))) {
+    return notFound(res, 'Product series');
+  }
   setPublicListCache(res);
   res.json({ data: await serializeSeriesWithProducts(series) });
 });
@@ -211,6 +223,9 @@ export const getProductSeriesBySlug = asyncHandler(async (req: Request, res: Res
     include: SERIES_INCLUDE,
   });
   if (!series) return notFound(res, 'Product series');
+  if (!isStaffCatalogRequest(req) && !seriesShownOnSite(series.get('show_on_site'))) {
+    return notFound(res, 'Product series');
+  }
   setPublicListCache(res);
   res.json({ data: await serializeSeriesWithProducts(series) });
 });
@@ -262,10 +277,18 @@ export const updateProductSeries = asyncHandler(async (req: Request, res: Respon
 export const deleteProductSeries = asyncHandler(async (req: Request, res: Response) => {
   const series = await ProductSeries.findByPk(req.params.id);
   if (!series) return notFound(res, 'Product series');
-  await SeriesOption.destroy({ where: { series_id: req.params.id } });
-  await SeriesAppearancePhoto.destroy({ where: { series_id: req.params.id } });
-  await Product.update({ series_id: null }, { where: { series_id: req.params.id } });
-  await series.destroy();
+  const seriesId = Number(series.get('id'));
+  const products = await Product.findAll({ where: { series_id: seriesId } });
+  for (const product of products) {
+    deleteProductLdtFile(product.get('ldt_file') as string | null);
+  }
+  await sequelize.transaction(async (transaction) => {
+    await SeriesOption.destroy({ where: { series_id: seriesId }, transaction });
+    await SeriesAppearancePhoto.destroy({ where: { series_id: seriesId }, transaction });
+    await Product.destroy({ where: { series_id: seriesId }, transaction });
+    await series.destroy({ transaction });
+  });
+  await clearGeneratedPdfCache();
   deleteSuccess(res);
 });
 

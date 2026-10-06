@@ -16,6 +16,7 @@ import {
   UNAUTHORIZED_STATUS,
   isPublicCatalogReadMethod,
 } from '@shared/admin-backend-path';
+import { STAFF_CATALOG_HEADER, STAFF_CATALOG_HEADER_VALUE } from '@shared/series-visibility';
 import {
   defaultPagesForRole,
   normalizeAdminRole,
@@ -171,10 +172,11 @@ function errorCause(error: unknown): string {
 export async function forwardToExpress(
   request: NextRequest,
   expressPath: string,
-  opts?: { timeoutMs?: number; cacheMode?: 'public' | 'no-store' }
+  opts?: { timeoutMs?: number; cacheMode?: 'public' | 'no-store'; staff?: boolean }
 ): Promise<NextResponse> {
   const incoming = new URL(request.url);
   const headers: Record<string, string> = internalApiHeaders();
+  if (opts?.staff) headers[STAFF_CATALOG_HEADER] = STAFF_CATALOG_HEADER_VALUE;
   const accept = request.headers.get('Accept');
   headers.Accept = accept && accept.length > 0 ? accept : 'application/json';
   const realIp = request.headers.get('x-real-ip');
@@ -243,7 +245,7 @@ export async function proxyToExpress(
 ): Promise<NextResponse> {
   const unauthorized = await requireAdminSession(request);
   if (unauthorized) return unauthorized;
-  return forwardToExpress(request, expressPath, { ...opts, cacheMode: opts?.cacheMode ?? 'no-store' });
+  return forwardToExpress(request, expressPath, { ...opts, cacheMode: opts?.cacheMode ?? 'no-store', staff: true });
 }
 
 export function methodNotAllowed(allow = 'GET, HEAD'): NextResponse {

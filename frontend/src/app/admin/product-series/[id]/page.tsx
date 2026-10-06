@@ -8,6 +8,7 @@ import { showSaveNotice } from '@/components/ui/SaveNotice';
 import Button from '@/components/ui/Button';
 import HelpButton from '@/components/admin/HelpButton';
 import OptionTag from '@/components/ui/OptionTag';
+import ToggleSwitch from '@/components/ui/ToggleSwitch';
 import { TextInput, SelectField } from '@/components/ui/FormField';
 import PartnerImportPanel from '@/components/admin/PartnerImportPanel';
 import SizePackPhotos from '@/components/admin/SizePackPhotos';
@@ -21,6 +22,7 @@ import { parseDatasheetLabels, type DatasheetLabel } from '@shared/datasheet-lab
 import { APPEARANCE_NA, isAppearanceNa, isAppearanceKind, type AppearancePhotoDto } from '@shared/appearance-photos';
 import { fillPhraseTemplate, phraseSpecFromOptionDrafts, PHRASE_PLACEHOLDER_FIELDS } from '@shared/description-phrase';
 import { asStrapiEntity } from '@/lib/strapi-entity';
+import { seriesShownOnSite } from '@shared/series-visibility';
 import {
   groupCatalogByKind,
   groupOptionsByKind,
@@ -157,12 +159,13 @@ export default function SeriesVariantEditorPage() {
   const [ldtFamily, setLdtFamily] = useState('');
   const [productCode, setProductCode] = useState('');
   const [isFeatured, setIsFeatured] = useState(false);
+  const [showOnSite, setShowOnSite] = useState(true);
+  const [savingVisibility, setSavingVisibility] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, DraftOption[]>>({});
   const [catalog, setCatalog] = useState<VariantCatalogOption[]>([]);
   const [datasheetLabels, setDatasheetLabels] = useState<DatasheetLabel[]>([]);
   const [appearancePhotos, setAppearancePhotos] = useState<AppearancePhotoDto[]>([]);
   const [stylePhotoUrl, setStylePhotoUrl] = useState('');
-  const [generateTick, setGenerateTick] = useState(0);
   const [uploadedMainA, setUploadedMainA] = useState('');
   const [uploadedSourceId, setUploadedSourceId] = useState<number | undefined>();
 
@@ -197,6 +200,7 @@ export default function SeriesVariantEditorPage() {
     setLdtFamily(String(attrs.ldt_family || ''));
     setProductCode(String(attrs.product_code || ''));
     setIsFeatured(Boolean(attrs.is_featured));
+    setShowOnSite(seriesShownOnSite(attrs.show_on_site));
     setStylePhotoUrl(toPublicImagePath(attrs.featured_image_page));
     const products = Array.isArray((attrs.products as { data?: unknown[] })?.data)
       ? ((attrs.products as { data: Array<{ id: number; attributes?: Record<string, unknown> }> }).data)
@@ -355,6 +359,25 @@ export default function SeriesVariantEditorPage() {
     await load();
   }
 
+  async function toggleShowOnSite(next: boolean) {
+    setShowOnSite(next);
+    setSavingVisibility(true);
+    const result = await adminFetchJson(`/product-series/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ show_on_site: next }),
+    });
+    setSavingVisibility(false);
+    if (!result.ok) {
+      setShowOnSite(!next);
+      setError(result.error);
+      showSaveNotice(result.error, 'error');
+      return;
+    }
+    setError(null);
+    showSaveNotice(next ? 'Series is on the site.' : 'Series is hidden from the site.');
+  }
+
   if (!Number.isInteger(id) || id <= 0) {
     return <AlertBanner variant="error">Invalid series.</AlertBanner>;
   }
@@ -368,6 +391,13 @@ export default function SeriesVariantEditorPage() {
         backHelpKey="admin.product_series.back_list"
         actions={
           <div className="flex items-center gap-3">
+            <ToggleSwitch
+              helpKey="admin.product_series.show_on_site"
+              checked={showOnSite}
+              onChange={(next) => void toggleShowOnSite(next)}
+              label="Show on site"
+              disabled={savingVisibility || loading}
+            />
             <Button helpKey="admin.product_series.edit" variant="secondary" href={`/admin/product-series/${id}/edit`}>
               Edit
             </Button>
@@ -571,7 +601,6 @@ export default function SeriesVariantEditorPage() {
                               onMainAUploaded={({ productId, imagePath }) => {
                                 setUploadedMainA(imagePath);
                                 setUploadedSourceId(productId);
-                                setGenerateTick((tick) => tick + 1);
                               }}
                             />
                           </div>
@@ -664,7 +693,6 @@ export default function SeriesVariantEditorPage() {
                       uploadedSourceId ||
                       (drafts[SIZE_KIND] || []).find((row) => optionText(row.main_image_A))?.packId
                     }
-                    generateTick={generateTick}
                     onPhotosChange={setAppearancePhotos}
                   />
                 ) : null}

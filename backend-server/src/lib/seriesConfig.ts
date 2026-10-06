@@ -31,6 +31,7 @@ import {
   normalizeAppearanceCombo,
   type AppearancePhotoDto,
 } from './shared/appearance-photos';
+import { seriesShownOnSite } from './seriesVisibility';
 
 export type { SeriesOptionDto, AppearancePhotoDto };
 
@@ -106,6 +107,7 @@ export function serializeAppearancePhoto(
     colour: combo.colour,
     trim_color: combo.trim_color,
     reflector_finish: combo.reflector_finish,
+    size: combo.size,
     main_image_A: optionText(rec.main_image_A),
     source_product_id: rec.source_product_id != null ? Number(rec.source_product_id) : null,
     generated_by_ai: Boolean(rec.generated_by_ai),
@@ -184,6 +186,9 @@ export async function resolveSeriesConfig(
     include: SERIES_INCLUDE,
   });
   if (!series) return { ok: false, status: 404, error: 'Series not found' };
+  if (!seriesShownOnSite(series.get('show_on_site'))) {
+    return { ok: false, status: 404, error: 'Series not found' };
+  }
 
   const seriesId = Number(series.get('id'));
   const options = await loadSeriesOptions(seriesId);

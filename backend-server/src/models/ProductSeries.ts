@@ -58,6 +58,11 @@ ProductSeries.init({
     type: DataTypes.BOOLEAN,
     allowNull: true,
   },
+  show_on_site: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  },
   datasheet_labels: {
     type: DataTypes.TEXT,
     allowNull: true,

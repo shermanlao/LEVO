@@ -25,7 +25,7 @@ Header menus and dashboard cards hide pages the role does not have. The same mat
 
 | Page | Admin UI | API |
 |------|----------|-----|
-| Catalog | Product types, series, variants | `/api/admin/backend/products`, `product-types`, `product-series`, `variant-options`, `upload` |
+| Catalog | Product types, series, variants. **Delete** on a series is system and admin only; it also deletes the products in that series. Operation can still edit series and variants. | `/api/admin/backend/products`, `product-types`, `product-series`, `variant-options`, `upload`. `DELETE /api/admin/backend/product-series/:id` returns 403 for operation |
 | Partner catalog | `/admin/external-catalog` | `/api/admin/external-catalog` |
 | LDT library | `/admin/ldt-library` | `/api/admin/photometric-library` |
 | Projects | `/admin/projects` | `/api/admin/backend/projects`, `/api/project-upload` |

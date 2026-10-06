@@ -10,7 +10,7 @@ LEVO keeps duplicated logic in one place instead of copying it across the Next.j
 |------|----------|
 | `product-specs.ts` | Spec field lists (Finish / Trim / Reflector labels), `APPEARANCE_NA` / `isAppearanceNa`, `formatSpecValue`, PDF filenames (SKU datasheet / installation / label use the model code; family datasheet uses the series name) |
 | `spec-icons.ts` | Catalog table icons: Kelvin → CCT swatch hex, finish name → swatch colours, beam degrees for the cone icon |
-| `appearance-photos.ts` | Finish / Trim / Reflector combo rows, N/A checks, lookup of stored appearance photos (`findAppearancePhoto` for the catalog, `findExactAppearancePhoto` / `familyAppearancePhotoRows` for the family datasheet, `unusedAppearancePhotos` for leftover admin rows), AI prompt lines |
+| `appearance-photos.ts` | Tagged Finish / Trim / Reflector / Size photos, N/A checks, `rankAppearancePhotos` / `findAppearancePhoto` for the catalog and SKU datasheet (most tags first, then newer id), `familyAppearancePhotoRows` / `unusedAppearancePhotos` for the family datasheet, AI prompt lines |
 | `series-options.ts` | Series variant kinds (including size), catalog kinds without size (`catalogVariantFields`), grouping, unique equivalent values (`120` / `120°`), visitor selector rules, ascending option sort (`compareOptionValues` / `uniqueOptionsForKind`), cartesian combo rows (`cartesianComboRows` / `specFromCombo` / `findSizePack`), visitor / admin kind order (`variantSpecFields` / `VARIANT_KIND_DISPLAY_ORDER`: physical, electrical, optic, control), ordering codes, datasheet SKU segments (`orderCodeSegments` / `composeDatasheetSku` / `skuSegmentText` / `compactSkuCode` / `resolvedSkuSegment` / `skuCodingKinds` / `familyOrderCodeSegments` column grid; single-option kinds omitted except Model), family datasheet helpers (`familyOptionsForKind` / `familyWattageRows` / `familyPolarCombos` / `familyColourGroups`), series page href (`seriesPageHref` / `selectionFromSpec`), variant option catalog types |
 | `datasheet-labels.ts` | Datasheet PDF square badges. `datasheetLabelsForSpec` looks up `label_image` on the variant catalog for IP / warranty / voltage (and matching spec kinds) on a SKU. `datasheetLabelsForSeriesOptions` lists those badges for every value a series offers (plus size-pack values when passed). `copyPackDatasheetFields` fills missing IP / warranty / voltage on a combo spec from the size pack. `extraLabelsFromCatalog` / `toggleExtraLabel` let a series pick extra catalog icons (`kind` `datasheet_label`). `mergeScopedDatasheetLabels` then overlays leftover `product_types.datasheet_labels` and `product_series.datasheet_labels`, using catalog artwork when it matches. |
 | `description-phrase.ts` | Series phrase template (`{{wattage}}`, `{{source_lumen}}`, `{{system_lumen}}`, `{{cct}}`, …), `fillPhraseTemplate`, `phraseSpecFromOptionDrafts` (size pack + joined series tags for style match), placeholder field list. `{{source_lumen}}` maps to spec `lumen`; `{{lumen}}` still works. |
@@ -20,7 +20,8 @@ LEVO keeps duplicated logic in one place instead of copying it across the Next.j
 | `production-secrets.ts` | Local default names, production fail-fast, `INTERNAL_API_HEADER` |
 | `safe-href.ts` | `safeHttpUrl` / `safePublicHref` for stored links |
 | `image-magic.ts` | JPEG/PNG/GIF/WebP magic-byte check |
-| `catalog-card-grey.ts` | Shared 16:9 card ceiling grey `#D6D6D4` and `unifyCatalogCardGrey` (side strips plus ceiling pixels; trim / lamps / fixture holes stay) |
+| `catalog-card-grey.ts` | Shared 16:9 card ceiling grey `#D6D6D4` and `unifyCatalogCardGrey` (side strips keep luma / grain; original ceiling gets a light chroma match only; trim / lamps / fixture holes stay) |
+| `series-visibility.ts` | `seriesShownOnSite` (null counts as on) and `STAFF_CATALOG_HEADER` (`x-levo-staff`) so public catalog reads hide a series while `/api/admin/backend` still loads it |
 | `admin-roles.ts` | `system` / `admin` / `operation`, page keys, default matrix, path → page mapping, `roleCanOpenPage`, `pagesForAiApi` (catalog generate vs AI settings), and `matrixWithNewDefaultPages` |
 | `admin-session-cookie.ts` | HMAC cookie create/verify (`username.role.exp.epoch.sig`), `safeAdminNextPath`, `adminLoginHref`, and `cookieIsSecure` (`Secure` only for HTTPS `SITE_ORIGIN`) |
 | `admin-backend-path.ts` | Admin BFF path allowlist; public catalog GET/HEAD vs 405 |
@@ -48,12 +49,12 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 ## Backend helpers
 
 - `database.ts` — SQLite by default; PostgreSQL when `DATABASE_URL` / `DB_DIALECT=postgres` is set
-- `dbSchema.ts` — dialect-safe `ensureTable` / `ensureIndex` for startup schema
+- `dbSchema.ts` — dialect-safe `ensureTable` / `ensureIndex` / `dropIndexIfExists` for startup schema
 - `asyncHandler.ts` — Express try/catch + `clientError`
 - `strapiSerialize.ts` — media envelope + type envelope + `parseSpecs`
 - `productMedia.extractStoredImageUrl` — image values on type/series/product writes
 - `photometric/persistProductLdt.ts` — stamp and store a product `.ldt` on create/update (`ldt_file`)
-- `unifySeriesCardGrey.ts` — rewrite saved 16:9 `featured_image` files to the shared ceiling grey on API start (`unifyExistingSeriesCards`). Skips files whose corners already match. Series-page photos are not touched.
+- `unifySeriesCardGrey.ts` — rewrite saved 16:9 `featured_image` files on API start (`unifyExistingSeriesCards`). Pastes the source photo back into the middle when that file still exists, then applies the luma-preserving grey. Series and type cards. Skips a file whose sides already match and whose middle still has grain. Source photos are not touched.
 - `photometric/writeProductLdtFile.ts` — write/resolve/delete `/uploads/product-ldt/{series}/{id}.ldt`
 - `seriesConfig.ts` — load/replace/merge `series_options`, batch `loadSeriesOptionsForIds` for list pages, resolve a series + query into a spec (options + size-pack photos), upsert size packs (optional `pack_id` keeps photos on that product when the label changes; `main_image_A` / `main_image_B` / `size_image` on a size option write those columns on Save variants), upsert matching rows into `variant_option_catalog`
 - `variantCatalog.ts` — load/replace/upsert/backfill global option labels and SKU codes

@@ -40,7 +40,7 @@ import {
   type VariantCatalogOption,
 } from '@shared/series-options';
 import { fillPhraseTemplate } from '@shared/description-phrase';
-import { findAppearancePhoto, type AppearancePhotoDto } from '@shared/appearance-photos';
+import { rankAppearancePhotos, type AppearancePhotoDto } from '@shared/appearance-photos';
 import { copyPackDatasheetFields, mergeScopedDatasheetLabels, type DatasheetLabel } from '@shared/datasheet-labels';
 
 type SeriesConfiguratorProps = {
@@ -163,9 +163,9 @@ export default function SeriesConfigurator({
       const packProduct = pack
         ? products.find((product) => Number(product.id) === Number(pack.id))
         : null;
-      const appearance = findAppearancePhoto(appearancePhotos, { ...specs, ...combo.selection });
+      const ranked = rankAppearancePhotos(appearancePhotos, { ...specs, ...combo.selection });
       const uniquePhotos = datasheetGalleryUrls({
-        main: toPublicImagePath(appearance?.main_image_A) || productImageUrl(packProduct || undefined),
+        main: toPublicImagePath(ranked[0]?.main_image_A) || productImageUrl(packProduct || undefined),
         size: packProduct?.attributes?.size_image,
         fallbackMain: seriesThumbUrl || seriesImageUrl,
         polarUrl: getSeriesPolarUrl(seriesSlug, combo.selection),
@@ -231,20 +231,36 @@ export default function SeriesConfigurator({
   const liveGallery = useMemo(() => {
     const filled = filledSelection(grouped, selection);
     const specs = specFromCombo(grouped, filled);
-    const appearance = findAppearancePhoto(appearancePhotos, { ...specs, ...filled });
+    const ranked = rankAppearancePhotos(appearancePhotos, { ...specs, ...filled });
     const sizeValue = optionText(specs.size) || filled[SIZE_KIND];
     const pack = findSizePack(packs, sizeValue, grouped);
     const packProduct = pack
       ? products.find((product) => Number(product.id) === Number(pack.id))
       : null;
-    const appearanceUrl = toPublicImagePath(appearance?.main_image_A);
+    const rankedUrls = ranked
+      .map((photo) => toPublicImagePath(photo.main_image_A))
+      .filter(Boolean);
     const packUrl = productImageUrl(packProduct || undefined);
     const visitorPicked = Object.values(selection).some(Boolean);
-    const hero =
-      (visitorPicked && appearanceUrl) || seriesImageUrl || appearanceUrl || packUrl;
-    if (!hero) return null;
-    const extra = toPublicImagePath(packProduct?.attributes?.main_image_B);
-    const urls = extra && extra !== hero ? [hero, extra] : [hero];
+    const urls: string[] = [];
+    const seen = new Set<string>();
+    const add = (url?: string) => {
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      urls.push(url);
+    };
+    if (visitorPicked) {
+      rankedUrls.forEach(add);
+      if (!urls.length) add(packUrl);
+      if (!urls.length) add(seriesImageUrl);
+    } else {
+      add(seriesImageUrl);
+      rankedUrls.forEach(add);
+      add(packUrl);
+    }
+    add(toPublicImagePath(packProduct?.attributes?.main_image_B));
+    if (!urls.length) return null;
+    const hero = urls[0];
     return (
       <ImageCarousel
         key={hero}

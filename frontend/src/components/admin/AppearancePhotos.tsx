@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import AdminPhotoSlot from '@/components/admin/AdminPhotoSlot';
 import HelpButton from '@/components/admin/HelpButton';
 import Button from '@/components/ui/Button';
+import OptionTag from '@/components/ui/OptionTag';
 import { showSaveNotice } from '@/components/ui/SaveNotice';
 import ImageFileIntake from '@/components/ui/ImageFileIntake';
 import { adminFetchJson, uploadAdminImage } from '@/lib/admin-fetch';
@@ -12,15 +13,17 @@ import { dataUrlToFile, imageUrlToDataUrl } from '@/lib/sizeDrawingCropClient';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
 import {
-  appearanceComboKey,
-  appearanceComboLabel,
-  appearanceComboRows,
-  unusedAppearancePhotos,
   APPEARANCE_KINDS,
+  PHOTO_TAG_KINDS,
+  appearanceAxisValues,
+  appearanceComboLabel,
+  normalizeAppearanceCombo,
+  unusedAppearancePhotos,
   type AppearanceCombo,
   type AppearancePhotoDto,
+  type PhotoTagKind,
 } from '@shared/appearance-photos';
-import { groupOptionsByKind, optionText, type SeriesOptionDto } from '@shared/series-options';
+import { groupOptionsByKind, optionText, valuesEqual, variantKindLabel, type SeriesOptionDto } from '@shared/series-options';
 
 type AppearancePhotosProps = {
   seriesId: number;
@@ -29,18 +32,8 @@ type AppearancePhotosProps = {
   photos: AppearancePhotoDto[];
   sourceImageUrl: string;
   sourceProductId?: number;
-  generateTick?: number;
   onPhotosChange?: (photos: AppearancePhotoDto[]) => void;
 };
-
-function photoForCombo(photos: AppearancePhotoDto[], combo: AppearanceCombo) {
-  const key = appearanceComboKey(combo);
-  return photos.find((photo) => appearanceComboKey(photo) === key) || null;
-}
-
-function isStaffUpload(photo: AppearancePhotoDto | null) {
-  return Boolean(photo?.main_image_A) && photo?.generated_by_ai === false;
-}
 
 function unwrapSavedPhoto(payload: unknown): AppearancePhotoDto | null {
   if (!payload || typeof payload !== 'object') return null;
@@ -50,12 +43,20 @@ function unwrapSavedPhoto(payload: unknown): AppearancePhotoDto | null {
   return rec.data || null;
 }
 
+function photoKey(photo: AppearancePhotoDto, fallback: number): string {
+  return photo.id != null ? String(photo.id) : `new-${fallback}`;
+}
+
+function emptyCombo(): AppearanceCombo {
+  return { colour: '', trim_color: '', reflector_finish: '', size: '' };
+}
+
 function comboFromPhoto(photo: AppearancePhotoDto): AppearanceCombo {
-  return {
-    colour: photo.colour || '',
-    trim_color: photo.trim_color || '',
-    reflector_finish: photo.reflector_finish || '',
-  };
+  return normalizeAppearanceCombo(photo);
+}
+
+function canAiGenerate(combo: AppearanceCombo): boolean {
+  return APPEARANCE_KINDS.some((kind) => Boolean(combo[kind]));
 }
 
 export default function AppearancePhotos({
@@ -65,37 +66,26 @@ export default function AppearancePhotos({
   photos,
   sourceImageUrl,
   sourceProductId,
-  generateTick = 0,
   onPhotosChange,
 }: AppearancePhotosProps) {
   const grouped = useMemo(() => groupOptionsByKind(options), [options]);
-  const combos = useMemo(() => appearanceComboRows(grouped), [grouped]);
   const [localPhotos, setLocalPhotos] = useState(photos);
   const [pending, setPending] = useState<Record<string, string>>({});
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { requestCrop, cutboard } = useImageCutboard();
-  const [progress, setProgress] = useState<string | null>(null);
-  const cancelRef = useRef(false);
-  const queueRef = useRef(false);
   const photosRef = useRef(localPhotos);
   const pendingRef = useRef(pending);
   photosRef.current = localPhotos;
   pendingRef.current = pending;
 
   useEffect(() => {
-    if (!queueRef.current) setLocalPhotos(photos);
+    setLocalPhotos(photos);
   }, [photos]);
 
-  const unused = useMemo(() => unusedAppearancePhotos(localPhotos, combos), [localPhotos, combos]);
+  const leftover = useMemo(() => unusedAppearancePhotos(localPhotos, grouped), [grouped, localPhotos]);
+  const leftoverIds = useMemo(() => new Set(leftover.map((photo) => photo.id)), [leftover]);
   const pendingKeys = Object.keys(pending);
-  const inUse = APPEARANCE_KINDS.some((kind) => (grouped[kind] || []).some((row) => optionText(row.value)));
-  const allNa =
-    inUse &&
-    APPEARANCE_KINDS.every((kind) => {
-      const list = grouped[kind] || [];
-      return !list.length || list.every((row) => /^n\/a$/i.test(optionText(row.value)));
-    });
 
   function commitPhotos(next: AppearancePhotoDto[]) {
     setLocalPhotos(next);
@@ -104,8 +94,13 @@ export default function AppearancePhotos({
   }
 
   function upsertPhoto(photo: AppearancePhotoDto) {
-    const key = appearanceComboKey(photo);
-    commitPhotos([...photosRef.current.filter((row) => appearanceComboKey(row) !== key), photo]);
+    const id = photo.id;
+    const list = photosRef.current;
+    if (id != null && list.some((row) => row.id === id)) {
+      commitPhotos(list.map((row) => (row.id === id ? photo : row)));
+      return;
+    }
+    commitPhotos([...list, photo]);
   }
 
   function setPendingPhoto(key: string, dataUrl: string | null) {
@@ -118,44 +113,58 @@ export default function AppearancePhotos({
     });
   }
 
-  async function savePhoto(combo: AppearanceCombo, file: File, generated: boolean) {
-    const uploaded = await uploadAdminImage(file, { seriesSlug, imageType: 'appearance' });
-    if (!uploaded.ok) throw new Error(uploaded.error);
-    const fileInfo =
-      (uploaded.data as { files?: Array<{ url?: string; filename?: string }> }).files?.[0] || uploaded.data;
-    const path = storedProductImagePath(
-      {
-        url: (fileInfo as { url?: string }).url,
-        fileName: (fileInfo as { filename?: string }).filename,
-      },
-      seriesSlug
-    );
+  async function persistPhoto(input: {
+    combo: AppearanceCombo;
+    file?: File;
+    generated?: boolean;
+    id?: number;
+    existingPath?: string;
+  }): Promise<AppearancePhotoDto> {
+    let path = input.existingPath || '';
+    if (input.file) {
+      const uploaded = await uploadAdminImage(input.file, { seriesSlug, imageType: 'appearance' });
+      if (!uploaded.ok) throw new Error(uploaded.error);
+      const fileInfo =
+        (uploaded.data as { files?: Array<{ url?: string; filename?: string }> }).files?.[0] || uploaded.data;
+      path = storedProductImagePath(
+        {
+          url: (fileInfo as { url?: string }).url,
+          fileName: (fileInfo as { filename?: string }).filename,
+        },
+        seriesSlug
+      );
+    }
+    const body: Record<string, unknown> = {
+      ...input.combo,
+      source_product_id: sourceProductId || null,
+    };
+    if (input.id) body.id = input.id;
+    if (path) body.main_image_A = path;
+    if (input.generated !== undefined) body.generated_by_ai = input.generated;
     const saved = await adminFetchJson<{ data: AppearancePhotoDto }>(
       `/product-series/${seriesId}/appearance-photos`,
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...combo,
-          main_image_A: path,
-          source_product_id: sourceProductId || null,
-          generated_by_ai: generated,
-        }),
+        body: JSON.stringify(body),
       }
     );
     if (!saved.ok) throw new Error(saved.error);
     const photo = unwrapSavedPhoto(saved.data) || {
-      ...combo,
+      ...input.combo,
+      id: input.id,
       main_image_A: path,
       source_product_id: sourceProductId || null,
-      generated_by_ai: generated,
+      generated_by_ai: Boolean(input.generated),
     };
     upsertPhoto(photo);
-    setPendingPhoto(appearanceComboKey(combo), null);
+    if (photo.id != null) setPendingPhoto(String(photo.id), null);
+    return photo;
   }
 
-  async function generateOne(combo: AppearanceCombo, sourceDataUrl: string) {
-    const key = appearanceComboKey(combo);
+  async function generateOne(photo: AppearancePhotoDto, sourceDataUrl: string) {
+    const combo = comboFromPhoto(photo);
+    const key = photoKey(photo, 0);
     setBusyKey(key);
     const res = await fetch('/api/admin/ai/generate-appearance-photo', {
       method: 'POST',
@@ -174,15 +183,20 @@ export default function AppearancePhotos({
     setPendingPhoto(key, dataUrl);
   }
 
-  async function confirmCombo(combo: AppearanceCombo) {
-    const key = appearanceComboKey(combo);
+  async function confirmPhoto(photo: AppearancePhotoDto) {
+    const key = photoKey(photo, 0);
     const dataUrl = pendingRef.current[key];
     if (!dataUrl) return;
     setBusyKey(key);
     setError(null);
     try {
-      const file = dataUrlToFile(dataUrl, `appearance-${key.replace(/\|/g, '-')}.png`);
-      await savePhoto(combo, file, true);
+      const file = dataUrlToFile(dataUrl, `appearance-${key}.png`);
+      await persistPhoto({
+        combo: comboFromPhoto(photo),
+        file,
+        generated: true,
+        id: photo.id,
+      });
       showSaveNotice('Appearance photo saved.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Save failed';
@@ -194,20 +208,22 @@ export default function AppearancePhotos({
   }
 
   async function confirmAllPending() {
-    if (queueRef.current) return;
-    const targets = combos.filter((combo) => pendingRef.current[appearanceComboKey(combo)]);
+    const targets = localPhotos.filter((photo) => pendingRef.current[photoKey(photo, 0)]);
     if (!targets.length) return;
-    queueRef.current = true;
     setError(null);
     try {
-      for (const combo of targets) {
-        const key = appearanceComboKey(combo);
+      for (const photo of targets) {
+        const key = photoKey(photo, 0);
         setBusyKey(key);
-        setProgress(`Saving ${appearanceComboLabel(combo)}`);
         const dataUrl = pendingRef.current[key];
         if (!dataUrl) continue;
-        const file = dataUrlToFile(dataUrl, `appearance-${key.replace(/\|/g, '-')}.png`);
-        await savePhoto(combo, file, true);
+        const file = dataUrlToFile(dataUrl, `appearance-${key}.png`);
+        await persistPhoto({
+          combo: comboFromPhoto(photo),
+          file,
+          generated: true,
+          id: photo.id,
+        });
       }
       showSaveNotice('Appearance photos saved.');
     } catch (err) {
@@ -215,9 +231,7 @@ export default function AppearancePhotos({
       setError(message);
       showSaveNotice(message, 'error');
     } finally {
-      queueRef.current = false;
       setBusyKey(null);
-      setProgress(null);
     }
   }
 
@@ -226,59 +240,12 @@ export default function AppearancePhotos({
     pendingRef.current = {};
   }
 
-  async function generateQueue(targets: AppearanceCombo[], label: string) {
-    if (queueRef.current) return;
-    if (combos.length < 2) return;
-    const src = toPublicImagePath(sourceImageUrl);
-    if (!src) {
-      setError('Upload a size Main A photo first.');
-      return;
-    }
-    if (!targets.length) return;
-    queueRef.current = true;
-    cancelRef.current = false;
+  async function uploadNew(file: File) {
+    setBusyKey('add');
     setError(null);
     try {
-      const sourceDataUrl = await imageUrlToDataUrl(src);
-      for (let i = 0; i < targets.length; i += 1) {
-        if (cancelRef.current) break;
-        const combo = targets[i];
-        setProgress(`${label} ${i + 1} of ${targets.length}: ${appearanceComboLabel(combo)}`);
-        await generateOne(combo, sourceDataUrl);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Generate failed');
-    } finally {
-      queueRef.current = false;
-      setBusyKey(null);
-      setProgress(null);
-    }
-  }
-
-  function generateMissing() {
-    const missing = combos.filter((combo) => {
-      const key = appearanceComboKey(combo);
-      return !photoForCombo(photosRef.current, combo) && !pendingRef.current[key];
-    });
-    return generateQueue(missing, 'Generating');
-  }
-
-  function generateAll() {
-    const targets = combos.filter((combo) => !isStaffUpload(photoForCombo(photosRef.current, combo)));
-    return generateQueue(targets, 'Generating');
-  }
-
-  useEffect(() => {
-    if (generateTick > 0) void generateMissing();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generateTick]);
-
-  async function uploadCombo(combo: AppearanceCombo, file: File) {
-    const key = appearanceComboKey(combo);
-    setBusyKey(key);
-    setError(null);
-    try {
-      await savePhoto(combo, file, false);
+      await persistPhoto({ combo: emptyCombo(), file, generated: false });
+      showSaveNotice('Appearance photo saved.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
@@ -286,25 +253,64 @@ export default function AppearancePhotos({
     }
   }
 
-  function takeComboFile(combo: AppearanceCombo, file: File) {
+  async function replacePhoto(photo: AppearancePhotoDto, file: File) {
+    const key = photoKey(photo, 0);
+    setBusyKey(key);
+    setError(null);
+    try {
+      await persistPhoto({
+        combo: comboFromPhoto(photo),
+        file,
+        generated: false,
+        id: photo.id,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  function takeFile(file: File, photo?: AppearancePhotoDto) {
     const invalid = validateImageFile(file);
     if (invalid) {
       setError(invalid);
       return;
     }
     void requestCrop(file, IMAGE_FRAMES.product).then((cropped) => {
-      if (cropped) void uploadCombo(combo, cropped);
+      if (!cropped) return;
+      if (photo) void replacePhoto(photo, cropped);
+      else void uploadNew(cropped);
     });
   }
 
-  async function removeCombo(combo: AppearanceCombo, photo?: AppearancePhotoDto | null) {
-    const key = appearanceComboKey(combo);
+  async function setPhotoTag(photo: AppearancePhotoDto, kind: PhotoTagKind, value: string) {
+    if (photo.id == null || busyKey != null) return;
+    const key = photoKey(photo, 0);
+    setBusyKey(key);
+    setError(null);
+    try {
+      await persistPhoto({
+        combo: { ...comboFromPhoto(photo), [kind]: value },
+        id: photo.id,
+        existingPath: photo.main_image_A,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function removePhoto(photo: AppearancePhotoDto) {
+    if (photo.id == null) return;
+    const key = photoKey(photo, 0);
     setBusyKey(key);
     setError(null);
     const saved = await adminFetchJson(`/product-series/${seriesId}/appearance-photos`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(photo?.id ? { id: photo.id } : combo),
+      body: JSON.stringify({ id: photo.id }),
     });
     setBusyKey(null);
     if (!saved.ok) {
@@ -312,17 +318,23 @@ export default function AppearancePhotos({
       return;
     }
     setPendingPhoto(key, null);
-    commitPhotos(photosRef.current.filter((row) => appearanceComboKey(row) !== key));
+    commitPhotos(photosRef.current.filter((row) => row.id !== photo.id));
   }
 
-  if ((allNa || combos.length === 0) && unused.length === 0) return null;
-
-  const canGenerate = busyKey == null && combos.length >= 2 && Boolean(toPublicImagePath(sourceImageUrl));
   const canConfirm = busyKey == null && pendingKeys.length > 0;
+  const sourceUrl = toPublicImagePath(sourceImageUrl);
 
-  function comboStatus(combo: AppearanceCombo, photo: AppearancePhotoDto | null, pendingSrc?: string) {
+  function tagValues(kind: PhotoTagKind, selected: string): string[] {
+    const values = appearanceAxisValues(grouped, kind);
+    if (selected && !values.some((item) => valuesEqual(kind === 'size' ? 'size' : kind, item, selected))) {
+      return [...values, selected];
+    }
+    return values;
+  }
+
+  function photoStatus(photo: AppearancePhotoDto, pendingSrc?: string) {
     if (pendingSrc) return 'Pending confirmation';
-    if (!photo?.main_image_A) return 'Missing';
+    if (leftoverIds.has(photo.id)) return 'Unused tags';
     return photo.generated_by_ai ? 'Generated' : 'Uploaded';
   }
 
@@ -336,194 +348,167 @@ export default function AppearancePhotos({
           </HelpButton>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          {progress ? (
-            <Button
-              helpKey="admin.product_series.appearance_cancel"
-              variant="ghost"
-              className="text-xs"
-              onClick={() => {
-                cancelRef.current = true;
-              }}
-            >
-              Cancel
-            </Button>
-          ) : (
+          {pendingKeys.length > 0 ? (
             <>
-              {combos.length >= 2 ? (
-                <>
-                  <Button
-                    helpKey="admin.product_series.appearance_generate_missing"
-                    variant="secondary"
-                    disabled={!canGenerate}
-                    onClick={() => void generateMissing()}
-                  >
-                    Generate missing
-                  </Button>
-                  <Button
-                    helpKey="admin.product_series.appearance_generate_all"
-                    variant="secondary"
-                    disabled={!canGenerate}
-                    onClick={() => void generateAll()}
-                  >
-                    Generate all
-                  </Button>
-                </>
-              ) : null}
-              {pendingKeys.length > 0 ? (
-                <>
-                  <Button
-                    helpKey="admin.product_series.appearance_confirm_all"
-                    disabled={!canConfirm}
-                    onClick={() => void confirmAllPending()}
-                  >
-                    Confirm all
-                  </Button>
-                  <Button
-                    helpKey="admin.product_series.appearance_discard_all"
-                    variant="ghost"
-                    disabled={!canConfirm}
-                    onClick={discardAllPending}
-                  >
-                    Discard all
-                  </Button>
-                </>
-              ) : null}
+              <Button
+                helpKey="admin.product_series.appearance_confirm_all"
+                disabled={!canConfirm}
+                onClick={() => void confirmAllPending()}
+              >
+                Confirm all
+              </Button>
+              <Button
+                helpKey="admin.product_series.appearance_discard_all"
+                variant="ghost"
+                disabled={!canConfirm}
+                onClick={discardAllPending}
+              >
+                Discard all
+              </Button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
-      {combos.length === 1 ? (
-        <p className="text-sm text-gray-500 mb-4">
-          Add at least two Finish, Trim, or Reflector values to generate appearance photos. A single combination uses the
-          size Main A photo.
-        </p>
-      ) : null}
-      {combos.length >= 2 ? (
-        <div className="space-y-4">
-          {progress ? <p className="text-sm text-gray-600">{progress}</p> : null}
-          {combos.map((combo) => {
-            const key = appearanceComboKey(combo);
-            const photo = photoForCombo(localPhotos, combo);
-            const pendingSrc = pending[key];
-            const src = pendingSrc || toPublicImagePath(photo?.main_image_A);
-            const busy = busyKey === key;
-            return (
-              <div key={key} className="flex flex-wrap items-start gap-3 border border-gray-100 rounded p-3">
-                <ImageFileIntake
-                  enabled={busyKey == null}
-                  clickToPick={!src}
-                  helpKey="admin.product_series.appearance_upload"
-                  className="inline-block"
-                  onFile={(file) => takeComboFile(combo, file)}
-                >
-                  <AdminPhotoSlot src={src} alt={appearanceComboLabel(combo)} compact />
-                </ImageFileIntake>
-                <div className="min-w-[12rem] flex-1">
-                  <div className="flex items-center justify-between mb-2 gap-2">
-                    <span className="text-sm font-medium text-gray-700">{appearanceComboLabel(combo)}</span>
-                    <span className="text-xs text-gray-400 shrink-0">{comboStatus(combo, photo, pendingSrc)}</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {pendingSrc ? (
-                      <>
-                        <Button
-                          helpKey="admin.product_series.appearance_confirm"
-                          className="text-xs py-1 px-2"
-                          disabled={busyKey != null}
-                          onClick={() => void confirmCombo(combo)}
-                        >
-                          {busy ? 'Saving…' : 'Confirm'}
-                        </Button>
-                        <Button
-                          helpKey="admin.product_series.appearance_discard"
-                          variant="ghost"
-                          className="text-xs"
-                          disabled={busyKey != null}
-                          onClick={() => setPendingPhoto(key, null)}
-                        >
-                          Discard
-                        </Button>
-                      </>
-                    ) : null}
-                    {busy && !pendingSrc ? <span className="text-xs text-gray-500">Working…</span> : null}
+      <p className="text-sm text-gray-500 mb-4">
+        Upload as many photos as you need. Tag Finish, Trim, Reflector, and Size. A product row uses the most specific
+        matching photo, then the next, down to an untagged photo.
+      </p>
+      <div className="space-y-4">
+        {localPhotos.map((photo, index) => {
+          const combo = comboFromPhoto(photo);
+          const key = photoKey(photo, index);
+          const pendingSrc = pending[key];
+          const src = pendingSrc || toPublicImagePath(photo.main_image_A);
+          const busy = busyKey === key;
+          return (
+            <div key={key} className="flex flex-wrap items-start gap-3 border border-gray-100 rounded p-3">
+              <ImageFileIntake
+                enabled={busyKey == null}
+                clickToPick={!src}
+                helpKey="admin.product_series.appearance_upload"
+                className="inline-block"
+                onFile={(file) => takeFile(file, photo)}
+              >
+                <AdminPhotoSlot src={src} alt={appearanceComboLabel(combo)} compact />
+              </ImageFileIntake>
+              <div className="min-w-[12rem] flex-1 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-700">{appearanceComboLabel(combo)}</span>
+                  <span className="text-xs text-gray-400 shrink-0">{photoStatus(photo, pendingSrc)}</span>
+                </div>
+                {PHOTO_TAG_KINDS.map((kind) => {
+                  const selected = combo[kind];
+                  const values = tagValues(kind, selected);
+                  if (!values.length) return null;
+                  return (
+                    <div key={kind}>
+                      <div className="text-xs text-gray-500 mb-1">{variantKindLabel(kind)}</div>
+                      <div className="flex flex-wrap gap-2">
+                        {values.map((value) => {
+                          const on = valuesEqual(kind === 'size' ? 'size' : kind, selected, value);
+                          return (
+                            <OptionTag
+                              key={`${kind}-${value}`}
+                              helpKey="admin.product_series.appearance_tag"
+                              selected={on}
+                              onClick={() => void setPhotoTag(photo, kind, on ? '' : value)}
+                            >
+                              {value}
+                            </OptionTag>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="flex flex-wrap items-center gap-2">
+                  {pendingSrc ? (
+                    <>
+                      <Button
+                        helpKey="admin.product_series.appearance_confirm"
+                        className="text-xs py-1 px-2"
+                        disabled={busyKey != null}
+                        onClick={() => void confirmPhoto(photo)}
+                      >
+                        {busy ? 'Saving…' : 'Confirm'}
+                      </Button>
+                      <Button
+                        helpKey="admin.product_series.appearance_discard"
+                        variant="ghost"
+                        className="text-xs"
+                        disabled={busyKey != null}
+                        onClick={() => setPendingPhoto(key, null)}
+                      >
+                        Discard
+                      </Button>
+                    </>
+                  ) : null}
+                  {busy && !pendingSrc ? <span className="text-xs text-gray-500">Working…</span> : null}
+                  <Button
+                    helpKey="admin.product_series.appearance_generate"
+                    variant="secondary"
+                    className="text-xs py-1 px-2"
+                    disabled={busyKey != null || !sourceUrl || !canAiGenerate(combo)}
+                    onClick={async () => {
+                      if (!sourceUrl) return;
+                      setError(null);
+                      try {
+                        const dataUrl = await imageUrlToDataUrl(sourceUrl);
+                        await generateOne(photo, dataUrl);
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Generate failed');
+                      } finally {
+                        setBusyKey(null);
+                      }
+                    }}
+                  >
+                    Generate by AI
+                  </Button>
+                  {src ? (
                     <Button
-                      helpKey="admin.product_series.appearance_generate"
-                      variant="secondary"
-                      className="text-xs py-1 px-2"
-                      disabled={busyKey != null || !toPublicImagePath(sourceImageUrl)}
-                      onClick={async () => {
-                        const srcUrl = toPublicImagePath(sourceImageUrl);
-                        if (!srcUrl) return;
-                        setError(null);
-                        try {
-                          const dataUrl = await imageUrlToDataUrl(srcUrl);
-                          await generateOne(combo, dataUrl);
-                        } catch (err) {
-                          setError(err instanceof Error ? err.message : 'Generate failed');
-                        } finally {
-                          setBusyKey(null);
-                        }
+                      helpKey="admin.product_series.appearance_upload"
+                      variant="ghost"
+                      className="text-xs"
+                      disabled={busyKey != null}
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = () => {
+                          const file = input.files?.[0];
+                          if (file) takeFile(file, photo);
+                        };
+                        input.click();
                       }}
                     >
-                      Generate by AI
+                      Replace
                     </Button>
-                    {photo?.main_image_A ? (
-                      <Button
-                        helpKey="admin.product_series.appearance_remove"
-                        variant="ghost"
-                        className="text-xs text-red-600"
-                        disabled={busyKey != null}
-                        onClick={() => void removeCombo(combo, photo)}
-                      >
-                        Remove
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
-      {unused.length > 0 ? (
-        <div className={`${combos.length >= 2 ? 'mt-6 pt-4 border-t border-gray-100' : ''} space-y-4`}>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-gray-700">Unused photos</h3>
-            <HelpButton helpKey="admin.product_series.appearance_unused" type="button" className="text-xs text-gray-400">
-              ?
-            </HelpButton>
-          </div>
-          <p className="text-sm text-gray-500">
-            These files no longer match the current Finish, Trim, or Reflector tags. They are hidden from the family
-            datasheet until you remove them or restore those tags.
-          </p>
-          {unused.map((photo) => {
-            const combo = comboFromPhoto(photo);
-            const key = appearanceComboKey(photo);
-            const src = toPublicImagePath(photo.main_image_A);
-            return (
-              <div key={photo.id || key} className="flex flex-wrap items-start gap-3 border border-gray-100 rounded p-3">
-                <AdminPhotoSlot src={src} alt={appearanceComboLabel(combo)} compact />
-                <div className="min-w-[12rem] flex-1">
-                  <div className="flex items-center justify-between mb-2 gap-2">
-                    <span className="text-sm font-medium text-gray-700">{appearanceComboLabel(combo)}</span>
-                    <span className="text-xs text-gray-400 shrink-0">Unused</span>
-                  </div>
+                  ) : null}
                   <Button
-                    helpKey="admin.product_series.appearance_unused_remove"
+                    helpKey="admin.product_series.appearance_remove"
                     variant="ghost"
                     className="text-xs text-red-600"
                     disabled={busyKey != null}
-                    onClick={() => void removeCombo(combo, photo)}
+                    onClick={() => void removePhoto(photo)}
                   >
                     Remove
                   </Button>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      ) : null}
+            </div>
+          );
+        })}
+        <ImageFileIntake
+          enabled={busyKey == null}
+          helpKey="admin.product_series.appearance_add"
+          className="block"
+          onFile={(file) => takeFile(file)}
+        >
+          <div className="border border-dashed border-gray-200 rounded p-4 text-sm text-gray-500">
+            Drop, paste, or choose a file to add a photo
+          </div>
+        </ImageFileIntake>
+      </div>
       {error ? <p className="text-xs text-red-600 mt-3 whitespace-pre-line">{error}</p> : null}
       {cutboard}
     </div>

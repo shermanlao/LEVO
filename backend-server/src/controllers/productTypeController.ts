@@ -6,6 +6,7 @@ import { setPublicListCache } from '../lib/publicCache';
 import { strapiMedia } from '../lib/strapiSerialize';
 import { extractStoredImageUrl } from '../lib/productMedia';
 import { parseDatasheetLabels, stringifyDatasheetLabels } from '../lib/shared/datasheet-labels';
+import { isStaffCatalogRequest, publicSeriesVisibleWhere } from '../lib/seriesVisibility';
 
 function serializeProductType(
   row: InstanceType<typeof ProductTypeClass>,
@@ -38,8 +39,11 @@ function serializeProductType(
   };
 }
 
-async function seriesCountByTypeId(): Promise<Map<number, number>> {
-  const rows = await ProductSeries.findAll({ attributes: ['product_type_id'] });
+async function seriesCountByTypeId(publicOnly: boolean): Promise<Map<number, number>> {
+  const rows = await ProductSeries.findAll({
+    attributes: ['product_type_id'],
+    ...(publicOnly ? { where: publicSeriesVisibleWhere() } : {}),
+  });
   const counts = new Map<number, number>();
   for (const row of rows) {
     const typeId = Number(row.get('product_type_id'));
@@ -71,10 +75,10 @@ function typeWritePayload(body: Record<string, unknown>) {
   return payload;
 }
 
-export const getAllProductTypes = asyncHandler(async (_req: Request, res: Response) => {
+export const getAllProductTypes = asyncHandler(async (req: Request, res: Response) => {
   const [productTypes, seriesCounts] = await Promise.all([
     ProductType.findAll(),
-    seriesCountByTypeId(),
+    seriesCountByTypeId(!isStaffCatalogRequest(req)),
   ]);
   setPublicListCache(res);
   res.json({

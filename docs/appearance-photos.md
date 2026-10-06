@@ -1,14 +1,32 @@
 # Appearance photos
 
-Staff pre-generate **Finish**, **Trim**, and **Reflector** product photos on `/admin/product-series/[id]`. Visitors and datasheets only read stored files — AI never runs at download time.
+Staff upload a **tagged photo library** on `/admin/product-series/[id]`. Visitors, SKU datasheets, and the family datasheet only read stored files — AI never runs at download time.
 
-Size pack photos stay on the size row (Main A/B and size drawing). Appearance photos are a separate series table.
+Size pack photos stay on the size row (Main A/B and size drawing). Appearance photos are a separate series table. There is no required Finish × Trim × Reflector grid.
 
-## Labels
+## Tags
 
-Database keys stay `colour`, `trim_color`, and `reflector_finish`. Display names are **Finish**, **Trim**, and **Reflector** (`variantKindLabel` via [`product-specs.ts`](../backend-server/src/lib/shared/product-specs.ts)).
+Each photo can carry **Finish**, **Trim**, **Reflector**, and **Size**. One value per tag; click again to clear. An empty tag means “any”. Size uses the series Size option value (the same label as the product table Size column).
 
-SKU coding has three segments (no Trim→Finish fallback): Finish, Trim, Reflector. A segment is omitted when that kind is empty or **N/A**.
+Database keys stay `colour`, `trim_color`, `reflector_finish`, and `size`. Display names are **Finish**, **Trim**, **Reflector**, and **Size** (`variantKindLabel` via [`product-specs.ts`](../backend-server/src/lib/shared/product-specs.ts) / [`series-options.ts`](../backend-server/src/lib/shared/series-options.ts)).
+
+SKU coding has three appearance segments (no Trim→Finish fallback): Finish, Trim, Reflector. A segment is omitted when that kind is empty or **N/A**.
+
+## Matching
+
+A photo is compatible with a variant only when **every tag that is set** equals that variant. A disagreeing tag drops the photo, so a White + size photo never shows on another size or another finish.
+
+Compatible photos are ordered **most match → least match**: more tags first, then newer `id`. The product photo uses that chain:
+
+1. Most match
+2. 2nd most match
+3. … continuing down …
+4. Least match (fewest tags, including a photo with no tags)
+5. Size Main A only when the chain is empty
+
+The table thumbnail and the SKU datasheet hero use the first photo. The series hero carousel lists the chain, best first. If a stored path is empty, the next photo in the chain is used.
+
+Example: Photo A tagged White, Photo B tagged White and `L172.5 x W92 x H76mm`. That size shows B then A. Any other white size shows A only. Black shows neither; size Main A fills the slot.
 
 ## N/A
 
@@ -17,38 +35,34 @@ Finish, Trim, and Reflector each have an **N/A** chip on the series page (not a 
 - Exclusive with real values
 - Stored as series option value `N/A`
 - Hidden from visitor dropdowns, datasheet spec rows, and SKU codes
-- Skipped from the appearance photo cartesian
-- LED strip: set all three to N/A — no appearance grid; public photo is size Main A
+- LED strip: set all three to N/A — public photo still uses tagged library photos, then size Main A
 
-Empty tags still mean “not configured yet.”
+Empty tags on a photo still mean “any”.
 
-## Staff generate
+## Staff upload
 
-1. Tag Finish / Trim / Reflector (or N/A), save if needed
-2. Upload size Main A
-3. Missing combinations generate sequentially from that photo as **pending previews** (the page does not reload). Nothing is written to the database until staff Confirm
-4. Staff review: Confirm / Discard the preview, Upload, Generate by AI, or Remove. Hover a photo to enlarge; click for the lightbox
-5. **Generate missing** fills empty cells later without overwriting existing photos. Confirm each preview or **Confirm all**
-6. **Generate all** generates every combination in one pass as pending previews. It regenerates AI photos and skips staff uploads. Confirm to save
-7. Photos left over from tags you later cleared (for example Finish White after switching Finish to N/A) appear under **Unused photos**. They are hidden from the family datasheet until you Remove them or restore those tags
+1. **Add photo** as many times as needed (drop, paste, or choose a file). Uploads open the shared crop board at the 1:1 catalog frame
+2. Tag Finish / Trim / Reflector / Size on that photo. Tags save immediately
+3. Optional: **Generate by AI** recolors size Main A using this photo’s Finish / Trim / Reflector tags (size is not sent). The preview stays pending until Confirm
+4. Replace or Remove a single photo. Hover a photo to enlarge; click for the lightbox
 
-The Appearance photos card sits directly under Size. Placeholders are square, matching product photos. Staff can drop a photo, paste from the clipboard while the placeholder is hovered, or choose a file. Uploads open the shared crop board at that 1:1 frame.
+Photos whose tags are no longer on the series stay in the library (status **Unused tags**) and are omitted from the family datasheet until you clear those tags or restore the series options.
 
-Fewer than two appearance combinations skips AI (the size Main A is enough).
+The Appearance photos card sits directly under Size. Placeholders are square, matching product photos.
 
 ## Data
 
-Table `series_appearance_photos`: `series_id`, `colour`, `trim_color`, `reflector_finish` (empty string when unused), `main_image_A`, `source_product_id`, `generated_by_ai`. Unique on the combo.
+Table `series_appearance_photos`: `series_id`, `colour`, `trim_color`, `reflector_finish`, `size` (empty string when unused), `main_image_A`, `source_product_id`, `generated_by_ai`. Several photos may share the same tags.
 
-Helpers: [`appearance-photos.ts`](../backend-server/src/lib/shared/appearance-photos.ts) (`appearanceComboRows`, `findAppearancePhoto`, `findExactAppearancePhoto`, `familyAppearancePhotoRows`, `unusedAppearancePhotos`, prompt lines). The family datasheet prints only current combo rows (`familyAppearancePhotoRows`), not leftover unused photos.
+Helpers: [`appearance-photos.ts`](../backend-server/src/lib/shared/appearance-photos.ts) (`rankAppearancePhotos` / `findAppearancePhoto` for the catalog and SKU datasheet, `familyAppearancePhotoRows` / `unusedAppearancePhotos` / `photoTagsOnSeries` for the family sheet, prompt lines). The family datasheet prints every current tagged photo (`familyAppearancePhotoRows`), captioned with its tags, not leftover unused photos.
 
 ## APIs (admin session)
 
 - `POST /api/admin/ai/generate-appearance-photo` `{ imageDataUrl, colour?, trim_color?, reflector_finish? }`
-- `GET` / `PUT` / `DELETE /api/product-series/:id/appearance-photos`
+- `GET` / `PUT` / `DELETE /api/product-series/:id/appearance-photos` — PUT and DELETE key by photo `id` (PUT without `id` creates a new row)
 
-Public series JSON includes `attributes.appearance_photos`. `resolveSeriesConfig` overlays `main_image_A` from the matching appearance photo after the size pack.
+Public series JSON includes `attributes.appearance_photos` (each item includes `size`). `resolveSeriesConfig` overlays `main_image_A` from the first photo in `rankAppearancePhotos` after the size pack.
 
 ## Help tips
 
-`admin.product_series.appearance_photos`, `appearance_generate`, `appearance_generate_missing`, `appearance_generate_all`, `appearance_confirm`, `appearance_discard`, `appearance_confirm_all`, `appearance_discard_all`, `appearance_upload`, `appearance_remove`, `appearance_cancel`, `appearance_unused`, `appearance_unused_remove`, `admin.product_series.appearance_na`, `catalog.series.colour`, `catalog.series.trim_color`, `catalog.series.reflector_finish`.
+`admin.product_series.appearance_photos`, `appearance_add`, `appearance_tag`, `appearance_generate`, `appearance_confirm`, `appearance_discard`, `appearance_confirm_all`, `appearance_discard_all`, `appearance_upload`, `appearance_remove`, `admin.product_series.appearance_na`, `catalog.series.colour`, `catalog.series.trim_color`, `catalog.series.reflector_finish`.

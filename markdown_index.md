@@ -11,7 +11,7 @@
 - [Product codes](docs/product-codes.md) — LEVO SKUs (`DL00007`), vendor_code, and spec-based public names
 - [Public product catalog API](docs/product-catalog-api.md) — by-slug / by-path routes and Strapi-like product JSON
 - [Series variant configurator](docs/series-configurator.md) — series option lists (including size), series page selectors, custom datasheet / LDT / installation
-- [Appearance photos](docs/appearance-photos.md) — Finish / Trim / Reflector photos generated at staff upload, N/A when a part is missing
+- [Appearance photos](docs/appearance-photos.md) — tagged Finish / Trim / Reflector / Size library; most-specific matching photo wins on the series page and datasheets
 - [Variant options](docs/variant-options.md) — global spec option labels, SKU codes, and datasheet badge artwork (`/admin/variant-options`)
 - [Contact Us page](docs/contact-page.md) — `/contact` page, seeded contact details, inquiry form API, and `/admin/inquiries`
 - [Resource pages](docs/resource-pages.md) — footer Resources / Media columns and staff-editable `/warranty`, `/certifications`, `/technical`

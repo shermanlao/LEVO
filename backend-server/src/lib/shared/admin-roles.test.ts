@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  canDeleteProductSeries,
   canManageUsers,
   defaultPagesForRole,
   defaultRolePageMatrix,
@@ -34,6 +35,9 @@ describe('admin roles and page access', () => {
     assert.equal(roleCanOpenPage('system', 'users', []), true);
     assert.equal(canManageUsers('admin'), true);
     assert.equal(canManageUsers('operation'), false);
+    assert.equal(canDeleteProductSeries('system'), true);
+    assert.equal(canDeleteProductSeries('admin'), true);
+    assert.equal(canDeleteProductSeries('operation'), false);
   });
 
   it('maps admin paths and backend prefixes to page keys', () => {
