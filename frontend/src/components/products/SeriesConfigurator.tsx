@@ -248,7 +248,6 @@ export default function SeriesConfigurator({
       if (!urls.length) add(seriesImageUrl);
     } else {
       add(seriesImageUrl);
-      rankedUrls.forEach(add);
     }
     if (!urls.length) return null;
     const hero = urls[0];

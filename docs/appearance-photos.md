@@ -26,7 +26,7 @@ Compatible photos are ordered **most match → least match**: more tags first, t
 4. Least match (fewest tags, including a photo with no tags)
 5. Series featured photo (`featured_image_page`, then an older datasheet crop, then the old source) only when the chain is empty
 
-The table thumbnail and the SKU datasheet hero use the first photo. The series hero carousel lists the chain, best first. If a stored path is empty, the next photo in the chain is used.
+The table thumbnail and the SKU datasheet hero use the first photo. Before the visitor picks options, the series hero shows only the series featured photo. After a pick, the carousel lists the chain, best first, and falls back to that featured photo only when the chain is empty. If a stored path is empty, the next photo in the chain is used.
 
 Example: Photo A tagged White, Photo B tagged White and `L172.5 x W92 x H76mm`. That size shows B then A. Any other white size shows A only. Black shows neither; the series photo fills the slot.
 
