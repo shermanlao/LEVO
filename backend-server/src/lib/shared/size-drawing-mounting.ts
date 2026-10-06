@@ -2,7 +2,7 @@ export function mountingNeedsCuthole(mounting: string | null | undefined): boole
   return /\b(recessed|recess|inground)\b/i.test((mounting ?? '').trim());
 }
 
-export type SizeDrawingMissingField = 'main_photo' | 'size' | 'cuthole';
+export type SizeDrawingMissingField = 'product_photo' | 'size' | 'cuthole';
 
 export function getSizeDrawingMissingFields(input: {
   mainPhoto: string | null | undefined;
@@ -14,7 +14,7 @@ export function getSizeDrawingMissingFields(input: {
   const main = typeof input.mainPhoto === 'string' ? input.mainPhoto.trim() : String(input.mainPhoto || '').trim();
   const size = String(input.size ?? '').trim();
   const cuthole = String(input.cuthole ?? '').trim();
-  if (!main) missing.push('main_photo');
+  if (!main) missing.push('product_photo');
   if (!size) missing.push('size');
   if (mountingNeedsCuthole(input.mounting) && !cuthole) missing.push('cuthole');
   return missing;
@@ -22,7 +22,7 @@ export function getSizeDrawingMissingFields(input: {
 
 export function formatSizeDrawingMissingMessage(missing: SizeDrawingMissingField[]): string {
   const labels: Record<SizeDrawingMissingField, string> = {
-    main_photo: 'Main photo',
+    product_photo: 'Product photo',
     size: 'Size Dimensions',
     cuthole: 'Cut Hole Size (required for recessed / recess / inground mounting)',
   };

@@ -12,9 +12,10 @@ import { storedProductImagePath, toPublicImagePath } from '@/lib/image-utils';
 import { dataUrlToFile, imageUrlToDataUrl } from '@/lib/sizeDrawingCropClient';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
+import ProductPhotoStyleDialog from '@/components/ai/ProductPhotoStyleDialog';
 import {
-  APPEARANCE_KINDS,
   PHOTO_TAG_KINDS,
+  appearanceAiSourcePath,
   appearanceAxisValues,
   appearanceComboLabel,
   normalizeAppearanceCombo,
@@ -30,8 +31,8 @@ type AppearancePhotosProps = {
   seriesSlug: string;
   options: SeriesOptionDto[];
   photos: AppearancePhotoDto[];
-  sourceImageUrl: string;
-  sourceProductId?: number;
+  seriesImageUrl?: string;
+  fixtureDescription?: string;
   onPhotosChange?: (photos: AppearancePhotoDto[]) => void;
 };
 
@@ -55,17 +56,13 @@ function comboFromPhoto(photo: AppearancePhotoDto): AppearanceCombo {
   return normalizeAppearanceCombo(photo);
 }
 
-function canAiGenerate(combo: AppearanceCombo): boolean {
-  return APPEARANCE_KINDS.some((kind) => Boolean(combo[kind]));
-}
-
 export default function AppearancePhotos({
   seriesId,
   seriesSlug,
   options,
   photos,
-  sourceImageUrl,
-  sourceProductId,
+  seriesImageUrl = '',
+  fixtureDescription = '',
   onPhotosChange,
 }: AppearancePhotosProps) {
   const grouped = useMemo(() => groupOptionsByKind(options), [options]);
@@ -73,6 +70,8 @@ export default function AppearancePhotos({
   const [pending, setPending] = useState<Record<string, string>>({});
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasPhotoStyle, setHasPhotoStyle] = useState<boolean | null>(null);
+  const [stylePhoto, setStylePhoto] = useState<AppearancePhotoDto | null>(null);
   const { requestCrop, cutboard } = useImageCutboard();
   const photosRef = useRef(localPhotos);
   const pendingRef = useRef(pending);
@@ -82,6 +81,19 @@ export default function AppearancePhotos({
   useEffect(() => {
     setLocalPhotos(photos);
   }, [photos]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/admin/ai/settings', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setHasPhotoStyle(Boolean(data.data?.product_photo_style_image));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const leftover = useMemo(() => unusedAppearancePhotos(localPhotos, grouped), [grouped, localPhotos]);
   const leftoverIds = useMemo(() => new Set(leftover.map((photo) => photo.id)), [leftover]);
@@ -136,7 +148,7 @@ export default function AppearancePhotos({
     }
     const body: Record<string, unknown> = {
       ...input.combo,
-      source_product_id: sourceProductId || null,
+      source_product_id: null,
     };
     if (input.id) body.id = input.id;
     if (path) body.main_image_A = path;
@@ -154,7 +166,7 @@ export default function AppearancePhotos({
       ...input.combo,
       id: input.id,
       main_image_A: path,
-      source_product_id: sourceProductId || null,
+      source_product_id: null,
       generated_by_ai: Boolean(input.generated),
     };
     upsertPhoto(photo);
@@ -322,7 +334,7 @@ export default function AppearancePhotos({
   }
 
   const canConfirm = busyKey == null && pendingKeys.length > 0;
-  const sourceUrl = toPublicImagePath(sourceImageUrl);
+  const stylePhotoUrl = stylePhoto ? toPublicImagePath(stylePhoto.main_image_A) : '';
 
   function tagValues(kind: PhotoTagKind, selected: string): string[] {
     const values = appearanceAxisValues(grouped, kind);
@@ -371,7 +383,7 @@ export default function AppearancePhotos({
       </div>
       <p className="text-sm text-gray-500 mb-4">
         Upload as many photos as you need. Tag Finish, Trim, Reflector, and Size. A product row uses the most specific
-        matching photo, then the next, down to an untagged photo.
+        matching photo, then the next, down to an untagged photo, then the series photo.
       </p>
       <div className="space-y-4">
         {localPhotos.map((photo, index) => {
@@ -448,8 +460,16 @@ export default function AppearancePhotos({
                     helpKey="admin.product_series.appearance_generate"
                     variant="secondary"
                     className="text-xs py-1 px-2"
-                    disabled={busyKey != null || !sourceUrl || !canAiGenerate(combo)}
+                    disabled={
+                      busyKey != null ||
+                      !toPublicImagePath(
+                        appearanceAiSourcePath(localPhotos, photo, [seriesImageUrl])
+                      )
+                    }
                     onClick={async () => {
+                      const sourceUrl = toPublicImagePath(
+                        appearanceAiSourcePath(localPhotos, photo, [seriesImageUrl])
+                      );
                       if (!sourceUrl) return;
                       setError(null);
                       try {
@@ -464,6 +484,24 @@ export default function AppearancePhotos({
                   >
                     Generate by AI
                   </Button>
+                  {src && !pendingSrc ? (
+                    <Button
+                      helpKey="admin.product_series.photo_style_match"
+                      variant="secondary"
+                      className="text-xs py-1 px-2"
+                      disabled={busyKey != null}
+                      onClick={() => {
+                        if (hasPhotoStyle === false) {
+                          setError('Upload a catalog photo style on /admin/ai first.');
+                          return;
+                        }
+                        setError(null);
+                        setStylePhoto(photo);
+                      }}
+                    >
+                      Match catalog style
+                    </Button>
+                  ) : null}
                   {src ? (
                     <Button
                       helpKey="admin.product_series.appearance_upload"
@@ -511,6 +549,22 @@ export default function AppearancePhotos({
       </div>
       {error ? <p className="text-xs text-red-600 mt-3 whitespace-pre-line">{error}</p> : null}
       {cutboard}
+      <ProductPhotoStyleDialog
+        open={Boolean(stylePhoto && stylePhotoUrl)}
+        imageUrl={stylePhotoUrl}
+        photoType="appearance"
+        fixtureDescription={fixtureDescription}
+        onClose={() => setStylePhoto(null)}
+        onApply={async (file) => {
+          if (!stylePhoto) return;
+          await persistPhoto({
+            combo: comboFromPhoto(stylePhoto),
+            file,
+            generated: false,
+            id: stylePhoto.id,
+          });
+        }}
+      />
     </div>
   );
 }

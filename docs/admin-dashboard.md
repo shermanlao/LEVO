@@ -8,7 +8,7 @@
 2. **Stat tiles** — size packs, types, series, projects, inquiries (7 days), unique visitors (7 days), page views (7 days), featured series. Tiles that have an admin list page are links (inquiries open `/admin/inquiries`; catalog tiles open series).
 3. **Top pages** — last 7 days, if any visitor hits exist.
 4. **Shortcuts** — Catalog (Product Types, Series, **Variant**, plus partner catalog and LDT library), Projects (plus Contact inquiries), Settings, **AI** (**Open AI settings** → `/admin/ai`), Users (system/admin, plus **Page access**). Cards follow the role page matrix. Settings opens `/admin/settings` for brand, homepage, contact, and SEO. See [admin-site-settings.md](admin-site-settings.md). **Variant** (`/admin/variant-options`) is the global option+code catalog; series pages add those options as tags. See [variant-options.md](variant-options.md).
-5. **Needs attention** — series with no featured image, size packs with no main photo, inquiries in the last 7 days. Each row is a link. Hidden when all are zero.
+5. **Needs attention** — series with no featured image, series with no appearance photos, inquiries in the last 7 days. Each row is a link. Hidden when all are zero.
 
 Counts come from `GET /api/admin/dashboard` (session required). Next proxies to Express `GET /api/dashboard`. Staff and admin can load it; the user count is included only for admin.
 

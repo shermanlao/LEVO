@@ -71,7 +71,7 @@ export default function ProductPhotoStyleDialog({
               aspect: IMAGE_FRAMES.product.label,
               width: IMAGE_FRAMES.product.maxEdge,
               height: IMAGE_FRAMES.product.maxEdge,
-              label: 'square catalog photo slot (Main A / Main B)',
+              label: 'square catalog photo slot',
             },
           }),
         });

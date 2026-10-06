@@ -1782,7 +1782,7 @@ export async function buildFamilyDatasheetPdf(
 
   const firstPack =
     findSizePack(products, familyOptionsForKind(grouped, SIZE_KIND)[0]?.value, grouped) ||
-    products.find((product) => optionText(product.main_image_A)) ||
+    products[0] ||
     null;
 
   const [logo, featuredStored, contact, catalog, appearanceRows] = await Promise.all([
@@ -1797,8 +1797,7 @@ export async function buildFamilyDatasheetPdf(
     loadVariantCatalog(),
     Number.isInteger(seriesId) ? loadAppearancePhotos(seriesId) : Promise.resolve([]),
   ]);
-  const featured =
-    featuredStored || (firstPack ? await loadProductAsset(firstPack, 'main_image_A') : null);
+  const featured = featuredStored;
 
   const origin = publicSiteOrigin(contact.website);
   const pageUrl = familyCatalogPageUrl(series, origin);

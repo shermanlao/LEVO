@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import Product from '../models/Product';
 import ProductSeries from '../models/ProductSeries';
 import ProductType from '../models/ProductType';
@@ -250,8 +251,6 @@ export async function resolveSeriesConfig(
 
   if (sizePack) {
     spec.id = sizePack.id;
-    spec.main_image_A = sizePack.main_image_A || spec.main_image_A;
-    spec.main_image_B = sizePack.main_image_B || null;
     spec.size_image = sizePack.size_image || null;
     spec.application_image = sizePack.application_image || null;
     copyPackDatasheetFields(spec, sizePack);
@@ -259,8 +258,6 @@ export async function resolveSeriesConfig(
   } else {
     const firstWithSize = productPlains.find((product) => optionText(product.size_image));
     spec.size_image = firstWithSize?.size_image || null;
-    const firstPhoto = productPlains.find((product) => optionText(product.main_image_A));
-    if (!spec.main_image_A) spec.main_image_A = firstPhoto?.main_image_A || null;
   }
 
   const appearance = findAppearancePhoto(await loadAppearancePhotos(seriesId), spec);
@@ -420,8 +417,6 @@ export async function upsertSeriesSizePacks(
 
 function sizeImagePatch(size: SeriesOptionDto): Record<string, string | null> {
   const patch: Record<string, string | null> = {};
-  if (size.main_image_A !== undefined) patch.main_image_A = optionText(size.main_image_A) || null;
-  if (size.main_image_B !== undefined) patch.main_image_B = optionText(size.main_image_B) || null;
   if (size.size_image !== undefined) patch.size_image = optionText(size.size_image) || null;
   return patch;
 }
@@ -511,6 +506,61 @@ export async function backfillSeriesOptionsFromProducts(): Promise<void> {
         await series.update({ ldt_family: withFamily.get('ldt_family') });
       }
     }
+  }
+}
+
+export async function migrateSizePackMainPhotosToAppearance(): Promise<void> {
+  const packs = await Product.findAll({ where: { series_id: { [Op.ne]: null } } });
+  const pending = packs.filter((pack) => {
+    const rec = pack.get({ plain: true }) as Record<string, unknown>;
+    return Boolean(optionText(rec.main_image_A) || optionText(rec.main_image_B));
+  });
+  if (!pending.length) return;
+
+  const seriesIds = [
+    ...new Set(pending.map((pack) => Number(pack.get('series_id'))).filter((id) => Number.isInteger(id))),
+  ];
+  const [sizeOptions, existingPhotos] = await Promise.all([
+    SeriesOption.findAll({ where: { series_id: seriesIds, kind: SIZE_KIND } }),
+    SeriesAppearancePhoto.findAll({ where: { series_id: seriesIds } }),
+  ]);
+  const sizesBySeries = new Map<number, SeriesOptionDto[]>();
+  for (const option of sizeOptions) {
+    const seriesId = Number(option.get('series_id'));
+    const list = sizesBySeries.get(seriesId) || [];
+    list.push(serializeSeriesOption(option));
+    sizesBySeries.set(seriesId, list);
+  }
+  const existingPaths = new Set(
+    existingPhotos.map(
+      (row) => `${Number(row.get('series_id'))}|${optionText(row.get('main_image_A'))}`
+    )
+  );
+
+  for (const pack of pending) {
+    const rec = pack.get({ plain: true }) as Record<string, unknown>;
+    const seriesId = Number(rec.series_id);
+    const sizeList = sizesBySeries.get(seriesId) || [];
+    const sizeOption = sizeList.find((option) => productMatchesSize(rec, option));
+    const sizeValue =
+      optionText(sizeOption?.value) || sizeLabel(optionText(rec.dimensions), optionText(rec.cutout_size));
+    const paths = [optionText(rec.main_image_A), optionText(rec.main_image_B)].filter(Boolean);
+    for (const path of paths) {
+      const key = `${seriesId}|${path}`;
+      if (existingPaths.has(key)) continue;
+      await SeriesAppearancePhoto.create({
+        series_id: seriesId,
+        colour: '',
+        trim_color: '',
+        reflector_finish: '',
+        size: sizeValue,
+        main_image_A: path,
+        source_product_id: Number(rec.id) || null,
+        generated_by_ai: false,
+      });
+      existingPaths.add(key);
+    }
+    await pack.update({ main_image_A: null, main_image_B: null });
   }
 }
 

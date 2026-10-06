@@ -3,7 +3,12 @@ import ProductSeries from '../models/ProductSeries';
 import ProductType from '../models/ProductType';
 import { LightXProduct } from './lightxClient';
 import { levoDisplayName } from './productCode';
-import { loadSeriesOptions, mergeProductIntoSeriesOptions, upsertSeriesSizePacks } from './seriesConfig';
+import {
+  loadSeriesOptions,
+  mergeProductIntoSeriesOptions,
+  migrateSizePackMainPhotosToAppearance,
+  upsertSeriesSizePacks,
+} from './seriesConfig';
 import { findSizePack, groupOptionsByKind, optionText, sizeLabel } from './shared/series-options';
 
 export const LIGHTX_SOURCE = 'lightx';
@@ -155,12 +160,15 @@ export async function importLightXProduct(
   copyPhotoIfEmpty(current, patch, 'photometric_image', fields.photometric_image);
   copyPhotoIfEmpty(current, patch, 'featured_image', fields.featured_image);
 
-  const wasNew = !optionText(current.main_image_A) && Boolean(fields.main_image_A);
+  const copiedMain = Boolean(patch.main_image_A);
   if (Object.keys(patch).length > 1) await pack.update(patch);
+  if (copiedMain || patch.main_image_B) {
+    await migrateSizePackMainPhotosToAppearance();
+  }
 
   return {
     id: externalId,
-    status: wasNew ? 'created' : 'updated',
+    status: copiedMain ? 'created' : 'updated',
     productId: Number(pack.get('id')),
   };
 }

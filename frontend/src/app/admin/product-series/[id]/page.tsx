@@ -94,8 +94,6 @@ function draftsFromOptions(
         dimensions: option.dimensions || '',
         cutout_size: option.cutout_size || '',
         packId: pack?.id,
-        main_image_A: String(pack?.attributes?.main_image_A || ''),
-        main_image_B: String(pack?.attributes?.main_image_B || ''),
         size_image: String(pack?.attributes?.size_image || ''),
       };
     });
@@ -127,8 +125,6 @@ function flattenDrafts(drafts: Record<string, DraftOption[]>): SeriesOptionDto[]
         cutout_size: field.key === SIZE_KIND ? optionText(row.cutout_size) || null : null,
         code: optionText(row.code) || null,
         pack_id: field.key === SIZE_KIND ? row.packId ?? null : null,
-        main_image_A: field.key === SIZE_KIND ? optionText(row.main_image_A) || null : null,
-        main_image_B: field.key === SIZE_KIND ? optionText(row.main_image_B) || null : null,
         size_image: field.key === SIZE_KIND ? optionText(row.size_image) || null : null,
       });
       sort += 1;
@@ -166,8 +162,6 @@ export default function SeriesVariantEditorPage() {
   const [datasheetLabels, setDatasheetLabels] = useState<DatasheetLabel[]>([]);
   const [appearancePhotos, setAppearancePhotos] = useState<AppearancePhotoDto[]>([]);
   const [stylePhotoUrl, setStylePhotoUrl] = useState('');
-  const [uploadedMainA, setUploadedMainA] = useState('');
-  const [uploadedSourceId, setUploadedSourceId] = useState<number | undefined>();
 
   async function load() {
     setLoading(true);
@@ -281,25 +275,59 @@ export default function SeriesVariantEditorPage() {
     });
   }
 
-  function duplicateSize(index: number) {
+  async function duplicateSize(index: number) {
+    const list = drafts[SIZE_KIND] || [];
+    const source = list[index];
+    if (!source) return;
+    const baseLabel = optionText(source.value) || optionText(source.dimensions);
+    const copyLabel = baseLabel ? `${baseLabel} (copy)` : '';
+    const sourceSize = optionText(source.value) || optionText(source.dimensions);
     setDrafts((prev) => {
-      const list = [...(prev[SIZE_KIND] || [])];
-      const source = list[index];
-      if (!source) return prev;
-      const baseLabel = optionText(source.value) || optionText(source.dimensions);
-      const copyLabel = baseLabel ? `${baseLabel} (copy)` : '';
+      const nextList = [...(prev[SIZE_KIND] || [])];
       const copy = emptyDraft({
         value: copyLabel,
         code: source.code,
         dimensions: source.dimensions,
         cutout_size: source.cutout_size,
-        main_image_A: source.main_image_A,
-        main_image_B: source.main_image_B,
         size_image: source.size_image,
       });
-      list.splice(index + 1, 0, copy);
-      return { ...prev, [SIZE_KIND]: list };
+      nextList.splice(index + 1, 0, copy);
+      return { ...prev, [SIZE_KIND]: nextList };
     });
+    if (!copyLabel || !sourceSize) return;
+    const copies = appearancePhotos.filter(
+      (photo) => valuesEqual('size', optionText(photo.size), sourceSize) && optionText(photo.main_image_A)
+    );
+    if (!copies.length) return;
+    try {
+      const next = [...appearancePhotos];
+      for (const photo of copies) {
+        const saved = await adminFetchJson<{ data?: AppearancePhotoDto }>(
+          `/product-series/${id}/appearance-photos`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              colour: photo.colour || '',
+              trim_color: photo.trim_color || '',
+              reflector_finish: photo.reflector_finish || '',
+              size: copyLabel,
+              main_image_A: photo.main_image_A,
+              generated_by_ai: Boolean(photo.generated_by_ai),
+            }),
+          }
+        );
+        if (!saved.ok) throw new Error(saved.error);
+        const created =
+          saved.data && typeof saved.data === 'object' && 'data' in saved.data && saved.data.data
+            ? saved.data.data
+            : (saved.data as AppearancePhotoDto | undefined);
+        if (created?.main_image_A) next.push(created);
+      }
+      setAppearancePhotos(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not copy appearance photos');
+    }
   }
 
   function tagsForKind(kind: string): Array<{ value: string; code: string; selected: boolean }> {
@@ -560,7 +588,7 @@ export default function SeriesVariantEditorPage() {
                               <Button
                                 helpKey="admin.product_series.size_duplicate"
                                 variant="secondary"
-                                onClick={() => duplicateSize(index)}
+                                onClick={() => void duplicateSize(index)}
                               >
                                 Duplicate
                               </Button>
@@ -578,11 +606,8 @@ export default function SeriesVariantEditorPage() {
                               </Button>
                             </div>
                             <SizePackPhotos
-                              productId={row.packId}
                               seriesSlug={slug}
                               images={{
-                                main_image_A: row.main_image_A,
-                                main_image_B: row.main_image_B,
                                 size_image: row.size_image,
                               }}
                               size={optionText(row.dimensions) || optionText(row.value)}
@@ -592,16 +617,13 @@ export default function SeriesVariantEditorPage() {
                                 descriptionPhrase,
                                 phraseSpecFromOptionDrafts(drafts, row)
                               )}
-                              styledSourceUrl={stylePhotoUrl}
+                              appearancePhotos={appearancePhotos}
+                              seriesImageUrl={stylePhotoUrl}
                               mounting={(drafts.mounting_type || [])
                                 .map((item) => optionText(item.value))
                                 .filter(Boolean)
                                 .join(', ')}
                               onChanged={(patch) => updateRow(field.key, index, patch)}
-                              onMainAUploaded={({ productId, imagePath }) => {
-                                setUploadedMainA(imagePath);
-                                setUploadedSourceId(productId);
-                              }}
                             />
                           </div>
                         ))}
@@ -684,15 +706,8 @@ export default function SeriesVariantEditorPage() {
                     seriesSlug={slug}
                     options={flattenDrafts(drafts)}
                     photos={appearancePhotos}
-                    sourceImageUrl={
-                      uploadedMainA ||
-                      (drafts[SIZE_KIND] || []).map((row) => optionText(row.main_image_A)).find(Boolean) ||
-                      ''
-                    }
-                    sourceProductId={
-                      uploadedSourceId ||
-                      (drafts[SIZE_KIND] || []).find((row) => optionText(row.main_image_A))?.packId
-                    }
+                    seriesImageUrl={stylePhotoUrl}
+                    fixtureDescription={fillPhraseTemplate(descriptionPhrase, phraseSpecFromOptionDrafts(drafts))}
                     onPhotosChange={setAppearancePhotos}
                   />
                 ) : null}

@@ -1,14 +1,14 @@
 # Product photo AI
 
-On `/admin/product-series/[id]`, each size pack can generate a **size drawing** from Main A. **Add size** shows Main A, Main B, and Size drawing immediately. Upload, AI Apply, and Remove only stage the slot on the form; **Save variants** writes those paths onto the size pack. Configure keys at `/admin/ai`.
+On `/admin/product-series/[id]`, each size pack can generate a **size drawing** from a product photo. **Add size** shows Size drawing immediately. Upload, AI Apply, and Remove only stage the drawing on the form; **Save variants** writes `size_image` onto the size pack. Product photos live in Appearance photos. Configure keys at `/admin/ai`.
 
 ## Size drawing
 
 On the Size drawing slot, **Generate by AI**:
 
-1. Main A, Dimensions (`dimensions` or the size label), and Cutout when series mounting is recessed / recess / inground
+1. A product photo tagged with this size (else any appearance photo, else the series featured photo), Dimensions (`dimensions` or the size label), and Cutout when series mounting is recessed / recess / inground
 2. Series **Description** and the filled **Phrase template** (this size pack plus other tags)
-3. Focus crop on the main photo (starts full-frame)
+3. Focus crop on the product photo (starts full-frame)
 4. Generate a 2D size drawing (white/transparent background; only provided dimensions)
 5. Refine with chat, then **Apply** to `size_image`
 
@@ -18,7 +18,7 @@ Upload an optional **style reference** on `/admin/ai` (Size drawing style). When
 
 ## Appearance photos
 
-On the same series page, **Generate by AI** on a tagged library photo edits size Main A using that photo’s Finish / Trim / Reflector tags. Staff must **Confirm** (or Confirm all) before the preview is stored. Discard leaves the previous saved photo. See [appearance-photos.md](appearance-photos.md).
+On the same series page, **Generate by AI** on a tagged library photo edits that card (or another library photo if the slot is empty, then the series photo) using Finish / Trim / Reflector tags when they are set. Staff must **Confirm** (or Confirm all) before the preview is stored. Discard leaves the previous saved photo. Filled photos also show **Match catalog style**. See [appearance-photos.md](appearance-photos.md).
 
 ## Card photo
 
@@ -26,19 +26,19 @@ On Add / Edit series and Add / Edit product type, **Extend to 16:9** builds `fea
 
 ## Edit with AI
 
-On Add / Edit series and Add / Edit product type, click the **source photo** or the **Card photo** to open **Edit photo with AI** (the same chat as a LIGHTX product photo). The dialog is drawn outside the parent form, and **Send** is not a form submit, so it does not reload the page. Describe the change and Send, or Upscale. Apply uploads the preview into that slot and, on an existing series or type, saves it immediately. Reset or Close keeps the current file. Empty placeholders still drop, paste, or choose a file. Size drawings still use **Generate by AI** and its refine chat. Size Main A / Main B can still **Match catalog style** on that slot. Other admin thumbs still enlarge on click.
+On Add / Edit series and Add / Edit product type, click the **source photo** or the **Card photo** to open **Edit photo with AI** (the same chat as a LIGHTX product photo). The dialog is drawn outside the parent form, and **Send** is not a form submit, so it does not reload the page. Describe the change and Send, or Upscale. Apply uploads the preview into that slot and, on an existing series or type, saves it immediately. Reset or Close keeps the current file. Empty placeholders still drop, paste, or choose a file. Size drawings still use **Generate by AI** and its refine chat. Appearance photos can **Match catalog style**. Other admin thumbs still enlarge on click.
 
 ## Catalog photo style
 
 Upload one house-style product photo on `/admin/ai` (**Catalog photo style**). That file is optional.
 
-On `/admin/product-series/[id]`, size-pack **Main A** and **Main B** stage the cropped vendor file on the form. **Save variants** writes those paths. Filled Main A / Main B show **Match catalog style**. If no catalog style photo is stored, the button explains that `/admin/ai` needs one first. Staff can ignore it. The button:
+On `/admin/product-series/[id]`, filled **appearance photos** show **Match catalog style**. If no catalog style photo is stored, the button explains that `/admin/ai` needs one first. Staff can ignore it. The button:
 
-1. Sends a JPEG (longest edge 1600) plus the stored path, the filled **Phrase template** (`fixtureDescription`), and the **placeholder size** (`placeholderSize`: square 1:1, 1600×1600, same as Main A / Main B) to `POST /api/admin/ai/stylize-product-photo`. The phrase uses this size pack’s dimensions / cutout and joins the other series tags (`phraseSpecFromOptionDrafts`). The API first asks a chat/vision model to **describe the original photo**, then shrinks the catalog style reference and fills the stored **Catalog photo style prompt** from `/admin/ai` (`{{hints_line}}`, `{{placeholder_size}}`; empty or a previous built-in default uses the 3-step prompt). A lock is always prepended so xAI treats `<IMAGE_0>` as the **ORIGINAL PHOTO** and `<IMAGE_1>` as the **REFERENCE PHOTO** (look/scene only). The filled phrase, photo description, and placeholder size are always injected. The default prompt is: remove hidden install parts and cut out; polish the cutout only; place it into the reference-style surround at real-world scale, filling the square catalog slot. One photo uses `image: { url, type }`; two use `image: ["data:…", "data:…"]`.
+1. Sends a JPEG (longest edge 1600) plus the stored path, the filled **Phrase template** (`fixtureDescription`), and the **placeholder size** (`placeholderSize`: square 1:1, 1600×1600) to `POST /api/admin/ai/stylize-product-photo`. The phrase joins the series tags (`phraseSpecFromOptionDrafts`). The API first asks a chat/vision model to **describe the original photo**, then shrinks the catalog style reference and fills the stored **Catalog photo style prompt** from `/admin/ai` (`{{hints_line}}`, `{{placeholder_size}}`; empty or a previous built-in default uses the 3-step prompt). A lock is always prepended so xAI treats `<IMAGE_0>` as the **ORIGINAL PHOTO** and `<IMAGE_1>` as the **REFERENCE PHOTO** (look/scene only). The filled phrase, photo description, and placeholder size are always injected. The default prompt is: remove hidden install parts and cut out; polish the cutout only; place it into the reference-style surround at real-world scale, filling the square catalog slot. One photo uses `image: { url, type }`; two use `image: ["data:…", "data:…"]`.
 2. Shows a preview. Staff can **Refine** with chat (`POST /api/admin/ai/edit-product-photo` on the current preview) to adjust light, crop, scene, etc. **Apply** replaces the slot. **Reset** or Close keeps the original upload
 3. Failures show the provider message (not a generic “Server error”). “Saved key cannot be read” means the xAI/Google key on `/admin/ai` is stored but cannot be decrypted — paste it again and Test connection. A missing catalog style photo is a separate 400.
 
-The model copies the reference website style (ceiling/wall, camera distance, grading) after a clean cutout. It must keep this fixture’s identity from the original photo plus the phrase and the AI photo description — not flatten to a size drawing or paste the reference product. The series **Style photo** uses this same stylize call, then Apply extends that result into a location frame. Appearance and project slots are unchanged.
+The model copies the reference website style (ceiling/wall, camera distance, grading) after a clean cutout. It must keep this fixture’s identity from the original photo plus the phrase and the AI photo description — not flatten to a size drawing or paste the reference product. The series **Style photo** uses this same stylize call, then Apply extends that result into a location frame. Project slots are unchanged.
 
 ## Providers
 
@@ -61,8 +61,8 @@ Generate / refine / stylize on a series or variant page need **Catalog** or **AI
 - `POST /api/admin/ai/refine-size-drawing` `{ imageDataUrl, size, cuthole?, description?, fixtureDescription?, instruction }`
 - `POST /api/admin/ai/generate-appearance-photo` `{ imageDataUrl, colour?, trim_color?, reflector_finish? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/edit-product-photo` `{ imageDataUrl, instruction, photoType?, outpaint? }` — chat refine, or extend a style photo into a location frame. `outpaint` is `{ aspect, axis: "horizontal" | "vertical" }` and does not need `instruction`.
-- `POST /api/admin/ai/stylize-product-photo` `{ imageDataUrl, imageUrl?, fixtureDescription?, placeholderSize? }` — optional Main A / B restyle. Send a data URL and/or a local `/images/` or `/uploads/` path, plus the filled series phrase. The server describes the original photo first, then runs the 3-step style prompt, including the square 1:1 placeholder size (1600×1600 if omitted). 400 if no catalog style photo is stored.
+- `POST /api/admin/ai/stylize-product-photo` `{ imageDataUrl, imageUrl?, fixtureDescription?, placeholderSize? }` — optional appearance-photo restyle. Send a data URL and/or a local `/images/` or `/uploads/` path, plus the filled series phrase. The server describes the original photo first, then runs the 3-step style prompt, including the square 1:1 placeholder size (1600×1600 if omitted). 400 if no catalog style photo is stored.
 - `POST /api/admin/ai/generate-datasheet-label` `{ text, instruction?, imageDataUrl? }` → `{ imageDataUrl, mimeType }`
 - `POST /api/admin/ai/generate-description-phrase` `{ guide, seriesName, typeName?, fields?, existing? }` → `{ phrase }`
 
-Apply uses the existing `/api/upload` path so files stay under `frontend/public/images/products/` (series folder when a `seriesSlug` is sent). Size-pack slots keep that path on the form until **Save variants** writes it on the product row. Datasheet labels store paths on `variant_option_catalog.label_image` when Apply is used on Variant.
+Apply uses the existing `/api/upload` path so files stay under `frontend/public/images/products/` (series folder when a `seriesSlug` is sent). Size drawings keep that path on the form until **Save variants** writes it on the product row. Appearance photos save immediately. Datasheet labels store paths on `variant_option_catalog.label_image` when Apply is used on Variant.

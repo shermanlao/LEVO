@@ -4,6 +4,7 @@ import { asyncHandler } from '../lib/asyncHandler';
 import Product from '../models/Product';
 import ProductType from '../models/ProductType';
 import ProductSeries from '../models/ProductSeries';
+import SeriesAppearancePhoto from '../models/SeriesAppearancePhoto';
 import Project from '../models/Project';
 import ContactInquiry from '../models/ContactInquiry';
 import AdminUser from '../models/AdminUser';
@@ -67,7 +68,7 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
     inquiriesTotal,
     inquiriesLast7Days,
     productsWithoutSeries,
-    productsWithoutMainImage,
+    seriesWithoutAppearancePhotos,
     users,
     pageViewsLast7Days,
     uniqueVisitorsLast7Days,
@@ -85,12 +86,17 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
         [Op.or]: [{ featured_image: { [Op.is]: null } }, { featured_image: '' }],
       },
     }),
-    Product.count({
-      where: {
-        series_id: { [Op.ne]: null },
-        [Op.or]: [{ main_image_A: { [Op.is]: null } }, { main_image_A: '' }],
-      },
-    }),
+    (async () => {
+      const photographed = await SeriesAppearancePhoto.findAll({
+        attributes: ['series_id'],
+        group: ['series_id'],
+        raw: true,
+      });
+      const ids = photographed
+        .map((row) => Number((row as { series_id?: number }).series_id))
+        .filter((id) => Number.isInteger(id));
+      return ProductSeries.count(ids.length ? { where: { id: { [Op.notIn]: ids } } } : {});
+    })(),
     includeUsers ? AdminUser.count() : Promise.resolve(null),
     VisitorEvent.count({ where: { created_at: { [Op.gte]: since } } }),
     VisitorEvent.count({
@@ -122,7 +128,7 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
     inquiriesTotal,
     inquiriesLast7Days,
     productsWithoutSeries,
-    productsWithoutMainImage,
+    seriesWithoutAppearancePhotos,
     ...(includeUsers ? { users } : {}),
     pageViewsLast7Days,
     uniqueVisitorsLast7Days,

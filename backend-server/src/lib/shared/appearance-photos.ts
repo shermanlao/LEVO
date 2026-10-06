@@ -194,6 +194,41 @@ export function findAppearancePhoto(
   return rankAppearancePhotos(photos, selection)[0] || null;
 }
 
+function firstFallbackPath(fallbacks: Array<string | null | undefined>): string {
+  for (const fallback of fallbacks) {
+    const path = optionText(fallback);
+    if (path) return path;
+  }
+  return '';
+}
+
+export function appearanceAiSourcePath(
+  photos: AppearancePhotoDto[] | null | undefined,
+  current?: AppearancePhotoDto | null,
+  fallbacks: Array<string | null | undefined> = []
+): string {
+  const own = optionText(current?.main_image_A);
+  if (own) return own;
+  const other = (photos || []).find(
+    (photo) => optionText(photo.main_image_A) && (current?.id == null || photo.id !== current.id)
+  );
+  if (other) return optionText(other.main_image_A);
+  return firstFallbackPath(fallbacks);
+}
+
+export function sizeDrawingProductPhotoPath(
+  photos: AppearancePhotoDto[] | null | undefined,
+  sizeValue: string,
+  fallbacks: Array<string | null | undefined> = []
+): string {
+  const ranked = rankAppearancePhotos(photos, { size: sizeValue });
+  const tagged = ranked.find((photo) => optionText(photo.main_image_A));
+  if (tagged) return optionText(tagged.main_image_A);
+  const any = (photos || []).find((photo) => optionText(photo.main_image_A));
+  if (any) return optionText(any.main_image_A);
+  return firstFallbackPath(fallbacks);
+}
+
 export function appearanceComboLabel(combo: AppearanceCombo): string {
   const n = normalizeAppearanceCombo(combo);
   const parts: string[] = [];

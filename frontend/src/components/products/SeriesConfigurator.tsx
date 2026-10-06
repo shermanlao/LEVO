@@ -13,7 +13,7 @@ import PageRoute from '@/components/layout/PageRoute';
 import type { RouteCrumb } from '@/components/layout/pageRouteItems';
 import { FileDownloadIcon } from './ProductFileIcons';
 import SeriesFamilyTitle, { SeriesFamilyActions } from './SeriesFamilyTitle';
-import { datasheetGalleryUrls, productImageUrl, toPublicImagePath } from '@/lib/image-utils';
+import { datasheetGalleryUrls, toPublicImagePath } from '@/lib/image-utils';
 import { productFinishValue } from '@shared/product-specs';
 import {
   getSeriesDatasheetUrl,
@@ -165,7 +165,7 @@ export default function SeriesConfigurator({
         : null;
       const ranked = rankAppearancePhotos(appearancePhotos, { ...specs, ...combo.selection });
       const uniquePhotos = datasheetGalleryUrls({
-        main: toPublicImagePath(ranked[0]?.main_image_A) || productImageUrl(packProduct || undefined),
+        main: toPublicImagePath(ranked[0]?.main_image_A) || seriesThumbUrl || seriesImageUrl,
         size: packProduct?.attributes?.size_image,
         fallbackMain: seriesThumbUrl || seriesImageUrl,
         polarUrl: getSeriesPolarUrl(seriesSlug, combo.selection),
@@ -232,15 +232,9 @@ export default function SeriesConfigurator({
     const filled = filledSelection(grouped, selection);
     const specs = specFromCombo(grouped, filled);
     const ranked = rankAppearancePhotos(appearancePhotos, { ...specs, ...filled });
-    const sizeValue = optionText(specs.size) || filled[SIZE_KIND];
-    const pack = findSizePack(packs, sizeValue, grouped);
-    const packProduct = pack
-      ? products.find((product) => Number(product.id) === Number(pack.id))
-      : null;
     const rankedUrls = ranked
       .map((photo) => toPublicImagePath(photo.main_image_A))
       .filter(Boolean);
-    const packUrl = productImageUrl(packProduct || undefined);
     const visitorPicked = Object.values(selection).some(Boolean);
     const urls: string[] = [];
     const seen = new Set<string>();
@@ -251,14 +245,11 @@ export default function SeriesConfigurator({
     };
     if (visitorPicked) {
       rankedUrls.forEach(add);
-      if (!urls.length) add(packUrl);
       if (!urls.length) add(seriesImageUrl);
     } else {
       add(seriesImageUrl);
       rankedUrls.forEach(add);
-      add(packUrl);
     }
-    add(toPublicImagePath(packProduct?.attributes?.main_image_B));
     if (!urls.length) return null;
     const hero = urls[0];
     return (
@@ -277,7 +268,7 @@ export default function SeriesConfigurator({
         }}
       />
     );
-  }, [appearancePhotos, grouped, packs, products, selection, seriesImageUrl, seriesName]);
+  }, [appearancePhotos, grouped, selection, seriesImageUrl, seriesName]);
 
   const complete = selectors.length > 0 && selectors.every((field) => Boolean(selection[field.key]));
 

@@ -18,7 +18,7 @@ The component is `ImageCutboard` plus `useImageCutboard()` in [`frontend/src/com
 |-----|-------|----------|
 | `catalog` | 16:9 | Category featured **card** photos, and the series **card photo** made with Extend to 16:9 |
 | `seriesPage` | photo’s own ratio | Series photo on the series page and datasheets. Adjust crop uses that file’s shape |
-| `product` | 1:1 | Size-pack Main A/B, size drawing, and appearance photos |
+| `product` | 1:1 | Size drawing and appearance photos |
 | `project` | 16:9 | Project listing thumbnail |
 | `projectSection` | 3:2 | Project gallery / section photos |
 | `hero` | 3:2 | Homepage hero |

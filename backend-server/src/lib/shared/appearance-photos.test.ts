@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  appearanceAiSourcePath,
   findAppearancePhoto,
   rankAppearancePhotos,
+  sizeDrawingProductPhotoPath,
   unusedAppearancePhotos,
   type AppearancePhotoDto,
 } from './appearance-photos';
@@ -92,5 +94,23 @@ describe('unusedAppearancePhotos', () => {
       unused.map((row) => row.id),
       [2]
     );
+  });
+});
+
+describe('appearance photo sources', () => {
+  it('prefers a size-tagged library photo for the drawing, then any library photo', () => {
+    const sizePhoto = photo({ id: 1, size: SIZE_A, main_image_A: '/size.jpg' });
+    const other = photo({ id: 2, main_image_A: '/any.jpg' });
+    assert.equal(sizeDrawingProductPhotoPath([sizePhoto, other], SIZE_A, ['/series.jpg']), '/size.jpg');
+    assert.equal(sizeDrawingProductPhotoPath([other], SIZE_A, ['/series.jpg']), '/any.jpg');
+    assert.equal(sizeDrawingProductPhotoPath([], SIZE_A, ['/series.jpg']), '/series.jpg');
+  });
+
+  it('edits the card photo, then another library photo, then the series photo', () => {
+    const empty = photo({ id: 1, colour: 'White', main_image_A: '' });
+    const other = photo({ id: 2, main_image_A: '/lib.jpg' });
+    assert.equal(appearanceAiSourcePath([empty, other], other, ['/series.jpg']), '/lib.jpg');
+    assert.equal(appearanceAiSourcePath([empty, other], empty, ['/series.jpg']), '/lib.jpg');
+    assert.equal(appearanceAiSourcePath([empty], empty, ['/series.jpg']), '/series.jpg');
   });
 });

@@ -22,7 +22,7 @@ type DashboardStats = {
   inquiriesTotal: number;
   inquiriesLast7Days: number;
   productsWithoutSeries: number;
-  productsWithoutMainImage: number;
+  seriesWithoutAppearancePhotos: number;
   users?: number;
   pageViewsLast7Days: number;
   uniqueVisitorsLast7Days: number;
@@ -192,7 +192,7 @@ export default function AdminPage() {
       </div>
 
       {stats &&
-      (stats.productsWithoutSeries > 0 || stats.productsWithoutMainImage > 0 || stats.inquiriesLast7Days > 0) ? (
+      (stats.productsWithoutSeries > 0 || stats.seriesWithoutAppearancePhotos > 0 || stats.inquiriesLast7Days > 0) ? (
         <Card className="mb-8">
           <h2 className="text-lg font-semibold mb-3">Needs attention</h2>
           <ul className="space-y-2">
@@ -203,10 +203,10 @@ export default function AdminPage() {
                 </Button>
               </li>
             ) : null}
-            {stats.productsWithoutMainImage > 0 ? (
+            {stats.seriesWithoutAppearancePhotos > 0 ? (
               <li>
                 <Button helpKey="admin.dash.attention.no_photo" variant="ghost" href="/admin/product-series" className="text-blue-600 hover:underline">
-                  {stats.productsWithoutMainImage} size pack{stats.productsWithoutMainImage === 1 ? '' : 's'} with no main photo
+                  {stats.seriesWithoutAppearancePhotos} series with no appearance photo{stats.seriesWithoutAppearancePhotos === 1 ? '' : 's'}
                 </Button>
               </li>
             ) : null}

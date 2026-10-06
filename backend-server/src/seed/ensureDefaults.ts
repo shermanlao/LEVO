@@ -307,8 +307,8 @@ export const DEFAULT_HELP_TIPS = [
   },
   {
     helpKey: 'admin.dash.attention.no_photo',
-    title: 'Size packs with no main photo',
-    body: 'These size records have no main photo. Open the series variants page to upload one.',
+    title: 'Series with no appearance photos',
+    body: 'These series have no tagged product photos. Open the series variants page and upload photos in Appearance photos.',
   },
   {
     helpKey: 'admin.dash.attention.inquiries',
@@ -598,17 +598,17 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.ai.product_photo_style_upload',
     title: 'Upload catalog photo style',
-    body: 'Upload one finished catalog photo. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. Match catalog style on Main A or Main B copies its lighting, background, and color grade. Upload of vendor photos still saves the original.',
+    body: 'Upload one finished catalog photo. Drop a photo onto the placeholder, paste from the clipboard while it is hovered, or choose a file from this device. Match catalog style on an appearance photo copies its lighting, background, and color grade. Upload of vendor photos still saves the original.',
   },
   {
     helpKey: 'admin.ai.product_photo_style_remove',
     title: 'Remove catalog photo style',
-    body: 'Clear the catalog photo style. Match catalog style is then hidden on size-pack Main A and Main B.',
+    body: 'Clear the catalog photo style. Match catalog style is then hidden on appearance photos.',
   },
   {
     helpKey: 'admin.ai.product_photo_style_prompt',
     title: 'Catalog photo style prompt',
-    body: 'Template sent when matching catalog style on Main A or Main B. The model first describes the original photo, then follows cutout / polish / place-in-scene steps. A lock is always prepended so the style photo is look-only. The filled series phrase and that photo description are always sent. Placeholder: {{hints_line}}.',
+    body: 'Template sent when matching catalog style on an appearance photo. The model first describes the original photo, then follows cutout / polish / place-in-scene steps. A lock is always prepended so the style photo is look-only. The filled series phrase and that photo description are always sent. Placeholder: {{hints_line}}.',
   },
   {
     helpKey: 'admin.ai.product_photo_style_prompt_reset',
@@ -618,7 +618,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.photo_style_match',
     title: 'Match catalog style',
-    body: 'Optional. Restyle this saved Main A or Main B photo to the catalog style on /admin/ai. The model first describes the original photo, then cutout / polish / place it in the reference scene. Sends the filled Phrase template as the fixture’s physical description (this size pack plus the other series tags). After the preview appears, use Refine chat to adjust the photo, then Apply. Close keeps the original. If no catalog style photo is stored, open /admin/ai and upload one first.',
+    body: 'Optional. Restyle this saved appearance photo to the catalog style on /admin/ai. The model first describes the original photo, then cutout / polish / place it in the reference scene. Sends the filled Phrase template as the fixture’s physical description. After the preview appears, use Refine chat to adjust the photo, then Apply. Close keeps the original. If no catalog style photo is stored, open /admin/ai and upload one first.',
   },
   {
     helpKey: 'admin.product_series.photo_style_refine',
@@ -638,7 +638,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.photo_style_apply',
     title: 'Save styled photo',
-    body: 'On the style photo, save the preview back to that placeholder. On a size Main A or Main B match, replace that slot. Close or Reset keeps the previous file.',
+    body: 'On the style photo, save the preview back to that placeholder. On an appearance photo match, replace that library photo. Close or Reset keeps the previous file.',
   },
   {
     helpKey: 'admin.products.size_drawing_ai',
@@ -1193,12 +1193,12 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_add',
     title: 'Add size',
-    body: 'Add a size row with Label, Dimensions, Cutout, and Main A / Main B / Size drawing. Photos stay on this form until you click Save variants.',
+    body: 'Add a size row with Label, Dimensions, Cutout, and Size drawing. Product photos live in Appearance photos, tagged with this size. The drawing stays on this form until you click Save variants.',
   },
   {
     helpKey: 'admin.product_series.size_duplicate',
     title: 'Duplicate size',
-    body: 'Insert a copy of this size row below it, including dimensions, cutout, and photo paths. The label gets “ (copy)” so Save variants creates a new size pack instead of merging with the original. Edit the copy, then click Save variants.',
+    body: 'Insert a copy of this size row below it, including dimensions, cutout, and the size drawing. Appearance photos tagged with this size are copied onto the new size label. The label gets “ (copy)” so Save variants creates a new size pack instead of merging with the original. Edit the copy, then click Save variants.',
   },
   {
     helpKey: 'admin.product_series.option_remove',
@@ -1253,17 +1253,17 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.size_drawing',
     title: 'Size drawing',
-    body: 'Dimension drawing for this series size. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. You can also Generate by AI from Main A. Click Save variants to store it on the size pack. Used on datasheets and the option preview.',
+    body: 'Dimension drawing for this series size. Click an empty placeholder, drop a photo onto the slot, or paste from the clipboard while it is hovered. You can also Generate by AI from a product photo tagged with this size. Click Save variants to store it on the size pack. Used on datasheets and the option preview.',
   },
   {
     helpKey: 'admin.product_series.size_drawing_ai',
     title: 'Generate by AI',
-    body: 'Create a 2D size drawing from Main A, Dimensions, Cutout when the series is recessed, plus the series Description and filled Phrase template. Crop the fixture, then Apply to save. Configure AI keys under Admin → AI settings.',
+    body: 'Create a 2D size drawing from a product photo tagged with this size (or any appearance photo, or the series photo), Dimensions, Cutout when the series is recessed, plus the series Description and filled Phrase template. Crop the fixture, then Apply to save. Configure AI keys under Admin → AI settings.',
   },
   {
     helpKey: 'admin.product_series.size_drawing_ai_focus',
     title: 'Continue',
-    body: 'Crop the fixture on the main photo, then generate the size drawing.',
+    body: 'Crop the fixture on the product photo, then generate the size drawing.',
   },
   {
     helpKey: 'admin.product_series.size_drawing_ai_cancel',
@@ -1283,7 +1283,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_photos',
     title: 'Appearance photos',
-    body: 'Upload as many product photos as you need. Tag each with Finish, Trim, Reflector, and/or Size. A variant uses the photo whose tags all match and that has the most tags, then the next, down to an untagged photo, then size Main A.',
+    body: 'Upload as many product photos as you need. Tag each with Finish, Trim, Reflector, and/or Size. A variant uses the photo whose tags all match and that has the most tags, then the next, down to an untagged photo, then the series photo.',
   },
   {
     helpKey: 'admin.product_series.appearance_add',
@@ -1298,7 +1298,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_generate',
     title: 'Generate by AI',
-    body: 'Recolor the size Main A photo using this photo’s Finish, Trim, and Reflector tags. Size is not sent to the model. The preview stays pending until you Confirm. Discard keeps the previous saved photo.',
+    body: 'Edit this library photo with AI using its Finish, Trim, and Reflector tags when they are set. If this slot is empty, another library photo or the series photo is used as the source. Size is not sent to the model. The preview stays pending until you Confirm. Discard keeps the previous saved photo.',
   },
   {
     helpKey: 'admin.product_series.appearance_generate_missing',
@@ -1308,7 +1308,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_generate_all',
     title: 'Generate all',
-    body: 'Generate a pending preview for every Finish × Trim × Reflector combination from size Main A. Regenerates AI photos. Does not overwrite photos you uploaded yourself. Confirm to save.',
+    body: 'Generate a pending preview for every Finish × Trim × Reflector combination from a library photo. Regenerates AI photos. Does not overwrite photos you uploaded yourself. Confirm to save.',
   },
   {
     helpKey: 'admin.product_series.appearance_confirm',
@@ -1338,7 +1338,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.appearance_remove',
     title: 'Remove appearance photo',
-    body: 'Delete this photo from the series. Variants that used it pick the next most specific tagged photo, or size Main A.',
+    body: 'Delete this photo from the series. Variants that used it pick the next most specific tagged photo, or the series photo.',
   },
   {
     helpKey: 'admin.product_series.appearance_cancel',
@@ -2037,6 +2037,8 @@ export async function ensureSeriesAppearancePhotos(): Promise<void> {
     });
   }
   await dropIndexIfExists('series_appearance_photos_combo');
+  const { migrateSizePackMainPhotosToAppearance } = await import('../lib/seriesConfig');
+  await migrateSizePackMainPhotosToAppearance();
 }
 
 export async function ensureVariantOptionCatalog(): Promise<void> {
