@@ -373,7 +373,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.card_extend',
     title: 'Extend to 16:9',
-    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. Side strips keep plaster grain and take the catalogue grey colour (#D6D6D4). The original ceiling is not flattened — details stay, grey tone is a light match only.',
+    body: 'Build the homepage and category-card photo from the series photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. The original photo is blended into that background so there is no box at the join. Side strips take this photo’s ceiling colour (fallback #D6D6D4). Fixture, trim, and lamp light stay.',
   },
   {
     helpKey: 'admin.product_series.featured_image',
@@ -453,7 +453,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_types.card_extend',
     title: 'Extend to 16:9',
-    body: 'Build the /products category-card photo from the type photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. Side strips keep plaster grain and take the catalogue grey colour (#D6D6D4). The original ceiling is not flattened — details stay, grey tone is a light match only.',
+    body: 'Build the /products category-card photo from the type photo. The fixture stays the same height. Only the left and right background is extended until the file is 16:9. The original photo is blended into that background so there is no box at the join. Side strips take this photo’s ceiling colour (fallback #D6D6D4). Fixture, trim, and lamp light stay.',
   },
   {
     helpKey: 'admin.product_types.featured_delete',
@@ -751,6 +751,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Optional search snippet for this category. Leave empty to use the category description.',
   },
   {
+    helpKey: 'admin.product_types.seo_ai',
+    title: 'Generate SEO',
+    body: 'Fill the SEO title and description from this category’s name and description. Review the text, then save. Requires a text AI key on /admin/ai.',
+  },
+  {
     helpKey: 'admin.product_series.seo_title',
     title: 'SEO title',
     body: 'Optional browser and search title for this series. Leave empty to use the series name (and type when available).',
@@ -761,6 +766,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Optional search snippet for this series. Leave empty to use the series description.',
   },
   {
+    helpKey: 'admin.product_series.seo_ai',
+    title: 'Generate SEO',
+    body: 'Fill the SEO title and description from this series name, category, and description. Review the text, then save variants. Requires a text AI key on /admin/ai.',
+  },
+  {
     helpKey: 'admin.projects.seo_title',
     title: 'SEO title',
     body: 'Optional browser and search title for this project. Leave empty to use the project title.',
@@ -769,6 +779,16 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.projects.seo_description',
     title: 'SEO description',
     body: 'Optional search snippet for this project. Leave empty to use the project description.',
+  },
+  {
+    helpKey: 'admin.projects.seo_ai',
+    title: 'Generate SEO',
+    body: 'Fill the SEO title and description from this project’s title, location, and description. Review the text, then save. Requires a text AI key on /admin/ai.',
+  },
+  {
+    helpKey: 'admin.settings.seo_ai',
+    title: 'Generate SEO',
+    body: 'Fill the default site title and description from the company name, slogan, homepage, and About copy. Review the text, then save settings. Requires a text AI key on /admin/ai.',
   },
   {
     helpKey: 'catalog.404.home',
@@ -1049,6 +1069,11 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.product_series.edit',
     title: 'Edit series',
     body: 'Open this series on its own edit page.',
+  },
+  {
+    helpKey: 'admin.product_series.view_product',
+    title: 'View product',
+    body: 'Open this series on the public catalog (/products/{type}/{series}) in a new tab. The address uses the saved type slug and the slug on this form.',
   },
   {
     helpKey: 'admin.product_series.delete',

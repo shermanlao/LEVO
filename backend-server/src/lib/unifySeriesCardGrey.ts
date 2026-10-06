@@ -6,11 +6,17 @@ import ProductType from '../models/ProductType';
 import { photometricPublicRoot } from './photometric/beamLibraryServer';
 import { localProductImageCandidates } from './productMedia';
 import {
-  CARD_CEILING_GREY,
+  featherOriginalInto,
+  hardJoinDelta,
   luma,
+  pullSideColourIntoJoin,
+  sampleCeilingGrey,
   unifyCatalogCardGrey,
   type CatalogCardGreyBox,
 } from './shared/catalog-card-grey';
+
+/** Ceiling RGB jump at the original’s left/right edge that still looks like a box. */
+const HARD_JOIN_MIN = 12;
 
 function resolvePublicImage(stored: string, seriesSlug?: string | null): string | null {
   const value = stored.trim();
@@ -65,47 +71,6 @@ function detectSideBox(data: Uint8ClampedArray, width: number, height: number): 
   return { dx, drawW };
 }
 
-function patchMeanNearGrey(
-  data: Buffer,
-  width: number,
-  height: number,
-  channels: number,
-  x0: number,
-  y0: number,
-  size: number
-): boolean {
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  let n = 0;
-  const x1 = Math.min(width, x0 + size);
-  const y1 = Math.min(height, y0 + size);
-  for (let y = y0; y < y1; y++) {
-    for (let x = x0; x < x1; x++) {
-      const i = (y * width + x) * channels;
-      r += data[i];
-      g += data[i + 1];
-      b += data[i + 2];
-      n += 1;
-    }
-  }
-  if (!n) return false;
-  return (
-    Math.abs(r / n - CARD_CEILING_GREY.r) <= 3 &&
-    Math.abs(g / n - CARD_CEILING_GREY.g) <= 3 &&
-    Math.abs(b / n - CARD_CEILING_GREY.b) <= 3
-  );
-}
-
-async function alreadyUnified(abs: string): Promise<boolean> {
-  const { data, info } = await sharp(abs).raw().toBuffer({ resolveWithObject: true });
-  if (info.width < 16 || info.height < 16) return false;
-  return (
-    patchMeanNearGrey(data, info.width, info.height, info.channels, 2, 2, 12) &&
-    patchMeanNearGrey(data, info.width, info.height, info.channels, info.width - 14, 2, 12)
-  );
-}
-
 function lumaStddev(
   data: Buffer | Uint8ClampedArray,
   width: number,
@@ -134,52 +99,11 @@ function lumaStddev(
   return Math.sqrt(Math.max(0, sum2 / n - mean * mean));
 }
 
-async function centerHasDetail(abs: string, box?: CatalogCardGreyBox | null): Promise<boolean> {
-  const { data, info } = await sharp(abs).raw().toBuffer({ resolveWithObject: true });
-  if (!info.width || !info.height) return false;
-  const dx = box ? Math.max(0, Math.round(box.dx)) : Math.round(info.width * 0.2);
-  const drawW = box ? Math.max(1, Math.round(box.drawW)) : Math.round(info.width * 0.6);
-  return lumaStddev(data, info.width, info.height, info.channels, dx, dx + drawW) >= 5;
-}
-
-async function blitSource(
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-  sourceAbs: string,
-  box: CatalogCardGreyBox
-): Promise<void> {
-  const drawW = Math.max(1, Math.round(box.drawW));
-  const dx = Math.max(0, Math.round(box.dx));
-  const { data, info } = await sharp(sourceAbs)
-    .resize(drawW, height, { fit: 'fill' })
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const srcW = info.width || drawW;
-  const srcH = info.height || height;
-  const channels = info.channels || 4;
-  for (let y = 0; y < height && y < srcH; y++) {
-    for (let x = 0; x < drawW && x < srcW; x++) {
-      const destX = dx + x;
-      if (destX < 0 || destX >= width) continue;
-      const s = (y * srcW + x) * channels;
-      const d = (y * width + destX) * 4;
-      pixels[d] = data[s];
-      pixels[d + 1] = data[s + 1];
-      pixels[d + 2] = data[s + 2];
-      pixels[d + 3] = 255;
-    }
-  }
-}
-
-async function unifyFile(
-  abs: string,
-  box?: CatalogCardGreyBox | null,
-  sourceAbs?: string | null
-): Promise<boolean> {
+async function loadRgba(abs: string): Promise<{ pixels: Uint8ClampedArray; width: number; height: number }> {
   const { data, info } = await sharp(abs).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  if (info.channels < 3 || !info.width || !info.height) return false;
+  if (info.channels < 3 || !info.width || !info.height) {
+    throw new Error('unsupported image');
+  }
   const pixels = new Uint8ClampedArray(info.width * info.height * 4);
   if (info.channels === 4) {
     pixels.set(data);
@@ -191,13 +115,65 @@ async function unifyFile(
       pixels[p + 3] = 255;
     }
   }
-  const frame = box ?? detectSideBox(pixels, info.width, info.height);
-  if (sourceAbs && frame) {
-    await blitSource(pixels, info.width, info.height, sourceAbs, frame);
+  return { pixels, width: info.width, height: info.height };
+}
+
+async function placeSource(
+  width: number,
+  height: number,
+  sourceAbs: string,
+  box: CatalogCardGreyBox
+): Promise<Uint8ClampedArray> {
+  const drawW = Math.max(1, Math.round(box.drawW));
+  const dx = Math.max(0, Math.round(box.dx));
+  const { data, info } = await sharp(sourceAbs)
+    .resize(drawW, height, { fit: 'fill' })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const orig = new Uint8ClampedArray(width * height * 4);
+  const srcW = info.width || drawW;
+  const srcH = info.height || height;
+  const channels = info.channels || 4;
+  for (let y = 0; y < height && y < srcH; y++) {
+    for (let x = 0; x < drawW && x < srcW; x++) {
+      const destX = dx + x;
+      if (destX < 0 || destX >= width) continue;
+      const s = (y * srcW + x) * channels;
+      const d = (y * width + destX) * 4;
+      orig[d] = data[s];
+      orig[d + 1] = data[s + 1];
+      orig[d + 2] = data[s + 2];
+      orig[d + 3] = 255;
+    }
   }
-  unifyCatalogCardGrey(pixels, info.width, info.height, frame);
+  return orig;
+}
+
+async function unifyFile(
+  abs: string,
+  box?: CatalogCardGreyBox | null,
+  sourceAbs?: string | null
+): Promise<boolean> {
+  const { pixels, width, height } = await loadRgba(abs);
+  const frame = box ?? detectSideBox(pixels, width, height);
+  if (!frame) return false;
+  const dx = Math.max(0, Math.round(frame.dx));
+  const drawW = Math.max(1, Math.round(frame.drawW));
+  const detail = lumaStddev(pixels, width, height, 4, dx, dx + drawW) >= 5;
+  const join = hardJoinDelta(pixels, width, height, frame);
+  if (detail && join < HARD_JOIN_MIN) return false;
+
+  let sampledFrom: Uint8ClampedArray = pixels;
+  if (sourceAbs) {
+    sampledFrom = await placeSource(width, height, sourceAbs, frame);
+    pullSideColourIntoJoin(pixels, width, height, frame);
+    featherOriginalInto(pixels, sampledFrom, width, height, frame);
+  }
+  const grey = sampleCeilingGrey(sampledFrom, width, height, frame);
+  unifyCatalogCardGrey(pixels, width, height, frame, grey);
   const pipeline = sharp(Buffer.from(pixels), {
-    raw: { width: info.width, height: info.height, channels: 4 },
+    raw: { width, height, channels: 4 },
   });
   const ext = path.extname(abs).toLowerCase();
   const out = ext === '.png' ? await pipeline.png().toBuffer() : await pipeline.jpeg({ quality: 92 }).toBuffer();
@@ -233,22 +209,15 @@ async function unifyCardRows(
       continue;
     }
     const sameFile = Boolean(sourceAbs && path.resolve(cardAbs) === path.resolve(sourceAbs));
-    if (sameFile) {
-      skipped += 1;
-      continue;
-    }
     try {
       let box: CatalogCardGreyBox | null = null;
-      if (sourceAbs) {
+      if (sourceAbs && !sameFile) {
         const [card, source] = await Promise.all([sharp(cardAbs).metadata(), sharp(sourceAbs).metadata()]);
         box = padBoxFromSeries(card.width || 0, card.height || 0, source.width || 0, source.height || 0);
       }
-      if ((await alreadyUnified(cardAbs)) && (await centerHasDetail(cardAbs, box))) {
-        skipped += 1;
-        continue;
-      }
-      await unifyFile(cardAbs, box, sourceAbs);
-      rewritten += 1;
+      const wrote = await unifyFile(cardAbs, box, sameFile ? null : sourceAbs);
+      if (wrote) rewritten += 1;
+      else skipped += 1;
     } catch (err) {
       missing += 1;
       console.warn(
@@ -257,12 +226,12 @@ async function unifyCardRows(
     }
   }
   if (rewritten) {
-    console.log(`Unified ${rewritten} ${label} card photo(s) to the shared ceiling grey.`);
+    console.log(`Unified ${rewritten} ${label} card photo(s) to a feathered ceiling join.`);
   }
   return { rewritten, skipped, missing };
 }
 
-/** Rewrite saved 16:9 cards. Restores the original photo in the middle so washed details come back. */
+/** Rewrite saved 16:9 cards. Feathers the source photo in so a boxed original is not left as a rectangle. */
 export async function unifyExistingSeriesCards(): Promise<{ rewritten: number; skipped: number; missing: number }> {
   const series = await ProductSeries.findAll({
     attributes: ['id', 'slug', 'featured_image', 'featured_image_page'],

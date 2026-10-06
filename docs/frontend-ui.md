@@ -26,7 +26,7 @@ Do not invent a third button color. Admin create/save actions use primary (black
 
 | Component | Use |
 |-----------|-----|
-| `Button` | User-facing control. Requires `helpKey`. Variants: `primary`, `secondary`, `danger`, `ghost`. Pass `href` for a link (`mailto:` / `tel:` use a native anchor). |
+| `Button` | User-facing control. Requires `helpKey`. Variants: `primary`, `secondary`, `danger`, `ghost`. Pass `href` for a link (`mailto:` / `tel:` use a native anchor). Pass `target` and `rel` to open that link in a new tab. |
 | `ToggleSwitch` | On/off switch. Requires `helpKey`. Black when on, grey when off. Used for **Show on site** on `/admin/product-series/[id]`. |
 | `TextInput` / `SelectField` / `TextareaField` | Labeled fields using `.input-field` / `.select-field` |
 | `Card` | White panel |
@@ -56,7 +56,7 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `ImageLightbox` | Click-to-enlarge overlay with zoom, portaled to `document.body` so it is not clipped by the thumbnail. Admin thumbs that use `/uploads` skip Next image optimization. |
 | `ImageFileIntake` | Admin image placeholder intake: drop a photo, paste from the clipboard while hovered/focused, or click an empty placeholder to choose a file. Filled slots keep their own click (AI edit on series and type photos, enlarge elsewhere). |
 | `ImageCutboard` | Staff upload crop board. Starts at contain (whole photo visible); zoom and drag, then Apply. Use `useImageCutboard()` plus `IMAGE_FRAMES` from `image-frames.ts`. |
-| `FeaturedCardImageEditor` | Shared two-slot admin editor: original photo (own ratio) and 16:9 card. Empty source slot is drop / paste / choose. Click a filled source or card photo to open **Edit photo with AI**. **Replace photo**, **Adjust crop**, **Extend to 16:9**, and **Delete**. |
+| `FeaturedCardImageEditor` | Shared two-slot admin editor: original photo (own ratio) and 16:9 card. Empty source slot is drop / paste / choose. Click a filled source or card photo to open **Edit photo with AI**. **Replace photo**, **Adjust crop**, **Extend to 16:9** (feathers the original into the outpaint; sides take this photo’s ceiling grey), and **Delete**. |
 | `SeriesFeaturedImageEditor` | Series wrapper around `FeaturedCardImageEditor` (`featured_image_page` + `featured_image`). Used on Add / Edit Series, not on list-row thumbs. |
 | `TypeFeaturedImageEditor` | Product-type wrapper around `FeaturedCardImageEditor` (`featured_image_source` + `featured_image`). Used on Add / Edit Product Type, not on list-row thumbs. |
 | `AdminPhotoSlot` | Admin photo cell. Default frame is square (`aspect-square`). Pass `frameClassName` for other ratios (catalog 16:9). Hover shows a larger preview; click opens `ImageLightbox` (hover preview hides while the lightbox is open). Pass `onImageClick` and `helpKey` to open another dialog instead (series, type, card, and appearance photos). Empty slots show **Drop, paste, or choose a file**. Used by size-pack, appearance photos, and featured thumbs. `AdminHoverPreview` wraps other admin images for the same hover enlarge. |

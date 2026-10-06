@@ -1,7 +1,11 @@
 import type { ImageFrame } from '@/lib/image-frames';
 import { loadImageElement } from '@/lib/image-cutboard';
 import { padImageToAspect, type PadBox } from '@/lib/sizeDrawingCropClient';
-import { unifyCatalogCardGrey } from '@shared/catalog-card-grey';
+import {
+  featherOriginalInto,
+  sampleCeilingGrey,
+  unifyCatalogCardGrey,
+} from '@shared/catalog-card-grey';
 
 export type OutpaintResult = {
   dataUrl: string;
@@ -40,7 +44,7 @@ export async function outpaintToFrame(
   return { dataUrl, extended: true, axis: padded.axis };
 }
 
-/** Paste the series photo back so only the side fill remains. Top and bottom stay unchanged. */
+/** Keep the fixture from the original photo; feather the ceiling into the outpaint so there is no box. */
 async function keepOriginalPhoto(extendedDataUrl: string, paddedDataUrl: string, box: PadBox): Promise<string> {
   const [extended, padded] = await Promise.all([
     loadImageElement(extendedDataUrl),
@@ -52,9 +56,17 @@ async function keepOriginalPhoto(extendedDataUrl: string, paddedDataUrl: string,
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas unavailable');
   ctx.drawImage(extended, 0, 0, box.canvasW, box.canvasH);
-  ctx.drawImage(padded, box.dx, box.dy, box.drawW, box.drawH, box.dx, box.dy, box.drawW, box.drawH);
-  const image = ctx.getImageData(0, 0, box.canvasW, box.canvasH);
-  unifyCatalogCardGrey(image.data, image.width, image.height, { dx: box.dx, drawW: box.drawW });
-  ctx.putImageData(image, 0, 0);
+  const dest = ctx.getImageData(0, 0, box.canvasW, box.canvasH);
+  const origCanvas = document.createElement('canvas');
+  origCanvas.width = box.canvasW;
+  origCanvas.height = box.canvasH;
+  const origCtx = origCanvas.getContext('2d');
+  if (!origCtx) throw new Error('Canvas unavailable');
+  origCtx.drawImage(padded, 0, 0, box.canvasW, box.canvasH);
+  const orig = origCtx.getImageData(0, 0, box.canvasW, box.canvasH);
+  const grey = sampleCeilingGrey(orig.data, orig.width, orig.height, { dx: box.dx, drawW: box.drawW });
+  featherOriginalInto(dest.data, orig.data, dest.width, dest.height, { dx: box.dx, drawW: box.drawW });
+  unifyCatalogCardGrey(dest.data, dest.width, dest.height, { dx: box.dx, drawW: box.drawW }, grey);
+  ctx.putImageData(dest, 0, 0);
   return canvas.toDataURL('image/jpeg', 0.92);
 }
