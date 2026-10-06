@@ -45,9 +45,10 @@ Empty tags on a photo still mean “any”.
 
 1. **Add photo** as many times as needed (drop, paste, or choose a file). Uploads open the shared crop board at the 1:1 catalog frame
 2. Tag Finish / Trim / Reflector / Size on that photo. Tags save immediately
-3. Optional: **Generate by AI** edits the photo on that card (or another library photo if this slot is empty, then the series photo). Finish / Trim / Reflector tags are sent when set; size is not. The preview stays pending until Confirm
-4. Optional: **Match catalog style** on a filled photo (needs a catalog style photo on `/admin/ai`)
-5. Replace or Remove a single photo. Hover a photo to enlarge; click for the lightbox
+3. Click a filled photo to open **Edit photo with AI** (same chat as the series photo on `/admin/product-series/[id]/edit`). Describe the change and Send, or Upscale. Apply saves that photo immediately
+4. Optional: **Generate by AI** edits the photo on that card (or another library photo if this slot is empty, then the series photo). Finish / Trim / Reflector tags are sent when set; size is not. The preview stays pending until Confirm
+5. Optional: **Match catalog style** on a filled photo (needs a catalog style photo on `/admin/ai`)
+6. Replace or Remove a single photo
 
 Duplicating a size copies appearance photos that have the old size tag onto new rows tagged with the copy label.
 
@@ -72,4 +73,4 @@ Public series JSON includes `attributes.appearance_photos` (each item includes `
 
 ## Help tips
 
-`admin.product_series.appearance_photos`, `appearance_add`, `appearance_tag`, `appearance_generate`, `appearance_confirm`, `appearance_discard`, `appearance_confirm_all`, `appearance_discard_all`, `appearance_upload`, `appearance_remove`, `admin.product_series.appearance_na`, `admin.product_series.photo_style_match`, `catalog.series.colour`, `catalog.series.trim_color`, `catalog.series.reflector_finish`.
+`admin.product_series.appearance_photos`, `appearance_add`, `appearance_tag`, `appearance_generate`, `appearance_confirm`, `appearance_discard`, `appearance_confirm_all`, `appearance_discard_all`, `appearance_upload`, `appearance_remove`, `admin.product_series.appearance_na`, `admin.product_series.photo_enhance`, `admin.product_series.photo_style_match`, `catalog.series.colour`, `catalog.series.trim_color`, `catalog.series.reflector_finish`.

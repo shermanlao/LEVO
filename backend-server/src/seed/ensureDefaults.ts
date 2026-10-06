@@ -413,7 +413,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.photo_enhance',
     title: 'Edit with AI',
-    body: 'Click the series photo or the card photo to open this chat. Describe the change (lighter background, less glare, sharper fixture) and Send. Upscale raises resolution without changing the product. Apply saves the preview into this slot. Reset or Close keeps the current file.',
+    body: 'Click the series photo, the card photo, or an appearance photo to open this chat. Describe the change (lighter background, less glare, sharper fixture) and Send. Upscale raises resolution without changing the product. Apply saves the preview into this slot. Reset or Close keeps the current file.',
   },
   {
     helpKey: 'admin.product_series.photo_enhance_send',
@@ -423,7 +423,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.product_series.photo_enhance_apply',
     title: 'Apply AI photo',
-    body: 'Save the latest preview into this slot. On a series featured image the file is stored immediately. On a size pack it stays on the form until Save variants. Close or Reset keeps the previous file.',
+    body: 'Save the latest preview into this slot. On a series featured image or an appearance photo the file is stored immediately. Close or Reset keeps the previous file.',
   },
   {
     helpKey: 'admin.product_series.photo_enhance_upscale',

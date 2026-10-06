@@ -13,6 +13,7 @@ import { dataUrlToFile, imageUrlToDataUrl } from '@/lib/sizeDrawingCropClient';
 import { useImageCutboard } from '@/components/ui/ImageCutboard';
 import { IMAGE_FRAMES, validateImageFile } from '@/lib/image-frames';
 import ProductPhotoStyleDialog from '@/components/ai/ProductPhotoStyleDialog';
+import ProductPhotoAiEditDialog from '@/components/ai/ProductPhotoAiEditDialog';
 import {
   PHOTO_TAG_KINDS,
   appearanceAiSourcePath,
@@ -72,6 +73,7 @@ export default function AppearancePhotos({
   const [error, setError] = useState<string | null>(null);
   const [hasPhotoStyle, setHasPhotoStyle] = useState<boolean | null>(null);
   const [stylePhoto, setStylePhoto] = useState<AppearancePhotoDto | null>(null);
+  const [aiEdit, setAiEdit] = useState<{ photo: AppearancePhotoDto; src: string } | null>(null);
   const { requestCrop, cutboard } = useImageCutboard();
   const photosRef = useRef(localPhotos);
   const pendingRef = useRef(pending);
@@ -401,7 +403,20 @@ export default function AppearancePhotos({
                 className="inline-block"
                 onFile={(file) => takeFile(file, photo)}
               >
-                <AdminPhotoSlot src={src} alt={appearanceComboLabel(combo)} compact />
+                <AdminPhotoSlot
+                  src={src}
+                  alt={appearanceComboLabel(combo)}
+                  compact
+                  helpKey="admin.product_series.photo_enhance"
+                  onImageClick={
+                    src
+                      ? () => {
+                          if (busyKey != null) return;
+                          setAiEdit({ photo, src });
+                        }
+                      : undefined
+                  }
+                />
               </ImageFileIntake>
               <div className="min-w-[12rem] flex-1 space-y-3">
                 <div className="flex items-center justify-between gap-2">
@@ -565,6 +580,23 @@ export default function AppearancePhotos({
           });
         }}
       />
+      {aiEdit ? (
+        <ProductPhotoAiEditDialog
+          open
+          imageUrl={aiEdit.src}
+          photoType="appearance"
+          onClose={() => setAiEdit(null)}
+          onApply={async (file) => {
+            await persistPhoto({
+              combo: comboFromPhoto(aiEdit.photo),
+              file,
+              generated: false,
+              id: aiEdit.photo.id,
+            });
+            setPendingPhoto(photoKey(aiEdit.photo, 0), null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

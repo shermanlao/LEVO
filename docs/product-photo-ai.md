@@ -26,7 +26,7 @@ On Add / Edit series and Add / Edit product type, **Extend to 16:9** builds `fea
 
 ## Edit with AI
 
-On Add / Edit series and Add / Edit product type, click the **source photo** or the **Card photo** to open **Edit photo with AI** (the same chat as a LIGHTX product photo). The dialog is drawn outside the parent form, and **Send** is not a form submit, so it does not reload the page. Describe the change and Send, or Upscale. Apply uploads the preview into that slot and, on an existing series or type, saves it immediately. Reset or Close keeps the current file. Empty placeholders still drop, paste, or choose a file. Size drawings still use **Generate by AI** and its refine chat. Appearance photos can **Match catalog style**. Other admin thumbs still enlarge on click.
+On Add / Edit series and Add / Edit product type, click the **source photo** or the **Card photo** to open **Edit photo with AI** (the same chat as a LIGHTX product photo). The dialog is drawn outside the parent form, and **Send** is not a form submit, so it does not reload the page. Describe the change and Send, or Upscale. Apply uploads the preview into that slot and, on an existing series or type, saves it immediately. Reset or Close keeps the current file. Empty placeholders still drop, paste, or choose a file. Size drawings still use **Generate by AI** and its refine chat. On `/admin/product-series/[id]`, click a filled **appearance photo** to open the same Edit photo with AI chat; Apply saves that library photo immediately. Appearance photos also have **Match catalog style**. Other admin thumbs still enlarge on click.
 
 ## Catalog photo style
 
