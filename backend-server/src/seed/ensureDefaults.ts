@@ -26,6 +26,7 @@ import {
   productCodePrefix,
 } from '../lib/productCode';
 import { rewriteLegacyLumenPlaceholders } from '../lib/shared/description-phrase';
+import { backfillProductSeriesSortOrder, backfillProductTypeSortOrder } from '../lib/catalogSortOrder';
 import AiProviderSettings from '../models/AiProviderSettings';
 import { AI_PROVIDER_SETTINGS_ID } from '../lib/ai/aiConstants';
 import { isLegacyProductPhotoStylePrompt } from '../lib/ai/productPhotoStylePrompts';
@@ -1006,6 +1007,16 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Open this category on its own edit page.',
   },
   {
+    helpKey: 'admin.product_types.move_up',
+    title: 'Move up',
+    body: 'Move this category one place earlier on /products. The first row stays at the top.',
+  },
+  {
+    helpKey: 'admin.product_types.move_down',
+    title: 'Move down',
+    body: 'Move this category one place later on /products. The last row stays at the bottom.',
+  },
+  {
     helpKey: 'admin.product_types.cancel_edit',
     title: 'Cancel',
     body: 'Return to the product type list without saving.',
@@ -1071,6 +1082,16 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Open this series on its own edit page.',
   },
   {
+    helpKey: 'admin.product_series.move_up',
+    title: 'Move up',
+    body: 'Move this series one place earlier in its category on /products/{type}. Hidden series keep their slot. The first row in the group stays at the top.',
+  },
+  {
+    helpKey: 'admin.product_series.move_down',
+    title: 'Move down',
+    body: 'Move this series one place later in its category on /products/{type}. Hidden series keep their slot. The last row in the group stays at the bottom.',
+  },
+  {
     helpKey: 'admin.product_series.view_product',
     title: 'View product',
     body: 'Open this series on the public catalog (/products/{type}/{series}) in a new tab. The address uses the saved type slug and the slug on this form.',
@@ -1079,6 +1100,16 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.product_series.delete',
     title: 'Delete series',
     body: 'Permanently remove this series and every product in it. Only system and admin accounts see this button.',
+  },
+  {
+    helpKey: 'admin.product_series.delete_confirm',
+    title: 'Confirm delete',
+    body: 'Remove this series and every product in it. This cannot be undone.',
+  },
+  {
+    helpKey: 'admin.product_series.delete_cancel',
+    title: 'Cancel delete',
+    body: 'Close this dialog and keep the series.',
   },
   {
     helpKey: 'admin.projects.create',
@@ -1499,10 +1530,10 @@ export const DEFAULT_HELP_TIPS = [
 
 /** Ensures category rows exist so `/api/product-types/by-slug/:slug` does not 404 on empty DB */
 export async function ensureDefaultProductTypes(): Promise<void> {
-  for (const row of DEFAULT_PRODUCT_TYPES) {
+  for (const [index, row] of DEFAULT_PRODUCT_TYPES.entries()) {
     await ProductType.findOrCreate({
       where: { slug: row.slug },
-      defaults: { ...row },
+      defaults: { ...row, sort_order: index },
     });
   }
 }
@@ -1872,6 +1903,14 @@ export async function ensureProductTypeColumns(): Promise<void> {
       allowNull: true,
     });
   }
+  if (!table.sort_order) {
+    await qi.addColumn('product_types', 'sort_order', {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    });
+  }
+  await backfillProductTypeSortOrder();
   const types = await ProductType.findAll();
   for (const row of types) {
     const source = String(row.get('featured_image_source') || '').trim();
@@ -1966,6 +2005,14 @@ export async function ensureSeriesFeaturedImageColumn(): Promise<void> {
       allowNull: true,
     });
   }
+  if (!table.sort_order) {
+    await qi.addColumn('product_series', 'sort_order', {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    });
+  }
+  await backfillProductSeriesSortOrder();
   await ensureIndex(
     `CREATE UNIQUE INDEX IF NOT EXISTS product_series_product_code_unique
      ON product_series (product_code)

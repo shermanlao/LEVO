@@ -42,6 +42,7 @@ Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend w
 - `image-cutboard.ts` — canvas crop of a zoomed/panned image into a framed File (zoom 1 = contain)
 - `strapi-entity.ts` — `{ id, attributes }` unwrap + `catalogSeriesHref` / `catalogProductHref`
 - `catalog-filters.ts` — wattage / size / CCT / beam / dimming options from series tags (ascending numeric/natural order); category pages filter series, not SKUs; `catalogTypeIsBrowsable` hides public types with `series_count === 0`
+- `list-order.ts` — swap neighboring rows for staff **Move up** / **Move down** on product types and series
 - `project-categories.ts` — preferred project category order and `projectFilterCategories()` for public `/projects` pills
 
 Do not add a second catalog client. Admin pages call `/api/admin/backend` through `ADMIN_BACKEND_BASE` in `api-config.ts`.
@@ -51,6 +52,7 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `database.ts` — SQLite by default; PostgreSQL when `DATABASE_URL` / `DB_DIALECT=postgres` is set
 - `dbSchema.ts` — dialect-safe `ensureTable` / `ensureIndex` / `dropIndexIfExists` for startup schema
 - `asyncHandler.ts` — Express try/catch + `clientError`
+- `catalogSortOrder.ts` — `sort_order` list order, append, backfill, and `PUT /reorder` for product types and series
 - `strapiSerialize.ts` — media envelope + type envelope + `parseSpecs`
 - `productMedia.extractStoredImageUrl` — image values on type/series/product writes
 - `photometric/persistProductLdt.ts` — stamp and store a product `.ldt` on create/update (`ldt_file`)

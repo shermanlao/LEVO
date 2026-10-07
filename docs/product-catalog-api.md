@@ -10,13 +10,15 @@ Public series lookup uses `GET /api/product-series/by-slug/:slug` (not `/api/pro
 
 | Method | Path | Notes |
 |--------|------|--------|
-| `GET` | `/api/product-types` | All types (Strapi-like). List rows include `attributes.series_count` so `/products` can hide types with no series. Public counts skip series with `show_on_site` off. `featured_image` is the 16:9 `/products` card; `featured_image_source` is the original type photo used to build that card |
-| `GET` | `/api/product-series` | Series list with nested `product_type` and `options` (no products, no appearance photos). Optional `q`, `featured=1`, `type` / `type_slug`, `product_type_id`. Public responses omit `show_on_site` off |
-| `GET` | `/api/product-series/featured` | Featured series for the homepage. Public responses omit `show_on_site` off |
+| `GET` | `/api/product-types` | All types (Strapi-like), `sort_order` then `id`. List rows include `attributes.series_count` so `/products` can hide types with no series, and `attributes.sole_series_slug` when that count is exactly 1 (the card then opens the series page). Public counts skip series with `show_on_site` off. `featured_image` is the 16:9 `/products` card; `featured_image_source` is the original type photo used to build that card |
+| `PUT` | `/api/admin/backend/product-types/reorder` | Admin session. Body `{ ids: number[] }` must list every product type. Writes `sort_order` as the index. New types append (`max + 1`) |
+| `GET` | `/api/product-series` | Series list with nested `product_type` and `options` (no products, no appearance photos), type `sort_order` then series `sort_order` then `id`. Optional `q`, `featured=1`, `type` / `type_slug`, `product_type_id`. Public responses omit `show_on_site` off |
+| `GET` | `/api/product-series/featured` | Featured series for the homepage, same order as the series list. Public responses omit `show_on_site` off |
 | `GET` | `/api/product-series/by-slug/:slug` | By series slug, including `attributes.products.data` (size packs). Public 404 when `show_on_site` is off |
 | `GET` | `/api/product-series/:id` | Numeric series id, including `attributes.products.data` (list payload). Public 404 when `show_on_site` is off |
-| `POST` | `/api/admin/backend/product-series` | Admin session. Create (name + slug required). Express still accepts this on loopback `/api/product-series` |
-| `PUT` | `/api/admin/backend/product-series/:id` | Admin session. Update (optional `options` array replaces `series_options`; optional `ldt_family`, `show_on_site`) |
+| `POST` | `/api/admin/backend/product-series` | Admin session. Create (name + slug required). New series append in their type (`max + 1`). Express still accepts this on loopback `/api/product-series` |
+| `PUT` | `/api/admin/backend/product-series/reorder` | Admin session. Body `{ ids: number[] }` must be every series in one type (or every untyped series). Writes `sort_order` as the index |
+| `PUT` | `/api/admin/backend/product-series/:id` | Admin session. Update (optional `options` array replaces `series_options`; optional `ldt_family`, `show_on_site`). Changing `product_type_id` appends the series in the new type |
 | `DELETE` | `/api/admin/backend/product-series/:id` | System or admin session. Deletes the series, its options, its appearance photos, and every product (size pack) in it. Operation accounts get 403 even if they can open Catalog |
 
 Product endpoints:

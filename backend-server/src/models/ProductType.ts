@@ -34,6 +34,11 @@ ProductType.init({
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  sort_order: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
   seo_title: {
     type: DataTypes.STRING,
     allowNull: true,

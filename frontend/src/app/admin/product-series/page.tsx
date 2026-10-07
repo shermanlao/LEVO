@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_CONFIG } from '@/lib/api-config';
 import { asStrapiList } from '@/lib/strapi-entity';
 import { slugify } from '@/lib/slugify';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { showSaveNotice } from '@/components/ui/SaveNotice';
 import { AdminHoverPreview } from '@/components/admin/AdminPhotoSlot';
@@ -21,6 +22,7 @@ import SpecificationsEditor, {
 } from '@/components/admin/SpecificationsEditor';
 import { useAdminMe } from '@/lib/use-admin-me';
 import { canDeleteProductSeries } from '@shared/admin-roles';
+import { swapNeighbors } from '@/lib/list-order';
 
 interface ProductSeries {
   id: number;
@@ -28,6 +30,7 @@ interface ProductSeries {
     name: string;
     description: string;
     slug: string;
+    product_type_id?: number | null;
     product_type?: {
       data: {
         id: number;
@@ -54,6 +57,52 @@ interface ProductType {
   };
 }
 
+type SeriesGroup = {
+  typeId: number | null;
+  typeName: string;
+  items: ProductSeries[];
+};
+
+function seriesTypeId(item: ProductSeries): number | null {
+  const nested = Number(item.attributes?.product_type?.data?.id);
+  if (Number.isInteger(nested) && nested > 0) return nested;
+  const raw = Number(item.attributes?.product_type_id);
+  if (Number.isInteger(raw) && raw > 0) return raw;
+  return null;
+}
+
+function groupSeriesByType(rows: ProductSeries[], types: ProductType[]): SeriesGroup[] {
+  const byType = new Map<number | 'none', ProductSeries[]>();
+  for (const item of rows) {
+    const typeId = seriesTypeId(item);
+    const key = typeId ?? 'none';
+    const list = byType.get(key) || [];
+    list.push(item);
+    byType.set(key, list);
+  }
+  const groups: SeriesGroup[] = [];
+  for (const type of types) {
+    const items = byType.get(type.id);
+    if (!items?.length) continue;
+    groups.push({ typeId: type.id, typeName: type.attributes.name, items });
+    byType.delete(type.id);
+  }
+  const untyped = byType.get('none');
+  if (untyped?.length) {
+    groups.push({ typeId: null, typeName: 'No type', items: untyped });
+    byType.delete('none');
+  }
+  for (const [key, items] of byType) {
+    if (!items.length) continue;
+    groups.push({
+      typeId: typeof key === 'number' ? key : null,
+      typeName: items[0]?.attributes?.product_type?.data?.attributes?.name || 'Type',
+      items,
+    });
+  }
+  return groups;
+}
+
 export default function ProductSeriesAdminPage() {
   const router = useRouter();
   const { me } = useAdminMe();
@@ -63,6 +112,9 @@ export default function ProductSeriesAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ProductSeries | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const [createFeaturedPaths, setCreateFeaturedPaths] = useState<Partial<SeriesFeaturedPaths>>({});
   const [createSpecRows, setCreateSpecRows] = useState<SpecPair[]>([]);
   
@@ -91,13 +143,14 @@ export default function ProductSeriesAdminPage() {
     fetchProductTypes();
   }, []);
   
-  const fetchProductSeries = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchProductSeries = async (mode: 'initial' | 'refresh' = 'initial') => {
+    if (mode === 'initial') {
+      setLoading(true);
+      setError(null);
+    }
     
     try {
-      // First try the admin API endpoint
-      const response = await fetch(`${apiUrl}/product-series`);
+      const response = await fetch(`${apiUrl}/product-series`, { cache: 'no-store' });
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -105,11 +158,14 @@ export default function ProductSeriesAdminPage() {
       
       const data = await response.json();
       setSeries(asStrapiList(data.data) as ProductSeries[]);
+      if (mode === 'refresh') setError(null);
     } catch (err: any) {
       console.error('Error fetching product series:', err);
-      setError(err.message || 'An error occurred while fetching product series');
+      const message = err.message || 'An error occurred while fetching product series';
+      if (mode === 'initial') setError(message);
+      else showSaveNotice(message, 'error');
     } finally {
-      setLoading(false);
+      if (mode === 'initial') setLoading(false);
     }
   };
   
@@ -186,7 +242,7 @@ export default function ProductSeriesAdminPage() {
       setCreateSpecRows([]);
       setCreateFeaturedPaths({});
       setIsCreating(false);
-      fetchProductSeries();
+      void fetchProductSeries('refresh');
       
     } catch (err: any) {
       console.error('Error creating product series:', err);
@@ -196,14 +252,51 @@ export default function ProductSeriesAdminPage() {
     }
   };
   
-  const handleDeleteSeries = async (id: number) => {
-    if (!confirm('Delete this product series and every product in it? This cannot be undone.')) {
-      return;
+  const seriesGroups = useMemo(() => groupSeriesByType(series, productTypes), [series, productTypes]);
+
+  const moveSeries = async (typeId: number | null, index: number, direction: -1 | 1) => {
+    if (reordering) return;
+    const group = seriesGroups.find((row) => row.typeId === typeId);
+    if (!group) return;
+    const nextItems = swapNeighbors(group.items, index, direction);
+    if (nextItems === group.items) return;
+    setSeries(
+      seriesGroups.flatMap((row) => (row.typeId === typeId ? nextItems : row.items))
+    );
+    setReordering(true);
+    try {
+      const response = await fetch(`${apiUrl}/product-series/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({ ids: nextItems.map((row) => row.id) }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Could not save series order.');
+      }
+      if (data?.data) setSeries(asStrapiList(data.data) as ProductSeries[]);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not save series order.';
+      setError(message);
+      showSaveNotice(message, 'error');
+      await fetchProductSeries('refresh');
+    } finally {
+      setReordering(false);
     }
+  };
+
+  const confirmDeleteSeries = async () => {
+    if (!deleteTarget || deleting) return;
+    const id = deleteTarget.id;
+
+    setDeleting(true);
+    setError(null);
     
     try {
       const response = await fetch(`${apiUrl}/product-series/${id}`, {
         method: 'DELETE',
+        cache: 'no-store',
       });
       
       let errorData;
@@ -217,12 +310,18 @@ export default function ProductSeriesAdminPage() {
         const errorMessage = errorData.error || 'Failed to delete product series';
         throw new Error(errorMessage);
       }
-      
-      // Refresh product series
-      fetchProductSeries();
+
+      setSeries((rows) => rows.filter((row) => row.id !== id));
+      setDeleteTarget(null);
+      showSaveNotice('Series deleted.');
+      void fetchProductSeries('refresh');
       
     } catch (err: any) {
-      setError(err.message || 'An error occurred while deleting the product series');
+      const message = err.message || 'An error occurred while deleting the product series';
+      setError(message);
+      showSaveNotice(message, 'error');
+    } finally {
+      setDeleting(false);
     }
   };
   
@@ -432,90 +531,134 @@ export default function ProductSeriesAdminPage() {
                 </td>
               </tr>
             ) : (
-              series.map((item) => {
-                const attrs = item?.attributes;
-                const imageUrl = seriesFeaturedCatalogUrl(attrs);
-                return (
-                <tr
-                  key={item.id}
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => router.push(`/admin/product-series/${item.id}`)}
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <AdminHoverPreview src={imageUrl || null} className="flex-shrink-0 w-16">
-                        <div
-                          className={`relative w-16 overflow-hidden rounded ${IMAGE_FRAMES.catalog.className}`}
-                        >
-                          {imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={imageUrl}
-                              alt=""
-                              className="absolute inset-0 h-full w-full object-contain"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                              <span className="text-gray-500 text-xs">No img</span>
+              seriesGroups.map((group) => (
+                <React.Fragment key={group.typeId ?? 'none'}>
+                  <tr className="bg-gray-50">
+                    <td colSpan={4} className="px-6 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {group.typeName}
+                    </td>
+                  </tr>
+                  {group.items.map((item, index) => {
+                    const attrs = item?.attributes;
+                    const imageUrl = seriesFeaturedCatalogUrl(attrs);
+                    return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => router.push(`/admin/product-series/${item.id}`)}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <AdminHoverPreview src={imageUrl || null} className="flex-shrink-0 w-16">
+                            <div
+                              className={`relative w-16 overflow-hidden rounded ${IMAGE_FRAMES.catalog.className}`}
+                            >
+                              {imageUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={imageUrl}
+                                  alt=""
+                                  className="absolute inset-0 h-full w-full object-contain"
+                                />
+                              ) : (
+                                <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                                  <span className="text-gray-500 text-xs">No img</span>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </AdminHoverPreview>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {attrs?.name || 'Untitled'}
+                              {attrs?.show_on_site === false ? (
+                                <span className="ml-2 text-xs font-medium text-gray-500">Hidden</span>
+                              ) : null}
+                            </div>
+                            <div className="text-xs text-gray-500">{attrs?.slug || ''}</div>
+                          </div>
                         </div>
-                      </AdminHoverPreview>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {attrs?.name || 'Untitled'}
-                          {attrs?.show_on_site === false ? (
-                            <span className="ml-2 text-xs font-medium text-gray-500">Hidden</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {attrs?.product_type?.data?.attributes?.name || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 truncate max-w-xs">
+                          {attrs?.description || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            helpKey="admin.product_series.move_up"
+                            variant="secondary"
+                            disabled={reordering || index === 0}
+                            className="disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => void moveSeries(group.typeId, index, -1)}
+                          >
+                            Move up
+                          </Button>
+                          <Button
+                            helpKey="admin.product_series.move_down"
+                            variant="secondary"
+                            disabled={reordering || index === group.items.length - 1}
+                            className="disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => void moveSeries(group.typeId, index, 1)}
+                          >
+                            Move down
+                          </Button>
+                          <Button
+                            helpKey="admin.product_series.variants"
+                            variant="secondary"
+                            href={`/admin/product-series/${item.id}`}
+                          >
+                            Variants
+                          </Button>
+                          <Button
+                            helpKey="admin.product_series.edit"
+                            variant="secondary"
+                            href={`/admin/product-series/${item.id}/edit`}
+                          >
+                            Edit
+                          </Button>
+                          {showDelete ? (
+                            <Button
+                              helpKey="admin.product_series.delete"
+                              variant="danger"
+                              onClick={() => setDeleteTarget(item)}
+                            >
+                              Delete
+                            </Button>
                           ) : null}
                         </div>
-                        <div className="text-xs text-gray-500">{attrs?.slug || ''}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {attrs?.product_type?.data?.attributes?.name || '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 truncate max-w-xs">
-                      {attrs?.description || '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        helpKey="admin.product_series.variants"
-                        variant="secondary"
-                        href={`/admin/product-series/${item.id}`}
-                      >
-                        Variants
-                      </Button>
-                      <Button
-                        helpKey="admin.product_series.edit"
-                        variant="secondary"
-                        href={`/admin/product-series/${item.id}/edit`}
-                      >
-                        Edit
-                      </Button>
-                      {showDelete ? (
-                        <Button
-                          helpKey="admin.product_series.delete"
-                          variant="danger"
-                          onClick={() => handleDeleteSeries(item.id)}
-                        >
-                          Delete
-                        </Button>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
-              );
-              })
+                      </td>
+                    </tr>
+                  );
+                  })}
+                </React.Fragment>
+              ))
             )}
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget != null}
+        title="Delete product series"
+        message={`Delete “${deleteTarget?.attributes?.name || 'this product series'}” and every product in it? This cannot be undone.`}
+        confirmLabel={deleting ? 'Deleting…' : 'Delete'}
+        cancelLabel="Cancel"
+        confirmHelpKey="admin.product_series.delete_confirm"
+        cancelHelpKey="admin.product_series.delete_cancel"
+        busy={deleting}
+        onConfirm={() => {
+          void confirmDeleteSeries();
+        }}
+        onCancel={() => {
+          if (!deleting) setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 } 

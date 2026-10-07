@@ -67,6 +67,11 @@ ProductSeries.init({
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  sort_order: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
   description_phrase: {
     type: DataTypes.TEXT,
     allowNull: true,

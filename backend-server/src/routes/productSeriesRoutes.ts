@@ -5,6 +5,7 @@ import {
   getProductSeriesById,
   getProductSeriesBySlug,
   createProductSeries,
+  reorderProductSeries,
   updateProductSeries,
   deleteProductSeries
 } from '../controllers/productSeriesController';
@@ -19,6 +20,7 @@ const router = Router();
 router.get('/', getAllProductSeries);
 router.get('/featured', getFeaturedProductSeries);
 router.get('/by-slug/:slug', getProductSeriesBySlug);
+router.put('/reorder', reorderProductSeries);
 router.get('/:id/appearance-photos', listSeriesAppearancePhotos);
 router.put('/:id/appearance-photos', upsertSeriesAppearancePhoto);
 router.delete('/:id/appearance-photos', deleteSeriesAppearancePhoto);

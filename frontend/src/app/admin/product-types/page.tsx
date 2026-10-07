@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { showSaveNotice } from '@/components/ui/SaveNotice';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
+import { swapNeighbors } from '@/lib/list-order';
 import SeoGenerateButton from '@/components/admin/SeoGenerateButton';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
 import TypeFeaturedImageEditor, {
@@ -45,6 +46,7 @@ export default function ProductTypesAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const [createFeaturedPaths, setCreateFeaturedPaths] = useState<Partial<TypeFeaturedPaths>>({});
 
   const [newType, setNewType] = useState({
@@ -62,9 +64,11 @@ export default function ProductTypesAdminPage() {
     return src || null;
   };
 
-  const fetchProductTypes = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchProductTypes = async (opts: { silent?: boolean } = {}) => {
+    if (!opts.silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const response = await fetch(`${apiUrl}/product-types`, { cache: 'no-store' });
       if (!response.ok) {
@@ -72,12 +76,40 @@ export default function ProductTypesAdminPage() {
       }
       const data = await response.json();
       setProductTypes(asStrapiList(data.data) as ProductType[]);
+      if (opts.silent) setError(null);
     } catch (err) {
       console.error('Could not load product types:', err);
-      setProductTypes([]);
+      if (!opts.silent) setProductTypes([]);
       setError('Could not load product types. Check that the API server is running.');
     } finally {
-      setLoading(false);
+      if (!opts.silent) setLoading(false);
+    }
+  };
+
+  const moveType = async (index: number, direction: -1 | 1) => {
+    if (reordering) return;
+    const next = swapNeighbors(productTypes, index, direction);
+    if (next === productTypes) return;
+    setProductTypes(next);
+    setReordering(true);
+    try {
+      const response = await fetch(`${apiUrl}/product-types/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: next.map((row) => row.id) }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Could not save category order.');
+      }
+      if (data?.data) setProductTypes(asStrapiList(data.data) as ProductType[]);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not save category order.';
+      setError(message);
+      showSaveNotice(message, 'error');
+      await fetchProductTypes({ silent: true });
+    } finally {
+      setReordering(false);
     }
   };
 
@@ -298,7 +330,7 @@ export default function ProductTypesAdminPage() {
                 <td colSpan={4} className="px-6 py-4 text-center">No product types found.</td>
               </tr>
             ) : (
-              productTypes.map((type) => (
+              productTypes.map((type, index) => (
                 <tr key={type.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <AdminHoverPreview src={extractImageUrl(type) ? resolveImageUrl(extractImageUrl(type)) : null} className="w-20">
@@ -331,19 +363,39 @@ export default function ProductTypesAdminPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <HelpLink
-                      helpKey="admin.product_types.edit"
-                      href={`/admin/product-types/${type.id}/edit`}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
-                      Edit
-                    </HelpLink>
-                    <button
-                      onClick={() => handleDeleteType(type.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        helpKey="admin.product_types.move_up"
+                        variant="secondary"
+                        disabled={reordering || index === 0}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => void moveType(index, -1)}
+                      >
+                        Move up
+                      </Button>
+                      <Button
+                        helpKey="admin.product_types.move_down"
+                        variant="secondary"
+                        disabled={reordering || index === productTypes.length - 1}
+                        className="disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => void moveType(index, 1)}
+                      >
+                        Move down
+                      </Button>
+                      <HelpLink
+                        helpKey="admin.product_types.edit"
+                        href={`/admin/product-types/${type.id}/edit`}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Edit
+                      </HelpLink>
+                      <button
+                        onClick={() => handleDeleteType(type.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

@@ -21,8 +21,21 @@ import type { SeriesOptionDto } from '../lib/shared/series-options';
 import { Op, type Includeable, type WhereOptions } from 'sequelize';
 import { clearGeneratedPdfCache } from '../lib/generatedPdfCache';
 import { isStaffCatalogRequest, publicSeriesVisibleWhere, seriesShownOnSite } from '../lib/seriesVisibility';
+import {
+  CATALOG_LIST_ORDER,
+  applyProductSeriesReorder,
+  catalogTypeKey,
+  nextProductSeriesSortOrder,
+  parseReorderIds,
+} from '../lib/catalogSortOrder';
 
 const SERIES_INCLUDE = [{ model: ProductType, as: 'type' }];
+
+const SERIES_LIST_ORDER: Array<[string, 'ASC'] | [{ model: typeof ProductType; as: string }, string, 'ASC']> = [
+  [{ model: ProductType, as: 'type' }, 'sort_order', 'ASC'],
+  [{ model: ProductType, as: 'type' }, 'id', 'ASC'],
+  ...CATALOG_LIST_ORDER,
+];
 
 const SERIES_PRODUCT_INCLUDE = [
   {
@@ -190,6 +203,7 @@ export const getAllProductSeries = asyncHandler(async (req: Request, res: Respon
   const series = await ProductSeries.findAll({
     where,
     include: seriesListInclude(typeSlug),
+    order: SERIES_LIST_ORDER,
   });
   setPublicListCache(res);
   res.json({ data: await serializeSeriesList(series) });
@@ -202,6 +216,7 @@ export const getFeaturedProductSeries = asyncHandler(async (req: Request, res: R
   const series = await ProductSeries.findAll({
     where,
     include: SERIES_INCLUDE,
+    order: SERIES_LIST_ORDER,
   });
   setPublicListCache(res);
   res.json({ data: await serializeSeriesList(series) });
@@ -251,6 +266,7 @@ export const createProductSeries = asyncHandler(async (req: Request, res: Respon
       payload.product_type_id != null ? Number(payload.product_type_id) : null
     );
   }
+  payload.sort_order = await nextProductSeriesSortOrder(payload.product_type_id);
   const created = await ProductSeries.create(payload);
   if (Array.isArray(req.body?.options)) {
     await replaceSeriesOptions(Number(created.get('id')), req.body.options);
@@ -262,10 +278,26 @@ export const createProductSeries = asyncHandler(async (req: Request, res: Respon
   res.status(201).json({ data: await serializeProductSeries(series || created) });
 });
 
+export const reorderProductSeries = asyncHandler(async (req: Request, res: Response) => {
+  const ids = parseReorderIds(req.body);
+  if (!ids) return res.status(400).json({ error: 'Send ids as a list of product series ids.' });
+  const problem = await applyProductSeriesReorder(ids);
+  if (problem) return res.status(400).json({ error: problem });
+  return getAllProductSeries(req, res);
+});
+
 export const updateProductSeries = asyncHandler(async (req: Request, res: Response) => {
   const series = await ProductSeries.findByPk(req.params.id);
   if (!series) return notFound(res, 'Product series');
-  await series.update(seriesWritePayload(req.body || {}));
+  const payload = seriesWritePayload(req.body || {});
+  if (payload.product_type_id !== undefined) {
+    const fromType = catalogTypeKey(series.get('product_type_id'));
+    const toType = catalogTypeKey(payload.product_type_id);
+    if (fromType !== toType) {
+      payload.sort_order = await nextProductSeriesSortOrder(payload.product_type_id);
+    }
+  }
+  await series.update(payload);
   if (Array.isArray(req.body?.options)) {
     await replaceSeriesOptions(Number(series.get('id')), req.body.options);
   }
