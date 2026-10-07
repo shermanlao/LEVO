@@ -373,7 +373,7 @@ export default function ProductSeriesAdminPage() {
             <li>Verify the API server port (3333) is not blocked</li>
             <li>Check for any error messages in the API server console</li>
           </ol>
-            <Button helpKey="admin.product_series.retry" onClick={fetchProductSeries}>
+            <Button helpKey="admin.product_series.retry" onClick={() => void fetchProductSeries()}>
               Retry Connection
             </Button>
           
