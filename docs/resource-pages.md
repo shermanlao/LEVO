@@ -1,6 +1,6 @@
 # Resource pages
 
-Public footer **Resources** and **Media** sit in the same column grid as Contact Us and Quick Links (bold heading, vertical list). Copy and social URLs come from `site_contacts`, not hardcoded page text. Staff edit them at `/admin/settings`. See [admin-site-settings.md](admin-site-settings.md).
+Public footer **Resources** and **Media** sit in the same column grid as Contact Us and Quick Links (bold heading, vertical list). Contact Us is twice as wide as each of the other columns, and its labels and values line up in two vertical columns. Copy and social URLs come from `site_contacts`, not hardcoded page text. Staff edit them at `/admin/settings`. See [admin-site-settings.md](admin-site-settings.md).
 
 ## Footer
 

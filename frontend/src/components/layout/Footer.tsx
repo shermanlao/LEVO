@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import type { SiteContact } from '@/lib/sqlite-api';
 import { HelpLink } from '@/components/admin/HelpButton';
@@ -113,29 +113,39 @@ export default function Footer({ contact }: { contact: SiteContact | null }) {
     <footer className="site-chrome border-t mt-16 py-8">
       <div className="container mx-auto px-4">
         <div
-          className={`grid grid-cols-1 md:grid-cols-3 gap-8${
-            safeMedia.length && contactLines.length ? ' lg:grid-cols-4' : ''
+          className={`grid grid-cols-1 gap-8 ${
+            contactLines.length
+              ? safeMedia.length
+                ? 'md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]'
+                : 'md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]'
+              : safeMedia.length
+                ? 'md:grid-cols-3'
+                : 'md:grid-cols-2'
           }`}
         >
           {contactLines.length ? (
             <div>
               <h3 className="text-lg font-bold mb-4">Contact Us</h3>
-              {contactLines.map((item) => (
-                <p key={item.key}>
-                  {item.label}:{' '}
-                  {item.href ? (
-                    <a
-                      href={item.href}
-                      className={LINK_CLASS}
-                      {...(item.key === 'website' ? { target: '_blank', rel: 'noreferrer' } : {})}
-                    >
-                      {item.value}
-                    </a>
-                  ) : (
-                    item.value
-                  )}
-                </p>
-              ))}
+              <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1">
+                {contactLines.map((item) => (
+                  <Fragment key={item.key}>
+                    <dt className="whitespace-nowrap">{item.label}:</dt>
+                    <dd className="min-w-0">
+                      {item.href ? (
+                        <a
+                          href={item.href}
+                          className={LINK_CLASS}
+                          {...(item.key === 'website' ? { target: '_blank', rel: 'noreferrer' } : {})}
+                        >
+                          {item.value}
+                        </a>
+                      ) : (
+                        item.value
+                      )}
+                    </dd>
+                  </Fragment>
+                ))}
+              </dl>
             </div>
           ) : null}
           <div>
