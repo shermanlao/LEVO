@@ -222,6 +222,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Company name, logos, homepage copy, contact details, social links, and SEO.',
   },
   {
+    helpKey: 'admin.dash.link.deploy',
+    title: 'Git versions',
+    body: 'See the running git version, fetch GitHub, and deploy or roll back a commit. System and admin only.',
+  },
+  {
     helpKey: 'admin.settings.save',
     title: 'Save site settings',
     body: 'Store brand, homepage, contact, and SEO fields. Uploaded logos are saved immediately.',
@@ -875,6 +880,41 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.nav.users',
     title: 'Users',
     body: 'Open the staff directory and page-access settings. System and admin can manage accounts.',
+  },
+  {
+    helpKey: 'admin.deploy.refresh',
+    title: 'Refresh',
+    body: 'Reload the current git SHA, recent commits, and the last deploy log.',
+  },
+  {
+    helpKey: 'admin.deploy.fetch',
+    title: 'Fetch from GitHub',
+    body: 'Download new commits from GitHub without changing the running site. Deploy a SHA from the list when you want it live.',
+  },
+  {
+    helpKey: 'admin.deploy.live_admin',
+    title: 'Live admin',
+    body: 'Open the production admin dashboard at https://levolight.com/admin in a new tab.',
+  },
+  {
+    helpKey: 'admin.deploy.redeploy',
+    title: 'Redeploy current version',
+    body: 'Rebuild and restart production on the SHA that is already checked out.',
+  },
+  {
+    helpKey: 'admin.deploy.deploy',
+    title: 'Deploy',
+    body: 'Check out this commit on the VPS, rebuild the API and site, and restart production.',
+  },
+  {
+    helpKey: 'admin.deploy.confirm',
+    title: 'Deploy',
+    body: 'Confirm. The public site may be briefly unavailable while the VPS rebuilds.',
+  },
+  {
+    helpKey: 'admin.deploy.cancel',
+    title: 'Cancel',
+    body: 'Close the dialog without starting a deploy.',
   },
   {
     helpKey: 'admin.product_types.add',

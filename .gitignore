@@ -33,6 +33,7 @@ Thumbs.db
 # accidental local artifacts
 frontend/.f
 frontend/let
+.deploy-status.json
 
 # VPS npm/home files if the app user home is the repo
 .cache/

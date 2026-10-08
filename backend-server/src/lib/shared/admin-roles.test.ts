@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   canDeleteProductSeries,
+  canManageDeploy,
   canManageUsers,
   defaultPagesForRole,
   defaultRolePageMatrix,
@@ -27,14 +28,20 @@ describe('admin roles and page access', () => {
       'catalog',
       'users',
       'permissions',
+      'deploy',
     ]);
-    assert.deepEqual(sanitizeRolePages('operation', ['catalog', 'users', 'permissions']), [
+    assert.deepEqual(sanitizeRolePages('admin', ['catalog']), ['catalog', 'deploy']);
+    assert.deepEqual(sanitizeRolePages('operation', ['catalog', 'users', 'permissions', 'deploy']), [
       'catalog',
     ]);
     assert.equal(roleCanOpenPage('operation', 'users', ['users']), false);
+    assert.equal(roleCanOpenPage('operation', 'deploy', ['deploy']), false);
     assert.equal(roleCanOpenPage('system', 'users', []), true);
+    assert.equal(roleCanOpenPage('admin', 'deploy', []), true);
     assert.equal(canManageUsers('admin'), true);
     assert.equal(canManageUsers('operation'), false);
+    assert.equal(canManageDeploy('admin'), true);
+    assert.equal(canManageDeploy('operation'), false);
     assert.equal(canDeleteProductSeries('system'), true);
     assert.equal(canDeleteProductSeries('admin'), true);
     assert.equal(canDeleteProductSeries('operation'), false);
@@ -44,6 +51,9 @@ describe('admin roles and page access', () => {
     assert.equal(pageKeyForAdminPath('/admin'), null);
     assert.equal(pageKeyForAdminPath('/admin/users'), 'users');
     assert.equal(pageKeyForAdminPath('/admin/users/access'), 'permissions');
+    assert.equal(pageKeyForAdminPath('/admin/deploy'), 'deploy');
+    assert.ok(!defaultPagesForRole('operation').includes('deploy'));
+    assert.ok(defaultPagesForRole('admin').includes('deploy'));
     assert.equal(pageKeyForAdminPath('/admin/product-series/12'), 'catalog');
     assert.equal(pageKeyForAdminPath('/admin/external-catalog'), 'lightx');
     assert.equal(pageKeyForBackendPath('product-series/3'), 'catalog');

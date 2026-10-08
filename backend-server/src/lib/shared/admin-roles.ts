@@ -12,6 +12,7 @@ export const ADMIN_PAGE_KEYS = [
   'ai',
   'users',
   'permissions',
+  'deploy',
 ] as const;
 
 export type AdminPageKey = (typeof ADMIN_PAGE_KEYS)[number];
@@ -26,6 +27,7 @@ export const ADMIN_PAGES: { key: AdminPageKey; label: string }[] = [
   { key: 'ai', label: 'AI' },
   { key: 'users', label: 'Users' },
   { key: 'permissions', label: 'Page access' },
+  { key: 'deploy', label: 'Git versions' },
 ];
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
@@ -35,19 +37,20 @@ export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
 };
 
 export const ADMIN_ROLE_HINTS: Record<AdminRole, string> = {
-  system: 'Full access. Users and page-access settings stay on.',
-  admin: 'Most pages, including users and page access by default.',
-  operation: 'Catalog and day-to-day work. No user or page-access management.',
+  system: 'Full access. Users, page access, and Git versions stay on.',
+  admin: 'Most pages, including users and page access by default. Git versions stays on.',
+  operation: 'Catalog and day-to-day work. No users, page access, or Git versions.',
 };
 
 /** Pages that cannot be turned off for a role. */
 export const LOCKED_ROLE_PAGES: Partial<Record<AdminRole, readonly AdminPageKey[]>> = {
-  system: ['users', 'permissions'],
+  system: ['users', 'permissions', 'deploy'],
+  admin: ['deploy'],
 };
 
 /** Pages that cannot be turned on for a role. */
 export const FORBIDDEN_ROLE_PAGES: Partial<Record<AdminRole, readonly AdminPageKey[]>> = {
-  operation: ['users', 'permissions'],
+  operation: ['users', 'permissions', 'deploy'],
 };
 
 const ALL_PAGES = [...ADMIN_PAGE_KEYS];
@@ -79,6 +82,11 @@ export function normalizeAdminRole(value: unknown): AdminRole | null {
 }
 
 export function canManageUsers(role: AdminRole | string | null | undefined): boolean {
+  return role === 'system' || role === 'admin';
+}
+
+/** Git version manager at /admin/deploy. Operation never sees it. */
+export function canManageDeploy(role: AdminRole | string | null | undefined): boolean {
   return role === 'system' || role === 'admin';
 }
 
@@ -124,6 +132,7 @@ export function roleCanOpenPage(
 export function pageKeyForAdminPath(pathname: string): AdminPageKey | null {
   const path = String(pathname || '').replace(/\/+$/, '') || '/';
   if (path === '/admin' || path === '/admin/login' || path.startsWith('/admin/login/')) return null;
+  if (path === '/admin/deploy' || path.startsWith('/admin/deploy/')) return 'deploy';
   if (path === '/admin/users/access' || path.startsWith('/admin/users/access/')) return 'permissions';
   if (path === '/admin/users' || path.startsWith('/admin/users/')) return 'users';
   if (path.startsWith('/admin/external-catalog')) return 'lightx';

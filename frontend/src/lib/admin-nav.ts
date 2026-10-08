@@ -54,6 +54,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
     helpKey: 'admin.nav.settings',
     links: [
       { href: '/admin/settings', label: 'Site settings', helpKey: 'admin.dash.link.settings', pageKey: 'settings' },
+      { href: '/admin/deploy', label: 'Git versions', helpKey: 'admin.dash.link.deploy', pageKey: 'deploy' },
     ],
   },
   {

@@ -22,7 +22,7 @@ LEVO keeps duplicated logic in one place instead of copying it across the Next.j
 | `image-magic.ts` | JPEG/PNG/GIF/WebP magic-byte check |
 | `catalog-card-grey.ts` | Sample this photo’s ceiling, feather the original into the 16:9 outpaint (`featherOriginalInto`), and tint the side strips and join (`unifyCatalogCardGrey`). Fallback chip `#D6D6D4`. Trim / lamps / fixture holes stay. |
 | `series-visibility.ts` | `seriesShownOnSite` (null counts as on) and `STAFF_CATALOG_HEADER` (`x-levo-staff`) so public catalog reads hide a series while `/api/admin/backend` still loads it |
-| `admin-roles.ts` | `system` / `admin` / `operation`, page keys, default matrix, path → page mapping, `roleCanOpenPage`, `pagesForAiApi` (catalog generate vs AI settings), and `matrixWithNewDefaultPages` |
+| `admin-roles.ts` | `system` / `admin` / `operation`, page keys (including `deploy`), default matrix, path → page mapping, `roleCanOpenPage`, `canManageDeploy`, `pagesForAiApi` (catalog generate vs AI settings), and `matrixWithNewDefaultPages` |
 | `admin-session-cookie.ts` | HMAC cookie create/verify (`username.role.exp.epoch.sig`), `safeAdminNextPath`, `adminLoginHref`, and `cookieIsSecure` (`Secure` only for HTTPS `SITE_ORIGIN`) |
 | `admin-backend-path.ts` | Admin BFF path allowlist; public catalog GET/HEAD vs 405 |
 
@@ -53,6 +53,7 @@ Do not add a second catalog client. Admin pages call `/api/admin/backend` throug
 - `dbSchema.ts` — dialect-safe `ensureTable` / `ensureIndex` / `dropIndexIfExists` for startup schema
 - `asyncHandler.ts` — Express try/catch + `clientError`
 - `catalogSortOrder.ts` — `sort_order` list order, append, backfill, and `PUT /reorder` for product types and series
+- `gitDeploy.ts` — validate git refs, read SHA/log, `git fetch`, and start `/usr/local/sbin/levo-deploy` from `/admin/deploy`
 - `strapiSerialize.ts` — media envelope + type envelope + `parseSpecs`
 - `productMedia.extractStoredImageUrl` — image values on type/series/product writes
 - `photometric/persistProductLdt.ts` — stamp and store a product `.ldt` on create/update (`ldt_file`)

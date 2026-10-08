@@ -157,8 +157,9 @@ export default function AdminPageAccessPage() {
       />
 
       <p className="text-sm text-gray-600 mb-6 max-w-3xl">
-        Grant admin pages by role, the same way LightX sets page access. System always keeps Users
-        and Page access. Operation cannot manage users or this matrix.
+        Grant admin pages by role, the same way LightX sets page access. System always keeps Users,
+        Page access, and Git versions. Admin always keeps Git versions. Operation cannot receive
+        Users, Page access, or Git versions.
       </p>
 
       {error ? <AlertBanner>{error}</AlertBanner> : null}

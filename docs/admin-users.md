@@ -6,13 +6,13 @@ Staff logins live in `admin_users` (SQLite locally, PostgreSQL in production). R
 
 | Role | Default access |
 |------|----------------|
-| `system` | Every admin page. Users and Page access cannot be turned off. |
-| `admin` | Every admin page by default, including users and page access. Those two can be unchecked. |
-| `operation` | Catalog, partner catalog, LDT, projects, inquiries, settings, and AI. Cannot receive Users or Page access. |
+| `system` | Every admin page. Users, Page access, and Git versions cannot be turned off. |
+| `admin` | Every admin page by default, including users and page access (those two can be unchecked). Git versions stays on. |
+| `operation` | Catalog, partner catalog, LDT, projects, inquiries, settings, and AI. Cannot receive Users, Page access, or Git versions. |
 
 This matches LightX: assign a role on the user, then grant pages on a role × page matrix. Existing `staff` rows become `operation` on API start (session cookies for those accounts stop working until they sign in again). The first seeded account is `system`.
 
-The User management card and **Page access** link show only when the session role can open those pages. Operation opening `/admin/users` is redirected to the dashboard. `GET/POST /api/admin/users` and `/api/admin/users/:id` return 403 without the Users page. `/api/admin/permissions` needs the Page access page.
+The User management card and **Page access** link show only when the session role can open those pages. Operation opening `/admin/users` or `/admin/deploy` is redirected to the dashboard. `GET/POST /api/admin/users` and `/api/admin/users/:id` return 403 without the Users page. `/api/admin/permissions` needs the Page access page. `/api/admin/deploy` needs Git versions.
 
 ## Page access
 
@@ -34,6 +34,7 @@ Header menus and dashboard cards hide pages the role does not have. The same mat
 | AI | `/admin/ai` | `/api/admin/ai` settings, usage, style uploads, and connection test. Generate / refine / stylize / appearance / label / phrase also accept **Catalog** (those buttons live on series and variant pages). |
 | Users | `/admin/users` | `/api/admin/users` |
 | Page access | `/admin/users/access` | `/api/admin/permissions` |
+| Git versions | `/admin/deploy` | `/api/admin/deploy` (system and admin only; see [admin-deploy.md](admin-deploy.md)) |
 
 ## Profile fields
 

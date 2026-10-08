@@ -1,0 +1,2 @@
+# Allow the levo API user to run production deploys from /admin/deploy.
+levo ALL=(root) NOPASSWD: /usr/local/sbin/levo-deploy

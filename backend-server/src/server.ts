@@ -26,6 +26,7 @@ import siteSettingsRoutes from './routes/siteSettingsRoutes';
 import adminUserRoutes, { authRoutes } from './routes/adminUserRoutes';
 import adminPermissionRoutes from './routes/adminPermissionRoutes';
 import dashboardRoutes, { visitorRoutes } from './routes/dashboardRoutes';
+import deployRoutes from './routes/deployRoutes';
 import { rateLimit } from './lib/rateLimit';
 
 const app = express();
@@ -95,6 +96,7 @@ app.use('/api/admin-users', requireInternalSecret, adminUserRoutes);
 app.use('/api/admin-permissions', requireInternalSecret, adminPermissionRoutes);
 app.use('/api/visitor-events', requireInternalSecret, visitorRoutes);
 app.use('/api/dashboard', requireInternalSecret, dashboardRoutes);
+app.use('/api/deploy', requireInternalSecret, deployRoutes);
 
 app.get('/', (_req, res) => {
   res.json({

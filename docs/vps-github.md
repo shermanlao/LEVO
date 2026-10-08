@@ -27,7 +27,7 @@ ssh root@187.7.21.12
 sudo /usr/local/sbin/levo-deploy
 ```
 
-That script pulls `main`, installs dependencies, builds the API and Next.js site, and restarts `levo-api` and `levo-web`. Nginx and PostgreSQL are left running.
+That script pulls `main` (or a SHA: `sudo /usr/local/sbin/levo-deploy 177fd5e`), installs dependencies, builds the API and Next.js site, and restarts `levo-api` and `levo-web`. Nginx and PostgreSQL are left running. System and admin can also do this from **Settings → Git versions** (`/admin/deploy`); see [admin-deploy.md](admin-deploy.md).
 
 Optional branch:
 
@@ -79,6 +79,7 @@ GitHub should reply that `shermanlao/LEVO` authenticated, with no shell access.
 | Git remote | `git@github.com:shermanlao/LEVO.git` |
 | Deploy key | `/var/www/levo/.ssh/github_deploy` (private; not in git) |
 | Deploy script | `/usr/local/sbin/levo-deploy` (copy of `scripts/levo-deploy.sh`) |
+| Admin deploy sudoers | `/etc/sudoers.d/90-levo-deploy` (copy of `scripts/levo-deploy-sudoers`) so the `levo` user can run the script from `/admin/deploy` |
 | Site | http://187.7.21.12 |
 | Next.js env | `/etc/levo/next.env` (`ADMIN_SESSION_SECRET`, `INTERNAL_API_SECRET`, `SITE_ORIGIN=http://187.7.21.12`) |
 

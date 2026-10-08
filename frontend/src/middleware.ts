@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ADMIN_SESSION_COOKIE, verifySessionValue } from '@/lib/admin-session';
 import { redirectSameOrigin } from '@/lib/same-origin-redirect';
-import { canManageUsers } from '@shared/admin-roles';
+import { canManageDeploy, canManageUsers } from '@shared/admin-roles';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -28,6 +28,12 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === '/admin/users' || pathname.startsWith('/admin/users/')) {
     if (!canManageUsers(session.role)) {
+      return redirectSameOrigin(request, '/admin');
+    }
+  }
+
+  if (pathname === '/admin/deploy' || pathname.startsWith('/admin/deploy/')) {
+    if (!canManageDeploy(session.role)) {
       return redirectSameOrigin(request, '/admin');
     }
   }
