@@ -749,6 +749,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Open the Contact page to start a warranty claim or request a project warranty statement.',
   },
   {
+    helpKey: 'catalog.warranty.download',
+    title: 'Download warranty PDF',
+    body: 'Download the LEVO warranty as a PDF. The file uses the same periods and statement shown on this page.',
+  },
+  {
     helpKey: 'catalog.series.inquire',
     title: 'Inquire',
     body: 'Opens Contact with this series name filled into the message so you can request datasheets, LDT files, or a quote.',

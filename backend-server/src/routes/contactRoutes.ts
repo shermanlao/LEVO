@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { createContactInquiry, getSiteContact } from '../controllers/contactController';
+import { createContactInquiry, getSiteContact, getWarrantyPdf } from '../controllers/contactController';
 import { rateLimit } from '../lib/rateLimit';
 
 const router = Router();
+router.get('/warranty.pdf', getWarrantyPdf);
 router.get('/', getSiteContact);
 router.post(
   '/inquiries',

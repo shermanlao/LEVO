@@ -23,7 +23,7 @@ Shared view: [`ResourcePage.tsx`](../frontend/src/components/layout/ResourcePage
 
 Certifications and Technical show `Home / {title}` (`resourceRouteItems` in [`pageRouteItems.ts`](../frontend/src/components/layout/pageRouteItems.ts)), an `h1` from the stored title, and body with preserved whitespace (same contact-intro panel style).
 
-`/warranty` uses [`WarrantyStatement.tsx`](../frontend/src/components/layout/WarrantyStatement.tsx). The opening line, period tiles, period table, covered / not covered, conditions, remedy, and claim text come from `warranty_schedule` on `GET /api/contact`. That object is parsed from `site_contacts.resource_warranty_schedule` (JSON). The grey **Warranty statement** panel is `resource_warranty_body`, which staff edit at `/admin/settings`. A **Contact Us** button (`catalog.warranty.contact`) opens `/contact`.
+`/warranty` uses [`WarrantyStatement.tsx`](../frontend/src/components/layout/WarrantyStatement.tsx). The opening line, period tiles, period table, covered / not covered, conditions, remedy, and claim text come from `warranty_schedule` on `GET /api/contact`. That object is parsed from `site_contacts.resource_warranty_schedule` (JSON). The grey **Warranty statement** panel is `resource_warranty_body`, which staff edit at `/admin/settings`. **Download PDF** (`catalog.warranty.download`) saves `LEVO-Warranty.pdf` from `GET /api/contact/warranty.pdf`, built with the same schedule and statement. **Contact Us** (`catalog.warranty.contact`) opens `/contact`.
 
 `ensureDefaultSiteContact` writes the schedule when the column is empty, and replaces the warranty statement when it is empty or still the previous one-paragraph default. A custom statement is left as saved.
 

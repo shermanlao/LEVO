@@ -3,6 +3,7 @@ import PageRoute from '@/components/layout/PageRoute';
 import { resourceRouteItems } from '@/components/layout/pageRouteItems';
 import AlertBanner from '@/components/ui/AlertBanner';
 import Button from '@/components/ui/Button';
+import { FileDownloadIcon } from '@/components/products/ProductFileIcons';
 
 function statementParagraphs(body: string): string[] {
   return body
@@ -145,9 +146,18 @@ export default async function WarrantyStatement() {
       <PageRoute items={resourceRouteItems(title)} />
       <h1 className="text-4xl font-bold mb-4">{title}</h1>
       {loadError ? <AlertBanner>{loadError}</AlertBanner> : null}
-      {schedule?.lead ? <p className="text-lg text-gray-600 mb-8">{schedule.lead}</p> : null}
+      {schedule?.lead ? <p className="text-lg text-gray-600 mb-6">{schedule.lead}</p> : null}
       {schedule ? (
         <div className="space-y-10">
+          <div className="flex flex-wrap gap-3">
+            <Button helpKey="catalog.warranty.download" href="/api/contact/warranty.pdf" download="LEVO-Warranty.pdf">
+              <FileDownloadIcon />
+              Download PDF
+            </Button>
+            <Button helpKey="catalog.warranty.contact" href="/contact" variant="secondary">
+              Contact Us
+            </Button>
+          </div>
           <ScheduleTables schedule={schedule} />
           {paragraphs.length ? (
             <section className="bg-gray-50 p-8 rounded-lg">
@@ -162,9 +172,6 @@ export default async function WarrantyStatement() {
           {schedule.statutory ? (
             <p className="text-sm text-gray-600 border-l-4 border-gray-900 pl-4">{schedule.statutory}</p>
           ) : null}
-          <Button helpKey="catalog.warranty.contact" href="/contact">
-            Contact Us
-          </Button>
         </div>
       ) : null}
     </div>

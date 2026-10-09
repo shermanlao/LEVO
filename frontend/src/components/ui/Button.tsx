@@ -16,6 +16,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   href?: string;
   target?: string;
   rel?: string;
+  download?: boolean | string;
 };
 
 export default function Button({
@@ -24,6 +25,7 @@ export default function Button({
   href,
   target,
   rel,
+  download,
   className = '',
   type,
   children,
@@ -32,7 +34,7 @@ export default function Button({
   const classes = `${VARIANT_CLASS[variant] || VARIANT_CLASS.primary} ${className}`.trim();
   if (href) {
     return (
-      <HelpLink helpKey={helpKey} href={href} className={classes} target={target} rel={rel}>
+      <HelpLink helpKey={helpKey} href={href} className={classes} target={target} rel={rel} download={download}>
         {children}
       </HelpLink>
     );

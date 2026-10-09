@@ -4,6 +4,13 @@ import ContactInquiry from '../models/ContactInquiry';
 import { asyncHandler, notFound } from '../lib/asyncHandler';
 import { setPublicListCache } from '../lib/publicCache';
 import { serializeSiteSettings } from '../lib/siteSettings';
+import { sendPdf } from '../lib/pdfResponse';
+import { buildWarrantyPdf, WARRANTY_PDF_FILENAME } from '../lib/warrantyPdf';
+
+export const getWarrantyPdf = asyncHandler(async (_req: Request, res: Response) => {
+  const pdf = await buildWarrantyPdf();
+  sendPdf(res, pdf, WARRANTY_PDF_FILENAME, 'public, max-age=120', 'attachment');
+});
 
 export const getSiteContact = asyncHandler(async (_req: Request, res: Response) => {
   const row = await SiteContact.findOne({ order: [['id', 'ASC']] });
