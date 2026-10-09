@@ -1,13 +1,13 @@
 # SEO and marketing (public site)
 
-How the public catalog is exposed to search engines and social shares. Staff edit default title, description, Open Graph image, and About copy on `/admin/settings`. Per-category, per-series, and per-project SEO snippets are optional on those admin editors. Each of those SEO blocks has **Generate SEO**, which fills the title and description from the page copy already on the form. Review the text, then save. The button needs a text AI key on `/admin/ai` (same chat failover as description phrases). It does not write the database until you save.
+How the public catalog is exposed to search engines and social shares. Staff edit default title, description, and the Open Graph image on `/admin/settings`. Per-category, per-series, and per-project SEO snippets are optional on those admin editors. Each of those SEO blocks has **Generate SEO**, which fills the title and description from the page copy already on the form. Review the text, then save. The button needs a text AI key on `/admin/ai` (same chat failover as description phrases). It does not write the database until you save.
 
 ## Go-live checklist
 
 1. Pick **one** public host (`https://levolight.com` or `https://www.levolight.com`). 301 the other to it. Set `SITE_ORIGIN` (and Next `SITE_ORIGIN` / `NEXT_PUBLIC_SITE_URL` if used) and the Site settings **Website** field to that same URL (no trailing slash).
 2. On `/admin/settings`, uncheck **UNDER CONSTRUCTION for visitors**.
 3. Confirm default SEO title / description and upload an Open Graph image if you want a branded share card.
-4. Fill About title/body, contact details, and LinkedIn (and other social URLs you use).
+4. Fill contact details and LinkedIn (and other social URLs you use).
 5. In [Google Search Console](https://search.google.com/search-console), verify the property and submit `https://YOUR-HOST/sitemap.xml`.
 6. Spot-check `/robots.txt` (should allow `/` and disallow `/admin`, `/api`, `/_next`, `/search`) and a series page title/description in the browser tab and “View source”.
 
@@ -26,7 +26,7 @@ While under construction is on, `robots.txt` disallows all paths and root metada
 
 ### Sitemap contents
 
-Static: `/`, `/products`, `/projects`, `/contact`, `/about`, `/warranty`, `/certifications`, `/technical`.
+Static: `/`, `/products`, `/projects`, `/contact`, `/warranty`, `/certifications`, `/technical`. `/about` redirects to `/contact` and is not listed.
 
 Dynamic: browsable product types (with at least one series), series at `/products/{type}/{series}`, project slugs. SKU paths are **not** listed (they redirect to the series). When under construction, only `/` is listed.
 
@@ -42,7 +42,7 @@ Dynamic: browsable product types (with at least one series), series at `/product
 
 - Layout: `Organization` + `WebSite` (social URLs as `sameAs` when set).
 - Series: `Product` + `BreadcrumbList`.
-- Category / products / projects / about / project detail: `BreadcrumbList` where applicable; project detail also emits `CreativeWork`.
+- Category / products / projects / project detail: `BreadcrumbList` where applicable; project detail also emits `CreativeWork`.
 
 ## Generate SEO in admin
 
@@ -57,7 +57,6 @@ The request is `POST /api/admin/ai/generate-seo`. Catalog, Projects, or Settings
 
 ## Marketing surfaces tied to SEO
 
-- **About** — `/about` from `about_title` / `about_body` on site settings (header + footer Quick Links).
 - **Inquire** — series title row links to `/contact?series={slug}`; the contact form prefills a datasheet / LDT request message.
 - **LinkedIn** — shown in the footer Media column when `social_linkedin` is set (with Facebook, Instagram, Threads, Pinterest).
 - **Datasheet QR** — still points at the series page (see [product-datasheet.md](product-datasheet.md)); keep Website / `SITE_ORIGIN` aligned so QR and canonicals match.

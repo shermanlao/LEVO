@@ -21,9 +21,6 @@ export const DEFAULT_SEO_DESCRIPTION =
   'Architectural LED lighting for hotels, retail, and residences. Browse downlights, datasheets, and photometric files.';
 export const PREVIOUS_SEO_TITLE = 'LEVO Lighting';
 export const PREVIOUS_SEO_DESCRIPTION = 'Professional lighting solutions for every space';
-export const DEFAULT_ABOUT_TITLE = 'About Us';
-export const DEFAULT_ABOUT_BODY =
-  'LEVO Lighting designs and supplies architectural LED luminaires for hospitality, retail, and residential projects. Specifiers can browse series pages for datasheets, installation guides, and photometric LDT files, then contact us for project support.';
 export const DEFAULT_LOGO_HEADER = '/images/levo-logo-mark.png';
 export const DEFAULT_HERO_IMAGE = '/hero-image.jpg';
 export const DEFAULT_RESOURCE_WARRANTY_TITLE = 'Warranty';
@@ -206,8 +203,6 @@ export const SITE_SETTINGS_COLUMNS: Record<string, { type: typeof DataTypes.STRI
   resource_certifications_body: { type: DataTypes.TEXT },
   resource_technical_title: { type: DataTypes.STRING },
   resource_technical_body: { type: DataTypes.TEXT },
-  about_title: { type: DataTypes.STRING },
-  about_body: { type: DataTypes.TEXT },
   seo_title: { type: DataTypes.STRING },
   seo_description: { type: DataTypes.TEXT },
   og_image: { type: DataTypes.STRING },
@@ -391,8 +386,6 @@ export type SerializedSiteSettings = {
   resource_certifications_body: string;
   resource_technical_title: string;
   resource_technical_body: string;
-  about_title: string;
-  about_body: string;
   seo_title: string;
   seo_description: string;
   og_image: string;
@@ -437,8 +430,6 @@ export function serializeSiteSettings(row: SiteContact): SerializedSiteSettings 
     resource_certifications_body: text(p.resource_certifications_body, DEFAULT_RESOURCE_CERTIFICATIONS_BODY),
     resource_technical_title: text(p.resource_technical_title, DEFAULT_RESOURCE_TECHNICAL_TITLE),
     resource_technical_body: text(p.resource_technical_body, DEFAULT_RESOURCE_TECHNICAL_BODY),
-    about_title: text(p.about_title, DEFAULT_ABOUT_TITLE),
-    about_body: text(p.about_body, DEFAULT_ABOUT_BODY),
     seo_title: text(p.seo_title, DEFAULT_SEO_TITLE),
     seo_description: text(p.seo_description, DEFAULT_SEO_DESCRIPTION),
     og_image: text(p.og_image),
@@ -476,8 +467,6 @@ export async function getOrCreateSiteContact(): Promise<SiteContact> {
     resource_certifications_body: DEFAULT_RESOURCE_CERTIFICATIONS_BODY,
     resource_technical_title: DEFAULT_RESOURCE_TECHNICAL_TITLE,
     resource_technical_body: DEFAULT_RESOURCE_TECHNICAL_BODY,
-    about_title: DEFAULT_ABOUT_TITLE,
-    about_body: DEFAULT_ABOUT_BODY,
     seo_title: DEFAULT_SEO_TITLE,
     seo_description: DEFAULT_SEO_DESCRIPTION,
     public_under_construction: true,
@@ -590,6 +579,11 @@ export async function ensureSiteSettingsColumns(): Promise<void> {
   for (const [name, spec] of Object.entries(SITE_SETTINGS_COLUMNS)) {
     if (!table[name]) {
       await qi.addColumn('site_contacts', name, { type: spec.type, allowNull: true });
+    }
+  }
+  for (const name of ['about_title', 'about_body']) {
+    if (table[name]) {
+      await qi.removeColumn('site_contacts', name);
     }
   }
   if (!table.public_under_construction) {

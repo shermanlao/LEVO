@@ -38,7 +38,7 @@ export default function SeoGenerateButton({
       return;
     }
     if (kind === 'site' && !trimmedName && !description?.trim() && !notes?.trim()) {
-      setError('Add a company name or about text first.');
+      setError('Add a company name or homepage text first.');
       return;
     }
     setLoading(true);

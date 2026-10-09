@@ -97,9 +97,6 @@ export default function MobileNav({
               <Link href="/projects" className="py-3 px-6 font-bold hover:bg-gray-100">
                 Projects
               </Link>
-              <Link href="/about" className="py-3 px-6 font-bold hover:bg-gray-100">
-                About
-              </Link>
               <Link href="/contact" className="py-3 px-6 font-bold hover:bg-gray-100">
                 Contact Us
               </Link>

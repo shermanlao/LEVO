@@ -11,8 +11,7 @@ SQLite `site_contacts` remains the public singleton (`GET /api/contact`). New co
 - **Public site** — `public_under_construction` (default on). Signed-out visitors see header, footer, and UNDER CONSTRUCTION on public pages (cone, pendant-light, and hard-hat icons above the heading). `/admin/login` and the rest of `/admin` always render the real admin UI so staff can sign in. Staff who are signed in see the full catalog after the header session check (`/api/admin/me`); the public HTML itself stays cached and does not read the session cookie. Uncheck it on `/admin/settings` when the site goes live.
 - **Contact and footer** — existing contact fields plus social URLs (`social_linkedin`, `social_facebook`, `social_instagram`, `social_threads`, `social_pinterest`). The footer Contact Us column shows email, phone, address, and website only when that field has a value. The Media column shows LinkedIn, Facebook, Instagram, Threads, and Pinterest when a URL is set. Empty fields stay hidden. **Website** is also the public catalog origin encoded in datasheet QR codes.
 - **Resources** — title and body for the public `/warranty`, `/certifications`, and `/technical` pages (`resource_warranty_title` / `resource_warranty_body`, and the same pair for certifications and technical). The warranty statement is the grey panel at the bottom of `/warranty`. The period table and conditions are `resource_warranty_schedule`. Footer label for the third link stays **Technical Underneath**.
-- **About** — `about_title` and `about_body` for the public `/about` page (header and footer Quick Links).
-- **SEO** — `seo_title`, `seo_description`, `og_image`. Defaults are architectural-LED oriented. **Generate SEO** fills the title and description from the company name, slogan, homepage, and About copy; save settings to keep them. See [seo.md](seo.md) for robots, sitemap, and the go-live checklist.
+- **SEO** — `seo_title`, `seo_description`, `og_image`. Defaults are architectural-LED oriented. **Generate SEO** fills the title and description from the company name, slogan, and homepage; save settings to keep them. See [seo.md](seo.md) for robots, sitemap, and the go-live checklist. There is no About page. `/about` redirects to `/contact`. API startup drops leftover `about_title` and `about_body` columns.
 
 Empty logo/hero/icon paths use the built-in LEVO files (`/images/levo-logo-mark.png`, `/hero-image.jpg`, `frontend/src/app/icon.svg`). Uploads write to `/images/site/{slot}.{ext}`. Each slot accepts drop, clipboard paste, or a chosen file, then opens the crop board at its public frame (wordmark 3:1, icon 1:1, hero 3:2, Open Graph 1.91:1).
 
@@ -22,7 +21,7 @@ Featured products stay on `/admin/products` (`is_featured`). Featured projects u
 
 Public:
 
-- `GET /api/contact` — full site settings payload (including brand, homepage, social, resource copy, About, SEO)
+- `GET /api/contact` — full site settings payload (including brand, homepage, social, resource copy, SEO)
 
 Admin session (`/api/admin/site-settings` → Express `/api/site-settings`):
 
@@ -38,7 +37,6 @@ Saving revalidates catalog, projects, and contact cache tags.
 - Header/footer logos and company name: [`Logo.tsx`](../frontend/src/components/layout/Logo.tsx), [`Footer.tsx`](../frontend/src/components/layout/Footer.tsx)
 - Resource pages (Warranty, Certifications, Technical Underneath): [resource-pages.md](resource-pages.md)
 - Homepage hero, Why Choose, featured headings: [`frontend/src/app/page.tsx`](../frontend/src/app/page.tsx)
-- About page: [`frontend/src/app/about/page.tsx`](../frontend/src/app/about/page.tsx)
 - Default metadata, Open Graph, tab icon, Organization JSON-LD: [`frontend/src/app/layout.tsx`](../frontend/src/app/layout.tsx)
 - Datasheet/label PDFs and LDT company: `logo_pdf` then `logo_header`, plus `company_name` / `company_short_name`
 

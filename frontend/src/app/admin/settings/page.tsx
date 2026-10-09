@@ -53,8 +53,6 @@ function emptySettings(): SiteContact {
     resource_certifications_body: '',
     resource_technical_title: '',
     resource_technical_body: '',
-    about_title: '',
-    about_body: '',
     seo_title: '',
     seo_description: '',
     og_image: '',
@@ -453,27 +451,6 @@ export default function AdminSiteSettingsPage() {
           </Card>
 
           <Card>
-            <h2 className="text-xl font-bold mb-2">About</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Public <code className="text-xs">/about</code> page. Shown in the header and footer Quick Links.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TextInput
-                label="About title"
-                value={form.about_title || ''}
-                onChange={(e) => patch({ about_title: e.target.value })}
-              />
-              <TextareaField
-                label="About body"
-                rows={6}
-                value={form.about_body || ''}
-                onChange={(e) => patch({ about_body: e.target.value })}
-                className="md:col-span-2"
-              />
-            </div>
-          </Card>
-
-          <Card>
             <h2 className="text-xl font-bold mb-2">SEO</h2>
             <p className="text-sm text-gray-500 mb-4">
               Default browser title, description, and social preview image for the public site.
@@ -494,9 +471,7 @@ export default function AdminSiteSettingsPage() {
                 kind="site"
                 helpKey="admin.settings.seo_ai"
                 name={form.company_name || ''}
-                description={[form.slogan, form.hero_title, form.hero_subtitle, form.about_title, form.about_body]
-                  .filter(Boolean)
-                  .join('\n')}
+                description={[form.slogan, form.hero_title, form.hero_subtitle].filter(Boolean).join('\n')}
                 notes={[form.featured_heading, form.why_heading].filter(Boolean).join('\n')}
                 existingTitle={form.seo_title}
                 existingDescription={form.seo_description}

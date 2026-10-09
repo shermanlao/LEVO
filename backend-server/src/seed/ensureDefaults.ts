@@ -47,8 +47,6 @@ import {
   DEFAULT_RESOURCE_WARRANTY_TITLE,
   DEFAULT_WARRANTY_SCHEDULE,
   PREVIOUS_RESOURCE_WARRANTY_BODY,
-  DEFAULT_ABOUT_BODY,
-  DEFAULT_ABOUT_TITLE,
   DEFAULT_SEO_DESCRIPTION,
   DEFAULT_SEO_TITLE,
   PREVIOUS_SEO_DESCRIPTION,
@@ -734,16 +732,6 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Open the LEVO LinkedIn company page in a new tab.',
   },
   {
-    helpKey: 'catalog.about.products',
-    title: 'Explore Products',
-    body: 'Open the public product category grid from the About page.',
-  },
-  {
-    helpKey: 'catalog.about.contact',
-    title: 'Contact Us',
-    body: 'Open the Contact page from About for inquiries and partnership questions.',
-  },
-  {
     helpKey: 'catalog.warranty.contact',
     title: 'Contact Us',
     body: 'Open the Contact page to start a warranty claim or request a project warranty statement.',
@@ -806,7 +794,7 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.settings.seo_ai',
     title: 'Generate SEO',
-    body: 'Fill the default site title and description from the company name, slogan, homepage, and About copy. Review the text, then save settings. Requires a text AI key on /admin/ai.',
+    body: 'Fill the default site title and description from the company name, slogan, and homepage. Review the text, then save settings. Requires a text AI key on /admin/ai.',
   },
   {
     helpKey: 'catalog.404.home',
@@ -1591,6 +1579,9 @@ export async function ensureDefaultProductTypes(): Promise<void> {
 }
 
 export async function ensureDefaultHelpTips(): Promise<void> {
+  await HelpTip.destroy({
+    where: { helpKey: ['catalog.about.products', 'catalog.about.contact'] },
+  });
   const extra: { helpKey: string; title: string; body: string }[] = [];
   try {
     const { variantSpecFields, ALWAYS_VISIBLE_KINDS } = await import('../lib/shared/series-options');
@@ -1668,8 +1659,6 @@ export async function ensureDefaultSiteContact(): Promise<void> {
       resource_certifications_body: DEFAULT_RESOURCE_CERTIFICATIONS_BODY,
       resource_technical_title: DEFAULT_RESOURCE_TECHNICAL_TITLE,
       resource_technical_body: DEFAULT_RESOURCE_TECHNICAL_BODY,
-      about_title: DEFAULT_ABOUT_TITLE,
-      about_body: DEFAULT_ABOUT_BODY,
       seo_title: DEFAULT_SEO_TITLE,
       seo_description: DEFAULT_SEO_DESCRIPTION,
     });
@@ -1705,8 +1694,6 @@ export async function ensureDefaultSiteContact(): Promise<void> {
   if (!seoDescription || seoDescription === PREVIOUS_SEO_DESCRIPTION) {
     patch.seo_description = DEFAULT_SEO_DESCRIPTION;
   }
-  if (!String(row.get('about_title') || '').trim()) patch.about_title = DEFAULT_ABOUT_TITLE;
-  if (!String(row.get('about_body') || '').trim()) patch.about_body = DEFAULT_ABOUT_BODY;
   if (!String(row.get('resource_warranty_title') || '').trim()) {
     patch.resource_warranty_title = DEFAULT_RESOURCE_WARRANTY_TITLE;
   }

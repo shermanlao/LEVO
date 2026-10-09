@@ -162,11 +162,6 @@ export default function Footer({ contact }: { contact: SiteContact | null }) {
                 </Link>
               </li>
               <li>
-                <Link href="/about" className={LINK_CLASS}>
-                  About
-                </Link>
-              </li>
-              <li>
                 <Link href="/contact" className={LINK_CLASS}>
                   Contact Us
                 </Link>

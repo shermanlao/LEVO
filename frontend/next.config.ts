@@ -43,6 +43,7 @@ const nextConfig: NextConfig = {
     optimizeCss: true,
   },
   async redirects() {
+    // There is no About page. Keep this so old /about links open Contact.
     return [{ source: '/about', destination: '/contact', permanent: false }];
   },
   async headers() {

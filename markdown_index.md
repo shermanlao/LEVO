@@ -2,7 +2,7 @@
 
 - [Admin login](docs/admin-login.md) — `/admin` session, SQLite staff logins, and Product Types → Series → Variants dashboard layers
 - [Admin dashboard](docs/admin-dashboard.md) — stats tiles, shortcuts, and attention counts on `/admin`
-- [Site settings](docs/admin-site-settings.md) — `/admin/settings` brand logos, homepage copy, contact/footer, About, and SEO
+- [Site settings](docs/admin-site-settings.md) — `/admin/settings` brand logos, homepage copy, contact/footer, and SEO
 - [SEO and marketing](docs/seo.md) — robots, sitemap, canonicals, JSON-LD, go-live checklist
 - [Visitor analytics](docs/visitor-analytics.md) — first-party `levo_vid` cookie and 7-day unique visitors / page views
 - [Visitor catalog performance](docs/visitor-performance.md) — 120s public HTML and JSON cache, image cache, admin writes stay uncached

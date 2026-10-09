@@ -1,10 +1,10 @@
 # Contact Us page
 
-Public contact page at `/contact`. About is a separate page at `/about` (title and body from Site settings).
+Public contact page at `/contact`. There is no About page. `/about` redirects here.
 
 ## Public site
 
-- Nav and footer **Contact Us** links go to `/contact`. **About** links go to `/about`.
+- Nav and footer **Contact Us** links go to `/contact`. There is no About link in the header, mobile menu, or footer Quick Links.
 - Series pages include an **Inquire** button that opens `/contact?series={slug}` and prefills the message asking for datasheets / LDT files.
 - Page copy (heading, intro, email, phone, address, hours, website, slogan) is loaded from the `site_contacts` table, not hardcoded in the page. Empty contact fields are omitted. Staff edit those fields on `/admin/settings`. See [admin-site-settings.md](admin-site-settings.md).
 - Optional `website` and `datasheet_disclaimer` on the same row are used on generated product datasheets. `website` is the public catalog origin in the datasheet QR. `datasheet_disclaimer` is the footer tolerance note (25°C rated values, ±10% flux/load, ±150 K CCT). See [product-datasheet.md](product-datasheet.md).
@@ -22,7 +22,7 @@ Those Express list routes are **not** in the public Next rewrites. Public visito
 
 ## API
 
-- `GET /api/contact` — `{ data: { heading, intro, email, phone, address, hours, website, datasheet_disclaimer, slogan, company_name, logos, homepage, social, about, seo, … } }`
+- `GET /api/contact` — `{ data: { heading, intro, email, phone, address, hours, website, datasheet_disclaimer, slogan, company_name, logos, homepage, social, seo, … } }`
 - `POST /api/contact/inquiries` — body `{ name, email, message }`
 - `GET /api/contact-inquiries` — staff list (call through `/api/admin/inquiries`)
 - `GET /api/contact-inquiries/:id` — one inquiry (call through `/api/admin/inquiries/:id`)
