@@ -33,6 +33,7 @@ class SiteContact extends Model {
   declare social_pinterest: string | null;
   declare resource_warranty_title: string | null;
   declare resource_warranty_body: string | null;
+  declare resource_warranty_schedule: string | null;
   declare resource_certifications_title: string | null;
   declare resource_certifications_body: string | null;
   declare resource_technical_title: string | null;
@@ -78,6 +79,7 @@ SiteContact.init(
     social_pinterest: { type: DataTypes.STRING, allowNull: true },
     resource_warranty_title: { type: DataTypes.STRING, allowNull: true },
     resource_warranty_body: { type: DataTypes.TEXT, allowNull: true },
+    resource_warranty_schedule: { type: DataTypes.TEXT, allowNull: true },
     resource_certifications_title: { type: DataTypes.STRING, allowNull: true },
     resource_certifications_body: { type: DataTypes.TEXT, allowNull: true },
     resource_technical_title: { type: DataTypes.STRING, allowNull: true },

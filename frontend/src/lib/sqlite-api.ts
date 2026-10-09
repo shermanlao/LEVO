@@ -125,6 +125,20 @@ export type WhyCard = {
   icon: 'energy' | 'lifespan' | 'design';
 };
 
+export type WarrantySchedule = {
+  lead: string;
+  periodNote: string;
+  periods: { value: string; label: string }[];
+  periodRows: { what: string; period: string; note: string }[];
+  covered: string[];
+  excluded: string[];
+  conditions: { condition: string; detail: string }[];
+  remedy: string[];
+  claim: string[];
+  claimNote: string;
+  statutory: string;
+};
+
 export type SiteContact = {
   heading: string;
   intro: string;
@@ -156,6 +170,7 @@ export type SiteContact = {
   social_pinterest?: string;
   resource_warranty_title?: string;
   resource_warranty_body?: string;
+  warranty_schedule?: WarrantySchedule;
   resource_certifications_title?: string;
   resource_certifications_body?: string;
   resource_technical_title?: string;

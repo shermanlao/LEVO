@@ -417,8 +417,9 @@ export default function AdminSiteSettingsPage() {
                 onChange={(e) => patch({ resource_warranty_title: e.target.value })}
               />
               <TextareaField
-                label="Warranty body"
-                rows={4}
+                label="Warranty statement"
+                hint="Shown at the bottom of /warranty. The period table, cover, and conditions come from the warranty schedule."
+                rows={8}
                 value={form.resource_warranty_body || ''}
                 onChange={(e) => patch({ resource_warranty_body: e.target.value })}
                 className="md:col-span-2"

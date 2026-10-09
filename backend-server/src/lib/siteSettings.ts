@@ -27,8 +27,124 @@ export const DEFAULT_ABOUT_BODY =
 export const DEFAULT_LOGO_HEADER = '/images/levo-logo-mark.png';
 export const DEFAULT_HERO_IMAGE = '/hero-image.jpg';
 export const DEFAULT_RESOURCE_WARRANTY_TITLE = 'Warranty';
-export const DEFAULT_RESOURCE_WARRANTY_BODY =
+export const PREVIOUS_RESOURCE_WARRANTY_BODY =
   'LEVO Lighting products are covered by the warranty period printed on each datasheet (typically five years). Keep your invoice and product SKU when making a claim. Contact us if you need a warranty statement for a project.';
+export const DEFAULT_RESOURCE_WARRANTY_BODY =
+  'LEVO Lighting warrants integral LED luminaires against defects in materials and workmanship for five (5) years from the invoice date, or for the shorter period printed on the product datasheet. Exterior LED luminaires are warranted for three (3) years. Non-LED luminaires are warranted for two (2) years. Emergency batteries, spare parts, and replacement modules are warranted for one (1) year from their invoice date.\n\nThe warranty covers the luminaire, its integral LED source, and the LEVO driver, provided the product is installed by a qualified person in line with the datasheet and installation guide, used within its stated temperature, IP rating, and voltage, and powered by the LEVO driver supplied or specified for that SKU. It applies to the first installation only.\n\nLEVO will, at its option, repair or replace the defective product or component, supply an equivalent product if the original is no longer made, or refund the purchase price. A replacement carries the rest of the original warranty period. Removal, reinstallation, access costs, and consequential loss are not included.\n\nThe warranty does not cover transport damage, misuse, unauthorised repair or modification, third-party drivers or dimmers, power surges, normal lumen depreciation and colour shift within the datasheet values, finish wear, or consumables after their own warranty period.\n\nTo claim, contact LEVO within 30 days of finding the fault and send the invoice, product SKU, installation address, and photographs of the defect.';
+
+export type WarrantyPeriod = { value: string; label: string };
+export type WarrantyTableRow = { what: string; period: string; note: string };
+export type WarrantyCondition = { condition: string; detail: string };
+
+export type WarrantySchedule = {
+  lead: string;
+  periodNote: string;
+  periods: WarrantyPeriod[];
+  periodRows: WarrantyTableRow[];
+  covered: string[];
+  excluded: string[];
+  conditions: WarrantyCondition[];
+  remedy: string[];
+  claim: string[];
+  claimNote: string;
+  statutory: string;
+};
+
+export const DEFAULT_WARRANTY_SCHEDULE: WarrantySchedule = {
+  lead: 'A 5-year limited warranty on integral LED luminaires, with shorter periods for exterior products, non-LED luminaires, batteries, and spare parts. Every period starts on the invoice date.',
+  periodNote:
+    'All periods start on the invoice date. If the datasheet prints a shorter period, that period applies.',
+  periods: [
+    { value: '5 years', label: 'Interior integral LED' },
+    { value: '3 years', label: 'Exterior LED' },
+    { value: '2 years', label: 'Non-LED luminaires' },
+    { value: '1 year', label: 'Batteries and spare parts' },
+  ],
+  periodRows: [
+    {
+      what: 'Interior luminaires with an integral LED and a LEVO driver',
+      period: '5 years',
+      note: 'From the invoice date.',
+    },
+    {
+      what: 'Exterior LED luminaires',
+      period: '3 years',
+      note: 'Outdoor products carry a shorter period.',
+    },
+    {
+      what: 'Control gear supplied by LEVO with the luminaire',
+      period: 'Same as the luminaire',
+      note: 'Covered with the luminaire it ships with.',
+    },
+    {
+      what: 'Non-LED / conventional luminaires',
+      period: '2 years',
+      note: 'From the invoice date.',
+    },
+    {
+      what: 'Spare parts and replacement modules',
+      period: '1 year',
+      note: 'From the invoice date of that part.',
+    },
+    {
+      what: 'Emergency batteries',
+      period: '1 year',
+      note: 'Not included in the luminaire period.',
+    },
+    {
+      what: 'Shorter period printed on the datasheet',
+      period: 'Applies instead',
+      note: 'Replaces the periods above.',
+    },
+  ],
+  covered: [
+    'Manufacturing and material defects in the luminaire, the integral LED source, and the LEVO driver.',
+    'Widespread LED failure. An isolated early failure is not a defect. A batch failure is.',
+    'Luminous flux that falls by more than 30% inside the warranty period, outside the L-value on the datasheet. Depreciation inside that L-value is normal.',
+  ],
+  excluded: [
+    'Removal, reinstallation, access equipment, labour, consequential loss, lost profit, and site delay.',
+    'Transport damage. That is a carrier claim, made on delivery.',
+    'Misuse, accident, negligence, the wrong environment, chemicals, or coastal exposure where the product is not rated for it.',
+    'Over-voltage, lightning, missing surge protection, or a supply outside the label.',
+    'Normal lumen drop, colour-temperature shift, and small batch-to-batch differences on a later LED delivery.',
+    'Finish wear, soiling, and corrosion from lack of cleaning. Batteries after their own 1-year period.',
+    'Buzz, flicker, or inrush from a third-party dimmer that is not on the datasheet. Repairs that use non-LEVO parts.',
+  ],
+  conditions: [
+    { condition: 'Installation', detail: 'By a qualified person, to the datasheet and the installation guide.' },
+    {
+      condition: 'Environment',
+      detail: 'Indoors or outdoors only as rated, and within the stated ambient temperature, IP rating, and voltage.',
+    },
+    { condition: 'Driver', detail: 'Only the LEVO power supply supplied or specified for that SKU.' },
+    {
+      condition: 'Alteration',
+      detail: 'Not modified, and not repaired, except by LEVO or with LEVO’s written agreement.',
+    },
+    { condition: 'Payment', detail: 'Invoice paid.' },
+    { condition: 'Installation count', detail: 'First installation only. A luminaire moved to a second site is not covered.' },
+    {
+      condition: 'Daily hours',
+      detail: 'No daily hour cap. Use is limited by the datasheet, including temperature, IP rating, and voltage.',
+    },
+  ],
+  remedy: [
+    'LEVO repairs or replaces the product or the failed component, or refunds the purchase price. LEVO chooses which.',
+    'If that SKU is gone, the replacement is an equivalent or better LEVO product. Light colour and output may differ slightly.',
+    'The replacement keeps only the remainder of the original period. It does not restart five years.',
+    'The customer pays removal, refit, and freight to LEVO if a return is requested. LEVO pays freight of the replacement on a valid claim.',
+    'No distributor or agent can extend these terms.',
+  ],
+  claim: [
+    'Within 30 days of the fault being found.',
+    'Send the invoice, SKU, installation address, photographs, and a short description.',
+    'LEVO inspects and decides whether the fault is a defect.',
+  ],
+  claimNote: 'Give notice within 30 days of finding the fault. Include the invoice, product SKU, installation address, and photographs.',
+  statutory:
+    'This warranty does not replace statutory rights, including the Consumer Rights Act 2015 for consumer buyers.',
+};
 export const DEFAULT_RESOURCE_CERTIFICATIONS_TITLE = 'Certifications';
 export const DEFAULT_RESOURCE_CERTIFICATIONS_BODY =
   'LEVO luminaires are designed to applicable IEC/EN safety and performance standards. Certificate marks appear on product datasheets. Contact us for copies of company or product certificates.';
@@ -85,6 +201,7 @@ export const SITE_SETTINGS_COLUMNS: Record<string, { type: typeof DataTypes.STRI
   social_pinterest: { type: DataTypes.STRING },
   resource_warranty_title: { type: DataTypes.STRING },
   resource_warranty_body: { type: DataTypes.TEXT },
+  resource_warranty_schedule: { type: DataTypes.TEXT },
   resource_certifications_title: { type: DataTypes.STRING },
   resource_certifications_body: { type: DataTypes.TEXT },
   resource_technical_title: { type: DataTypes.STRING },
@@ -164,6 +281,75 @@ export function parseWhyCards(raw: unknown): WhyCard[] {
   return cards;
 }
 
+function stringList(raw: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(raw)) return fallback;
+  const items = raw.map((item) => String(item || '').trim()).filter(Boolean);
+  return items.length ? items : fallback;
+}
+
+export function parseWarrantySchedule(raw: unknown): WarrantySchedule {
+  const fallback = DEFAULT_WARRANTY_SCHEDULE;
+  let parsed: unknown = raw;
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return fallback;
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      return fallback;
+    }
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return fallback;
+  const row = parsed as Record<string, unknown>;
+  const periods = Array.isArray(row.periods)
+    ? row.periods
+        .map((item) => {
+          const entry = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+          return {
+            value: String(entry.value || '').trim(),
+            label: String(entry.label || '').trim(),
+          };
+        })
+        .filter((item) => item.value && item.label)
+    : [];
+  const periodRows = Array.isArray(row.periodRows)
+    ? row.periodRows
+        .map((item) => {
+          const entry = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+          return {
+            what: String(entry.what || '').trim(),
+            period: String(entry.period || '').trim(),
+            note: String(entry.note || '').trim(),
+          };
+        })
+        .filter((item) => item.what && item.period)
+    : [];
+  const conditions = Array.isArray(row.conditions)
+    ? row.conditions
+        .map((item) => {
+          const entry = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+          return {
+            condition: String(entry.condition || '').trim(),
+            detail: String(entry.detail || '').trim(),
+          };
+        })
+        .filter((item) => item.condition && item.detail)
+    : [];
+  return {
+    lead: text(row.lead, fallback.lead),
+    periodNote: text(row.periodNote, fallback.periodNote),
+    periods: periods.length ? periods : fallback.periods,
+    periodRows: periodRows.length ? periodRows : fallback.periodRows,
+    covered: stringList(row.covered, fallback.covered),
+    excluded: stringList(row.excluded, fallback.excluded),
+    conditions: conditions.length ? conditions : fallback.conditions,
+    remedy: stringList(row.remedy, fallback.remedy),
+    claim: stringList(row.claim, fallback.claim),
+    claimNote: text(row.claimNote, fallback.claimNote),
+    statutory: text(row.statutory, fallback.statutory),
+  };
+}
+
 function text(value: unknown, fallback = ''): string {
   const next = String(value ?? '').trim();
   return next || fallback;
@@ -200,6 +386,7 @@ export type SerializedSiteSettings = {
   social_pinterest: string;
   resource_warranty_title: string;
   resource_warranty_body: string;
+  warranty_schedule: WarrantySchedule;
   resource_certifications_title: string;
   resource_certifications_body: string;
   resource_technical_title: string;
@@ -245,6 +432,7 @@ export function serializeSiteSettings(row: SiteContact): SerializedSiteSettings 
     social_pinterest: text(p.social_pinterest),
     resource_warranty_title: text(p.resource_warranty_title, DEFAULT_RESOURCE_WARRANTY_TITLE),
     resource_warranty_body: text(p.resource_warranty_body, DEFAULT_RESOURCE_WARRANTY_BODY),
+    warranty_schedule: parseWarrantySchedule(p.resource_warranty_schedule),
     resource_certifications_title: text(p.resource_certifications_title, DEFAULT_RESOURCE_CERTIFICATIONS_TITLE),
     resource_certifications_body: text(p.resource_certifications_body, DEFAULT_RESOURCE_CERTIFICATIONS_BODY),
     resource_technical_title: text(p.resource_technical_title, DEFAULT_RESOURCE_TECHNICAL_TITLE),
@@ -283,6 +471,7 @@ export async function getOrCreateSiteContact(): Promise<SiteContact> {
     why_cards: JSON.stringify(DEFAULT_WHY_CARDS),
     resource_warranty_title: DEFAULT_RESOURCE_WARRANTY_TITLE,
     resource_warranty_body: DEFAULT_RESOURCE_WARRANTY_BODY,
+    resource_warranty_schedule: JSON.stringify(DEFAULT_WARRANTY_SCHEDULE),
     resource_certifications_title: DEFAULT_RESOURCE_CERTIFICATIONS_TITLE,
     resource_certifications_body: DEFAULT_RESOURCE_CERTIFICATIONS_BODY,
     resource_technical_title: DEFAULT_RESOURCE_TECHNICAL_TITLE,

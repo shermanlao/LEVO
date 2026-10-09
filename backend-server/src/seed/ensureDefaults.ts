@@ -45,6 +45,8 @@ import {
   DEFAULT_RESOURCE_TECHNICAL_TITLE,
   DEFAULT_RESOURCE_WARRANTY_BODY,
   DEFAULT_RESOURCE_WARRANTY_TITLE,
+  DEFAULT_WARRANTY_SCHEDULE,
+  PREVIOUS_RESOURCE_WARRANTY_BODY,
   DEFAULT_ABOUT_BODY,
   DEFAULT_ABOUT_TITLE,
   DEFAULT_SEO_DESCRIPTION,
@@ -740,6 +742,11 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'catalog.about.contact',
     title: 'Contact Us',
     body: 'Open the Contact page from About for inquiries and partnership questions.',
+  },
+  {
+    helpKey: 'catalog.warranty.contact',
+    title: 'Contact Us',
+    body: 'Open the Contact page to start a warranty claim or request a project warranty statement.',
   },
   {
     helpKey: 'catalog.series.inquire',
@@ -1651,6 +1658,7 @@ export async function ensureDefaultSiteContact(): Promise<void> {
       why_cards: JSON.stringify(DEFAULT_WHY_CARDS),
       resource_warranty_title: DEFAULT_RESOURCE_WARRANTY_TITLE,
       resource_warranty_body: DEFAULT_RESOURCE_WARRANTY_BODY,
+      resource_warranty_schedule: JSON.stringify(DEFAULT_WARRANTY_SCHEDULE),
       resource_certifications_title: DEFAULT_RESOURCE_CERTIFICATIONS_TITLE,
       resource_certifications_body: DEFAULT_RESOURCE_CERTIFICATIONS_BODY,
       resource_technical_title: DEFAULT_RESOURCE_TECHNICAL_TITLE,
@@ -1697,8 +1705,12 @@ export async function ensureDefaultSiteContact(): Promise<void> {
   if (!String(row.get('resource_warranty_title') || '').trim()) {
     patch.resource_warranty_title = DEFAULT_RESOURCE_WARRANTY_TITLE;
   }
-  if (!String(row.get('resource_warranty_body') || '').trim()) {
+  const warrantyBody = String(row.get('resource_warranty_body') || '').trim();
+  if (!warrantyBody || warrantyBody === PREVIOUS_RESOURCE_WARRANTY_BODY) {
     patch.resource_warranty_body = DEFAULT_RESOURCE_WARRANTY_BODY;
+  }
+  if (!String(row.get('resource_warranty_schedule') || '').trim()) {
+    patch.resource_warranty_schedule = JSON.stringify(DEFAULT_WARRANTY_SCHEDULE);
   }
   if (!String(row.get('resource_certifications_title') || '').trim()) {
     patch.resource_certifications_title = DEFAULT_RESOURCE_CERTIFICATIONS_TITLE;
