@@ -174,3 +174,15 @@ export function catalogTypeIsBrowsable(type: { attributes?: { series_count?: num
   if (count == null) return true;
   return Number(count) > 0;
 }
+
+/** Category card target. One visible series skips the listing and opens that series. */
+export function categoryCardHref(type: {
+  attributes?: { slug?: string; series_count?: number; sole_series_slug?: string | null };
+}): string {
+  const slug = String(type.attributes?.slug || '').trim();
+  const sole = String(type.attributes?.sole_series_slug || '').trim();
+  if (Number(type.attributes?.series_count) === 1 && sole) {
+    return `/products/${slug}/${sole}`;
+  }
+  return `/products/${slug}`;
+}

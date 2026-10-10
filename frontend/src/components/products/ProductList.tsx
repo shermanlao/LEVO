@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import RobustImage from '@/components/ui/robust-image';
 import EmptyState from '@/components/ui/EmptyState';
@@ -109,26 +109,49 @@ function listColumns(rows: SeriesComboPreview[]): ListColumn[] {
     .map(toColumn);
 }
 
+const IMAGE_COL_REM = 4;
 const COMPACT_COL_REM = 6.5;
 const FILES_COL_REM = 6.75;
-const WIDE_COL_MIN_REM = 14;
-/** Short spec columns stay content-tight. SKU and size share the leftover width. */
-const COMPACT_COL = 'w-[6.5rem] whitespace-nowrap';
-const FILES_COL = 'w-[6.75rem]';
+/** Floor for the leftover SKU and size used to share, before the one-quarter give-back. */
+const WIDE_PAIR_MIN_REM = 28;
 const COMPACT_CELL =
   '[&>span]:flex [&>span]:max-w-full [&>span]:flex-wrap [&>span>span]:min-w-0 [&>span>span]:break-words';
 
-function columnWidthClass(key: string): string {
-  if (key === SIZE_KIND) return '';
-  return COMPACT_COL;
-}
+type ColumnWidths = {
+  image: number;
+  sku: number;
+  size: number;
+  compact: number;
+  files: number;
+};
 
 function tableMinWidth(columns: ListColumn[]): string {
   const hasSize = columns.some((column) => column.key === SIZE_KIND);
   const compactCount = columns.length - (hasSize ? 1 : 0);
-  const wideCount = 1 + (hasSize ? 1 : 0);
-  const rem = 4 + wideCount * WIDE_COL_MIN_REM + FILES_COL_REM + compactCount * COMPACT_COL_REM;
+  const wideFloor = hasSize ? WIDE_PAIR_MIN_REM : WIDE_PAIR_MIN_REM / 2;
+  const rem = IMAGE_COL_REM + wideFloor + FILES_COL_REM + compactCount * COMPACT_COL_REM;
   return `${rem}rem`;
+}
+
+function columnWidths(columns: ListColumn[], tablePx: number, rootPx: number): ColumnWidths | null {
+  if (tablePx <= 0 || rootPx <= 0) return null;
+  const hasSize = columns.some((column) => column.key === SIZE_KIND);
+  const compactCount = columns.length - (hasSize ? 1 : 0);
+  const wideCount = 1 + (hasSize ? 1 : 0);
+  const shortCount = compactCount + 1;
+  const px = (rem: number) => rem * rootPx;
+  const image = px(IMAGE_COL_REM);
+  const compactBase = px(COMPACT_COL_REM);
+  const filesBase = px(FILES_COL_REM);
+  const leftover = Math.max(0, tablePx - image - compactCount * compactBase - filesBase);
+  const extra = (leftover * 0.25) / shortCount;
+  return {
+    image,
+    sku: (leftover * 0.75) / wideCount,
+    size: (leftover * 0.75) / wideCount,
+    compact: compactBase + extra,
+    files: filesBase + extra,
+  };
 }
 
 function SizeValue({ row }: { row: SeriesComboPreview }) {
@@ -220,12 +243,34 @@ export default function ProductList({
   const openRow = rows.find((row) => row.id === openId) || null;
   const previewId = searchParams.get('preview') === '1' && rows.length === 1 ? rows[0].id : null;
   const columns = useMemo(() => listColumns(rows), [rows]);
+  const tableWrapRef = useRef<HTMLDivElement | null>(null);
+  const [tableWidth, setTableWidth] = useState(0);
+  const [rootPx, setRootPx] = useState(16);
+  const widths = useMemo(
+    () => columnWidths(columns, tableWidth, rootPx),
+    [columns, rootPx, tableWidth]
+  );
   const shownCount = rows.length;
   const allCount = typeof totalCount === 'number' ? totalCount : shownCount;
 
   useEffect(() => {
     if (previewId) setOpenId(previewId);
   }, [previewId]);
+
+  useLayoutEffect(() => {
+    const node = tableWrapRef.current;
+    if (!node) return;
+    const measure = () => {
+      const root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const minPx = parseFloat(tableMinWidth(columns)) * root;
+      setRootPx(root);
+      setTableWidth(Math.max(node.clientWidth, minPx));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [columns]);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -296,37 +341,49 @@ export default function ProductList({
         })}
       </ul>
 
-      <div className="hidden lg:block table-wrap min-w-0">
+      <div ref={tableWrapRef} className="hidden lg:block table-wrap min-w-0">
         <table
           className="w-full table-fixed divide-y divide-gray-200"
           style={{ minWidth: tableMinWidth(columns) }}
         >
           <colgroup>
             <col className="w-16" />
-            <col />
+            <col style={widths ? { width: widths.sku } : undefined} />
             {columns.map((column) => (
-              <col key={column.key} className={columnWidthClass(column.key) || undefined} />
+              <col
+                key={column.key}
+                style={
+                  widths
+                    ? { width: column.key === SIZE_KIND ? widths.size : widths.compact }
+                    : undefined
+                }
+              />
             ))}
-            <col className={FILES_COL} />
+            <col style={widths ? { width: widths.files } : undefined} />
           </colgroup>
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className={`${TH} w-16`}>
                 <span className="sr-only">Image</span>
               </th>
-              <th scope="col" className={TH}>
+              <th scope="col" className={TH} style={widths ? { width: widths.sku } : undefined}>
                 SKU
               </th>
               {columns.map((column) => (
                 <th
                   key={column.key}
                   scope="col"
-                  className={`${TH} ${columnWidthClass(column.key)}`}
+                  className={`${TH} ${column.key === SIZE_KIND ? '' : 'whitespace-nowrap'}`}
+                  style={
+                    widths
+                      ? { width: column.key === SIZE_KIND ? widths.size : widths.compact }
+                      : undefined
+                  }
                 >
                   {column.label}
                 </th>
               ))}
-              <th scope="col" className={`${TH} ${FILES_COL}`}>
+              <th scope="col" className={TH} style={widths ? { width: widths.files } : undefined}>
                 Files
               </th>
             </tr>
@@ -372,7 +429,7 @@ export default function ProductList({
                       <SpecValue row={row} kind={column.key} />
                     </td>
                   ))}
-                  <td className={`${TD} ${FILES_COL}`}>
+                  <td className={TD}>
                     <ComboFileButtons row={row} seriesSlug={seriesSlug} />
                   </td>
                 </tr>

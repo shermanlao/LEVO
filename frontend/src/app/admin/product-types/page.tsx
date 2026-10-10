@@ -14,6 +14,7 @@ import { showSaveNotice } from '@/components/ui/SaveNotice';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
 import { swapNeighbors } from '@/lib/list-order';
 import SeoGenerateButton from '@/components/admin/SeoGenerateButton';
+import DescriptionGenerateButton from '@/components/admin/DescriptionGenerateButton';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
 import TypeFeaturedImageEditor, {
   type TypeFeaturedPaths,
@@ -247,6 +248,13 @@ export default function ProductTypesAdminPage() {
                 onChange={(e) => setNewType({ ...newType, description: e.target.value })}
                 className="w-full border border-gray-300 rounded px-3 py-2 h-32"
               ></textarea>
+              <DescriptionGenerateButton
+                className="mt-3"
+                helpKey="admin.product_types.description_ai"
+                name={newType.name}
+                existing={newType.description}
+                onGenerated={(description) => setNewType((prev) => ({ ...prev, description }))}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

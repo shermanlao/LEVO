@@ -176,6 +176,7 @@ const AI_CATALOG_API_PATHS = new Set([
   'stylize-product-photo',
   'generate-datasheet-label',
   'generate-description-phrase',
+  'generate-description',
 ]);
 
 export function pagesForAiApi(method: string, suffix: string): AdminPageKey[] {

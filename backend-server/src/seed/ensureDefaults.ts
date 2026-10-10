@@ -687,6 +687,26 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Browse LEVO lighting projects.',
   },
   {
+    helpKey: 'catalog.nav.products',
+    title: 'Products',
+    body: 'Open the product catalog. Hover to jump straight to a lighting category.',
+  },
+  {
+    helpKey: 'catalog.nav.projects',
+    title: 'Projects',
+    body: 'Open lighting projects. Hover to jump straight to a project category.',
+  },
+  {
+    helpKey: 'catalog.nav.product_category',
+    title: 'Product category',
+    body: 'Open this lighting category from the header menu.',
+  },
+  {
+    helpKey: 'catalog.nav.project_category',
+    title: 'Project category',
+    body: 'Show projects in this category.',
+  },
+  {
     helpKey: 'catalog.breadcrumb.home',
     title: 'Home',
     body: 'Return to the LEVO homepage.',
@@ -745,6 +765,11 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'catalog.series.inquire',
     title: 'Inquire',
     body: 'Opens Contact with this series name filled into the message so you can request datasheets, LDT files, or a quote.',
+  },
+  {
+    helpKey: 'admin.product_types.description_ai',
+    title: 'Generate description',
+    body: 'Write the public category description from the category name. Review the text, then save. Requires a text AI key on /admin/ai.',
   },
   {
     helpKey: 'admin.product_types.seo_title',

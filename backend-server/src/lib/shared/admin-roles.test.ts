@@ -64,6 +64,7 @@ describe('admin roles and page access', () => {
 
   it('lets catalog staff call generate routes and keeps settings on AI', () => {
     assert.deepEqual(pagesForAiApi('POST', 'generate-seo'), ['catalog', 'projects', 'settings', 'ai']);
+    assert.deepEqual(pagesForAiApi('POST', 'generate-description'), ['catalog', 'ai']);
     assert.deepEqual(pagesForAiApi('POST', 'generate-size-drawing'), ['catalog', 'ai']);
     assert.deepEqual(pagesForAiApi('POST', 'refine-size-drawing'), ['catalog', 'ai']);
     assert.deepEqual(pagesForAiApi('POST', 'stylize-product-photo'), ['catalog', 'ai']);

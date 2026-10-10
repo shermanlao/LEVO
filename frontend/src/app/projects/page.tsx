@@ -10,6 +10,16 @@ import { breadcrumbJsonLd } from '@/lib/seo-jsonld';
 
 export const revalidate = 120;
 
+type ProjectsPageProps = {
+  searchParams: Promise<{ category?: string | string[] }>;
+};
+
+function categoryFromSearch(value: string | string[] | undefined): string {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const category = String(raw || '').trim();
+  return category || 'All';
+}
+
 export const metadata: Metadata = buildPageMetadata({
   title: 'Projects',
   description: 'Explore LEVO Lighting project case studies across architectural spaces.',
@@ -37,7 +47,9 @@ function toListItem(row: Record<string, unknown>): ProjectListItem | null {
   };
 }
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
+  const resolvedSearch = await searchParams;
+  const initialCategory = categoryFromSearch(resolvedSearch.category);
   const rows = await getProjectsFromApi();
   const projects = rows.map((row) => toListItem(row)).filter(Boolean) as ProjectListItem[];
   const loadError =
@@ -57,7 +69,7 @@ export default async function ProjectsPage() {
         <p className="text-gray-600">Architectural lighting projects by LEVO.</p>
       </div>
       {loadError ? <AlertBanner>{loadError}</AlertBanner> : null}
-      <ProjectCatalog projects={projects} />
+      <ProjectCatalog projects={projects} initialCategory={initialCategory} />
     </div>
   );
 }

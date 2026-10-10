@@ -14,6 +14,7 @@ import {
   postEditProductPhoto,
   postGenerateAppearancePhoto,
   postGenerateDatasheetLabel,
+  postGenerateDescription,
   postGenerateDescriptionPhrase,
   postGenerateSeo,
   postGenerateSizeDrawing,
@@ -45,6 +46,7 @@ router.post('/generate-appearance-photo', postGenerateAppearancePhoto);
 router.post('/edit-product-photo', postEditProductPhoto);
 router.post('/stylize-product-photo', postStylizeProductPhoto);
 router.post('/generate-datasheet-label', postGenerateDatasheetLabel);
+router.post('/generate-description', postGenerateDescription);
 router.post('/generate-description-phrase', postGenerateDescriptionPhrase);
 router.post('/generate-seo', postGenerateSeo);
 

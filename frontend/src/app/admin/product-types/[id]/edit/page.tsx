@@ -12,6 +12,7 @@ import { showSaveNotice } from '@/components/ui/SaveNotice';
 import NotFoundView from '@/components/layout/NotFoundView';
 import HelpButton from '@/components/admin/HelpButton';
 import SeoGenerateButton from '@/components/admin/SeoGenerateButton';
+import DescriptionGenerateButton from '@/components/admin/DescriptionGenerateButton';
 import TypeFeaturedImageEditor, {
   typeFeaturedPathsFromAttrs,
   type TypeFeaturedPaths,
@@ -202,6 +203,13 @@ export default function EditProductTypePage() {
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 h-32"
+              />
+              <DescriptionGenerateButton
+                className="mt-3"
+                helpKey="admin.product_types.description_ai"
+                name={name}
+                existing={description}
+                onGenerated={setDescription}
               />
             </div>
 

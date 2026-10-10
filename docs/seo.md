@@ -55,6 +55,8 @@ Dynamic: browsable product types (with at least one series), series at `/product
 
 The request is `POST /api/admin/ai/generate-seo`. Catalog, Projects, or Settings page access is enough. Series, category, and project titles stay within 60 characters because the public title template adds the company name. The site default title stays within 70 characters and can include the company name. Descriptions stay within 160 characters.
 
+The public category description (the sentence on `/products` cards) is a separate field. **Generate description** on `/admin/product-types` and `/admin/product-types/[id]/edit` fills that field from the category name. It uses `POST /api/admin/ai/generate-description` and does not change the SEO title or SEO description.
+
 ## Marketing surfaces tied to SEO
 
 - **Inquire** — series title row links to `/contact?series={slug}`; the contact form prefills a datasheet / LDT request message.

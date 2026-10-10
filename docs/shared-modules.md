@@ -44,6 +44,7 @@ Frontend imports via the `@shared/*` path in `frontend/tsconfig.json`. Backend w
 - `catalog-filters.ts` — wattage / size / CCT / beam / dimming options from series tags (ascending numeric/natural order); category pages filter series, not SKUs; `catalogTypeIsBrowsable` hides public types with `series_count === 0`
 - `list-order.ts` — swap neighboring rows for staff **Move up** / **Move down** on product types and series
 - `project-categories.ts` — preferred project category order and `projectFilterCategories()` for public `/projects` pills
+- `public-nav.ts` — header pull-downs: browsable product categories and project categories that have at least one project
 
 Do not add a second catalog client. Admin pages call `/api/admin/backend` through `ADMIN_BACKEND_BASE` in `api-config.ts`.
 

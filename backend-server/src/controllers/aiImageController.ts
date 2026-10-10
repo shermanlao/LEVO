@@ -7,6 +7,7 @@ import { stylizeProductPhoto } from '../lib/ai/productPhotoStyleAi';
 import { generateDatasheetLabel } from '../lib/ai/datasheetLabelAi';
 import { generateDescriptionPhrase } from '../lib/ai/descriptionPhraseAi';
 import { generateSeo } from '../lib/ai/seoAi';
+import { generateCatalogDescription } from '../lib/ai/catalogDescriptionAi';
 
 function respondAiFailure(res: Response, error: unknown) {
   const raw = errorMessage(error);
@@ -163,6 +164,24 @@ export const postGenerateSeo = async (req: Request, res: Response) => {
       notes,
       existingTitle,
       existingDescription,
+    });
+    res.json(result);
+  } catch (error) {
+    respondAiFailure(res, error);
+  }
+};
+
+export const postGenerateDescription = async (req: Request, res: Response) => {
+  try {
+    const { kind, name, existing } = (req.body || {}) as {
+      kind?: string;
+      name?: string;
+      existing?: string;
+    };
+    const result = await generateCatalogDescription({
+      kind: kind || '',
+      name,
+      existing,
     });
     res.json(result);
   } catch (error) {

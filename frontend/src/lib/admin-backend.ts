@@ -216,9 +216,10 @@ export async function forwardToExpress(
         },
       });
       const cacheControl =
-        response.headers.get('Cache-Control') ||
-        (cacheMode === 'public' ? PUBLIC_CACHE_CONTROL : null);
-      if (cacheControl) out.headers.set('Cache-Control', cacheControl);
+        cacheMode === 'public'
+          ? response.headers.get('Cache-Control') || PUBLIC_CACHE_CONTROL
+          : 'private, no-store';
+      out.headers.set('Cache-Control', cacheControl);
       const disposition = response.headers.get('Content-Disposition');
       if (disposition) out.headers.set('Content-Disposition', disposition);
       return out;

@@ -10,7 +10,7 @@ Public catalog HTML, JSON, and product photos are cached so repeat visitors do n
 | Server `fetch` to Express | `{ next: { revalidate: 120, tags } }` in [`sqlite-api.ts`](../frontend/src/lib/sqlite-api.ts) |
 | Public Next GET proxy (`/api/products`, types, series, projects) | Same 120s tags; `Cache-Control: public, max-age=120, s-maxage=120, stale-while-revalidate=600` |
 | Product / AI image routes | `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` plus `ETag` from mtime+size |
-| Admin `/api/admin/backend/*` and `/admin` pages | `cache: 'no-store'` / `dynamic = 'force-dynamic'` on the admin layout. After a successful POST/PUT/PATCH/DELETE, [`revalidateAfterAdminWrite`](../frontend/src/lib/catalog-revalidate.ts) runs |
+| Admin `/api/admin/backend/*` and `/admin` pages | `cache: 'no-store'` / `dynamic = 'force-dynamic'` on the admin layout. The browser response is `Cache-Control: private, no-store` even when Express sets a public list cache, so a delete is not followed by a stale list. After a successful POST/PUT/PATCH/DELETE, [`revalidateAfterAdminWrite`](../frontend/src/lib/catalog-revalidate.ts) runs |
 
 Tags: `catalog` (products, types, series, uploads), `projects`, `contact`.
 

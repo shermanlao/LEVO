@@ -18,6 +18,7 @@ export interface ProductType {
     description: string;
     slug: string;
     series_count?: number;
+    sole_series_slug?: string | null;
     featured_image: {
       data: Media | null;
     };

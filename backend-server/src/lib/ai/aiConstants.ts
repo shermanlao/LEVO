@@ -14,6 +14,7 @@ export const AI_USAGE_FEATURES = [
   'appearance_photo_generate',
   'datasheet_label_generate',
   'description_phrase_generate',
+  'catalog_description_generate',
   'seo_generate',
   'connection_test',
 ] as const;
@@ -27,6 +28,7 @@ export const AI_USAGE_FEATURE_LABELS: Record<AiUsageFeature, string> = {
   appearance_photo_generate: 'Appearance photo',
   datasheet_label_generate: 'Datasheet label',
   description_phrase_generate: 'Description phrase',
+  catalog_description_generate: 'Catalog description',
   seo_generate: 'SEO',
   connection_test: 'Connection test',
 };

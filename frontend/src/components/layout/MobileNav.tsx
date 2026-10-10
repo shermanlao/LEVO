@@ -5,13 +5,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HelpLink } from '@/components/admin/HelpButton';
 import type { AdminNavSection } from '@/lib/admin-nav';
+import type { PublicNavLink } from '@/lib/public-nav';
 
 export default function MobileNav({
   variant = 'public',
   sections = [],
+  productCategories = [],
+  projectCategories = [],
 }: {
   variant?: 'public' | 'admin';
   sections?: AdminNavSection[];
+  productCategories?: PublicNavLink[];
+  projectCategories?: PublicNavLink[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
@@ -91,12 +96,32 @@ export default function MobileNav({
               <Link href="/" className="py-3 px-6 font-bold hover:bg-gray-100">
                 Home
               </Link>
-              <Link href="/products" className="py-3 px-6 font-bold hover:bg-gray-100">
+              <HelpLink href="/products" helpKey="catalog.nav.products" className="py-3 px-6 font-bold hover:bg-gray-100">
                 Products
-              </Link>
-              <Link href="/projects" className="py-3 px-6 font-bold hover:bg-gray-100">
+              </HelpLink>
+              {productCategories.map((item) => (
+                <HelpLink
+                  key={item.href}
+                  href={item.href}
+                  helpKey="catalog.nav.product_category"
+                  className="block py-2 px-10 text-gray-800 hover:bg-gray-100"
+                >
+                  {item.label}
+                </HelpLink>
+              ))}
+              <HelpLink href="/projects" helpKey="catalog.nav.projects" className="py-3 px-6 font-bold hover:bg-gray-100">
                 Projects
-              </Link>
+              </HelpLink>
+              {projectCategories.map((item) => (
+                <HelpLink
+                  key={item.href}
+                  href={item.href}
+                  helpKey="catalog.nav.project_category"
+                  className="block py-2 px-10 text-gray-800 hover:bg-gray-100"
+                >
+                  {item.label}
+                </HelpLink>
+              ))}
               <Link href="/contact" className="py-3 px-6 font-bold hover:bg-gray-100">
                 Contact Us
               </Link>

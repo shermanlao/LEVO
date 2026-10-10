@@ -9,6 +9,7 @@ import AdminNavSectionBody from '@/components/admin/AdminNavSectionBody';
 import HelpButton, { HelpLink } from '@/components/admin/HelpButton';
 import Card from '@/components/ui/Card';
 import { isAdminChromePath, visibleAdminNavSections, type AdminNavSection } from '@/lib/admin-nav';
+import type { PublicNavLink } from '@/lib/public-nav';
 import { useAdminMe } from '@/lib/use-admin-me';
 
 function AdminNavDropdown({
@@ -41,7 +42,65 @@ function AdminNavDropdown({
   );
 }
 
-export default function SiteNav() {
+const NAV_LABEL_CLASS = 'inline-flex items-center leading-none font-bold hover:text-gray-600';
+
+const MENU_PANEL_CLASS =
+  'invisible opacity-0 pointer-events-none absolute top-full left-0 z-50 pt-3 delay-150 group-hover:visible group-hover:opacity-100 group-hover:pointer-events-auto group-hover:delay-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:pointer-events-auto group-focus-within:delay-0';
+
+function NavHoverMenu({
+  href,
+  label,
+  helpKey,
+  items,
+  itemHelpKey,
+}: {
+  href: string;
+  label: string;
+  helpKey: string;
+  items: PublicNavLink[];
+  itemHelpKey: string;
+}) {
+  if (items.length === 0) {
+    return (
+      <HelpLink helpKey={helpKey} href={href} className={NAV_LABEL_CLASS}>
+        {label}
+      </HelpLink>
+    );
+  }
+
+  return (
+    <div className="relative group">
+      <HelpLink helpKey={helpKey} href={href} className={NAV_LABEL_CLASS} ariaHasPopup>
+        {label}
+      </HelpLink>
+      <div className={MENU_PANEL_CLASS}>
+        <div className="min-w-48 max-h-80 overflow-y-auto rounded-md bg-white py-1 shadow-lg">
+          <ul>
+            {items.map((item) => (
+              <li key={item.href}>
+                <HelpLink
+                  helpKey={itemHelpKey}
+                  href={item.href}
+                  className="block px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+                >
+                  {item.label}
+                </HelpLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SiteNav({
+  productCategories = [],
+  projectCategories = [],
+}: {
+  productCategories?: PublicNavLink[];
+  projectCategories?: PublicNavLink[];
+}) {
   const pathname = usePathname() || '';
   const isAdmin = isAdminChromePath(pathname);
   const { me } = useAdminMe();
@@ -70,16 +129,24 @@ export default function SiteNav() {
   return (
     <nav className="flex items-center" aria-label="Main">
       <div className="hidden md:flex items-center space-x-8">
-        <Link href="/" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
+        <Link href="/" className={NAV_LABEL_CLASS}>
           Home
         </Link>
-        <Link href="/products" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
-          Products
-        </Link>
-        <Link href="/projects" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
-          Projects
-        </Link>
-        <Link href="/contact" className="inline-flex items-center leading-none font-bold hover:text-gray-600">
+        <NavHoverMenu
+          href="/products"
+          label="Products"
+          helpKey="catalog.nav.products"
+          items={productCategories}
+          itemHelpKey="catalog.nav.product_category"
+        />
+        <NavHoverMenu
+          href="/projects"
+          label="Projects"
+          helpKey="catalog.nav.projects"
+          items={projectCategories}
+          itemHelpKey="catalog.nav.project_category"
+        />
+        <Link href="/contact" className={NAV_LABEL_CLASS}>
           Contact Us
         </Link>
         <SearchButton />
@@ -88,7 +155,7 @@ export default function SiteNav() {
       <div className="flex items-center space-x-4 md:hidden">
         <SearchButton />
         <HeaderAuthButton />
-        <MobileNav />
+        <MobileNav productCategories={productCategories} projectCategories={projectCategories} />
       </div>
     </nav>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import RobustImage from '@/components/ui/robust-image';
 import { IMAGE_FRAMES } from '@/lib/image-frames';
@@ -24,14 +24,20 @@ export type ProjectListItem = {
 export default function ProjectCatalog({
   projects,
   hideFilters = false,
+  initialCategory = 'All',
 }: {
   projects: ProjectListItem[];
   hideFilters?: boolean;
+  initialCategory?: string;
 }) {
   const availableCategories = projectFilterCategories(projects);
   const categories = ['All', ...availableCategories];
   const showFilters = !hideFilters && availableCategories.length > 1;
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+
+  useEffect(() => {
+    setSelectedCategory(initialCategory || 'All');
+  }, [initialCategory]);
   const activeCategory = availableCategories.includes(selectedCategory) ? selectedCategory : 'All';
   const filtered =
     activeCategory === 'All'

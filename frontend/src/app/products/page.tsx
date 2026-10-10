@@ -5,7 +5,7 @@ import { asStrapiList } from '@/lib/strapi-entity';
 import { toPublicImagePath } from '@/lib/image-utils';
 import PageRoute from '@/components/layout/PageRoute';
 import { productRouteItems } from '@/components/layout/pageRouteItems';
-import { catalogTypeIsBrowsable } from '@/lib/catalog-filters';
+import { catalogTypeIsBrowsable, categoryCardHref } from '@/lib/catalog-filters';
 import { devLog } from '@/lib/dev-log';
 import AlertBanner from '@/components/ui/AlertBanner';
 import { ProductType } from '@/types/product';
@@ -93,6 +93,7 @@ export default async function ProductCategoriesPage() {
               name={attributes.name}
               description={attributes.description}
               imageUrl={imageUrl}
+              href={categoryCardHref(category)}
             />
           );
         })}

@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import SiteNav from '@/components/layout/SiteNav';
 import Logo from '@/components/layout/Logo';
+import type { PublicNavLink } from '@/lib/public-nav';
 import { useSiteHeaderScroll } from '@/lib/use-site-header-scroll';
 
 export default function Header({
@@ -10,11 +11,15 @@ export default function Header({
   logoSrc,
   companyName,
   companyShortName,
+  productCategories = [],
+  projectCategories = [],
 }: {
   slogan?: string | null;
   logoSrc?: string | null;
   companyName?: string | null;
   companyShortName?: string | null;
+  productCategories?: PublicNavLink[];
+  projectCategories?: PublicNavLink[];
 }) {
   const headerRef = useRef<HTMLElement>(null);
   const [slotHeight, setSlotHeight] = useState(84);
@@ -66,7 +71,7 @@ export default function Header({
               companyShortName={companyShortName}
               compact={compact}
             />
-            <SiteNav />
+            <SiteNav productCategories={productCategories} projectCategories={projectCategories} />
           </div>
         </div>
       </header>

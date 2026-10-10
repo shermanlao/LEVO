@@ -69,6 +69,7 @@ export function HelpLink({
   target,
   rel,
   ariaLabel,
+  ariaHasPopup,
   download,
 }: {
   helpKey: string;
@@ -79,6 +80,7 @@ export function HelpLink({
   target?: string;
   rel?: string;
   ariaLabel?: string;
+  ariaHasPopup?: boolean;
   download?: boolean | string;
 }) {
   const tip = useHelpTip(helpKey, title);
@@ -98,6 +100,7 @@ export function HelpLink({
         data-help-key={helpKey}
         title={tipTitle}
         aria-label={ariaLabel}
+        aria-haspopup={ariaHasPopup ? 'true' : undefined}
         className={className}
       >
         {children}
@@ -105,7 +108,14 @@ export function HelpLink({
     );
   }
   return (
-    <Link href={href} data-help-key={helpKey} title={tipTitle} aria-label={ariaLabel} className={className}>
+    <Link
+      href={href}
+      data-help-key={helpKey}
+      title={tipTitle}
+      aria-label={ariaLabel}
+      aria-haspopup={ariaHasPopup ? 'true' : undefined}
+      className={className}
+    >
       {children}
     </Link>
   );

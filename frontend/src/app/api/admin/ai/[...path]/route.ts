@@ -7,6 +7,6 @@ export const maxDuration = 300;
 export const { GET, PUT, POST, DELETE } = createAdminProxy('/api/ai', {
   pageKeys: pagesForAiApi,
   encodeTail: true,
-  longTimeoutPattern: /generate-size-drawing|refine-size-drawing|edit-product-photo|stylize-product-photo|generate-appearance-photo|generate-datasheet-label|generate-description-phrase|generate-seo/,
+  longTimeoutPattern: /generate-size-drawing|refine-size-drawing|edit-product-photo|stylize-product-photo|generate-appearance-photo|generate-datasheet-label|generate-description-phrase|generate-description|generate-seo/,
   longTimeoutMs: 300000,
 });

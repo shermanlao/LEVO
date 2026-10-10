@@ -8,6 +8,7 @@ import SaveNotice from "@/components/ui/SaveNotice";
 import VisitorBeacon from "@/components/layout/VisitorBeacon";
 import PublicCatalogGate from "@/components/layout/PublicCatalogGate";
 import JsonLd from "@/components/layout/JsonLd";
+import { loadPublicNavMenus } from "@/lib/public-nav";
 import { getSiteContact, type SiteContact } from "@/lib/sqlite-api";
 import { siteOrigin } from "@/lib/seo";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo-jsonld";
@@ -78,6 +79,7 @@ export default async function RootLayout({
   }
 
   const constructionOn = contact ? contact.public_under_construction !== false : true;
+  const navMenus = await loadPublicNavMenus();
 
   const company = contact?.company_name?.trim() || 'LEVO Lighting';
   const sameAs = [
@@ -112,6 +114,8 @@ export default async function RootLayout({
           logoSrc={contact?.logo_header}
           companyName={contact?.company_name}
           companyShortName={contact?.company_short_name}
+          productCategories={navMenus.productCategories}
+          projectCategories={navMenus.projectCategories}
         />
         <main className="container mx-auto py-4 px-4">
           <PublicCatalogGate constructionOn={constructionOn}>
