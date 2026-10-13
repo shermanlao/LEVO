@@ -8,7 +8,7 @@ Staff logins live in `admin_users` (SQLite locally, PostgreSQL in production). R
 |------|----------------|
 | `system` | Every admin page. Users, Page access, and Git versions cannot be turned off. |
 | `admin` | Every admin page by default, including users and page access (those two can be unchecked). Git versions stays on. |
-| `operation` | Catalog, partner catalog, LDT, projects, inquiries, settings, and AI. Cannot receive Users, Page access, or Git versions. |
+| `operation` | Catalog, partner catalog, LDT, projects, inquiries, visitor analysis, settings, and AI. Cannot receive Users, Page access, or Git versions. |
 
 This matches LightX: assign a role on the user, then grant pages on a role × page matrix. Existing `staff` rows become `operation` on API start (session cookies for those accounts stop working until they sign in again). The first seeded account is `system`.
 
@@ -30,6 +30,7 @@ Header menus and dashboard cards hide pages the role does not have. The same mat
 | LDT library | `/admin/ldt-library` | `/api/admin/photometric-library` |
 | Projects | `/admin/projects` | `/api/admin/backend/projects`, `/api/project-upload` |
 | Inquiries | `/admin/inquiries` | `/api/admin/inquiries` |
+| Visitor analysis | `/admin/visitors` | `/api/admin/visitors` |
 | Settings | `/admin/settings` | `/api/admin/site-settings` |
 | AI | `/admin/ai` | `/api/admin/ai` settings, usage, style uploads, and connection test. Generate / refine / stylize / appearance / label / phrase also accept **Catalog** (those buttons live on series and variant pages). |
 | Users | `/admin/users` | `/api/admin/users` |

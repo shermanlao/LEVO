@@ -169,12 +169,12 @@ export const DEFAULT_HELP_TIPS = [
   {
     helpKey: 'admin.dash.stat.visitors',
     title: 'Unique visitors',
-    body: 'Distinct anonymous visitors on public pages in the last 7 days. Admin and staff logins are not counted.',
+    body: 'Distinct anonymous visitors on public pages in the last 7 days. Opens visitor analysis. Admin and staff logins are not counted.',
   },
   {
     helpKey: 'admin.dash.stat.views',
     title: 'Page views',
-    body: 'Public page views in the last 7 days. Admin and staff browsing is not counted.',
+    body: 'Public page views in the last 7 days. Opens visitor analysis. Admin and staff browsing is not counted.',
   },
   {
     helpKey: 'admin.dash.stat.featured',
@@ -225,6 +225,26 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'admin.dash.link.deploy',
     title: 'Git versions',
     body: 'See the running git version, fetch GitHub, and deploy or roll back a commit. System and admin only.',
+  },
+  {
+    helpKey: 'admin.dash.link.visitors',
+    title: 'Visitor analysis',
+    body: 'Open country, redirect link, and URL parameter lists for public catalog visits.',
+  },
+  {
+    helpKey: 'admin.visitors.range.7',
+    title: 'Last 7 days',
+    body: 'Show visitor country, redirect links, and URL parameters for the last 7 days.',
+  },
+  {
+    helpKey: 'admin.visitors.range.30',
+    title: 'Last 30 days',
+    body: 'Show visitor country, redirect links, and URL parameters for the last 30 days.',
+  },
+  {
+    helpKey: 'admin.visitors.range.90',
+    title: 'Last 90 days',
+    body: 'Show visitor country, redirect links, and URL parameters for the last 90 days. Older hits are deleted.',
   },
   {
     helpKey: 'admin.settings.save',
@@ -1774,6 +1794,36 @@ export async function ensureProjectFeaturedColumn(): Promise<void> {
     });
   }
   await ensureIndex('CREATE INDEX IF NOT EXISTS projects_is_featured ON projects (is_featured)');
+}
+
+export async function ensureVisitorEventColumns(): Promise<void> {
+  const qi = sequelize.getQueryInterface();
+  let table: Record<string, unknown>;
+  try {
+    table = await qi.describeTable('visitor_events');
+  } catch {
+    return;
+  }
+  if (!table.country) {
+    await qi.addColumn('visitor_events', 'country', {
+      type: DataTypes.STRING(2),
+      allowNull: true,
+    });
+  }
+  if (!table.referrer) {
+    await qi.addColumn('visitor_events', 'referrer', {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    });
+  }
+  if (!table.query_params) {
+    await qi.addColumn('visitor_events', 'query_params', {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    });
+  }
+  await ensureIndex('CREATE INDEX IF NOT EXISTS visitor_events_country ON visitor_events (country)');
+  await ensureIndex('CREATE INDEX IF NOT EXISTS visitor_events_referrer ON visitor_events (referrer)');
 }
 
 export async function ensureDefaultCatalogSource(): Promise<void> {

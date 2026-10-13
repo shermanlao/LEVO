@@ -1,5 +1,5 @@
 import sequelize from '../database';
-import { ensureDefaultProductTypes, ensureDefaultHelpTips, ensureDefaultCatalogSource, ensureDefaultSiteContact, ensureDefaultAdminUser, ensureAdminUserColumns, ensureAdminRolePermissions, ensureProductExternalColumns, ensureProductTypeColumns, ensureSeriesFeaturedImageColumn, ensureSeriesOptions, ensureSeriesAppearancePhotos, ensureVariantOptionCatalog, ensureAiSettingsColumns, ensureProjectFeaturedColumn, backfillLightxProductCodes } from '../seed/ensureDefaults';
+import { ensureDefaultProductTypes, ensureDefaultHelpTips, ensureDefaultCatalogSource, ensureDefaultSiteContact, ensureDefaultAdminUser, ensureAdminUserColumns, ensureAdminRolePermissions, ensureProductExternalColumns, ensureProductTypeColumns, ensureSeriesFeaturedImageColumn, ensureSeriesOptions, ensureSeriesAppearancePhotos, ensureVariantOptionCatalog, ensureAiSettingsColumns, ensureProjectFeaturedColumn, ensureVisitorEventColumns, backfillLightxProductCodes } from '../seed/ensureDefaults';
 import AdminUser from './AdminUser';
 import AdminRolePermission from './AdminRolePermission';
 import { ensurePhotometricBeamLibrary } from '../lib/photometric/beamLibraryServer';
@@ -53,6 +53,7 @@ SeriesAppearancePhoto.belongsTo(ProductSeries, { foreignKey: 'series_id', as: 's
 
 async function syncDatabase() {
   try {
+    await ensureVisitorEventColumns();
     await sequelize.sync();
     await ensureProductExternalColumns();
     await ensureProductTypeColumns();

@@ -4,7 +4,7 @@
 - [Admin dashboard](docs/admin-dashboard.md) — stats tiles, shortcuts, and attention counts on `/admin`
 - [Site settings](docs/admin-site-settings.md) — `/admin/settings` brand logos, homepage copy, contact/footer, and SEO
 - [SEO and marketing](docs/seo.md) — robots, sitemap, canonicals, JSON-LD, go-live checklist
-- [Visitor analytics](docs/visitor-analytics.md) — first-party `levo_vid` cookie and 7-day unique visitors / page views
+- [Visitor analytics](docs/visitor-analytics.md) — first-party `levo_vid` cookie, 7-day dashboard counts, and `/admin/visitors` country / redirect / parameter lists
 - [Visitor catalog performance](docs/visitor-performance.md) — 120s public HTML and JSON cache, image cache, admin writes stay uncached
 - [Admin users](docs/admin-users.md) — system / admin / operation roles, `/admin/users`, and page-access matrix
 - [Git versions](docs/admin-deploy.md) — `/admin/deploy` for system/admin: current SHA, fetch GitHub, deploy or roll back on the VPS

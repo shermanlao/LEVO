@@ -8,6 +8,7 @@ export const ADMIN_PAGE_KEYS = [
   'ldt',
   'projects',
   'inquiries',
+  'visitors',
   'settings',
   'ai',
   'users',
@@ -23,6 +24,7 @@ export const ADMIN_PAGES: { key: AdminPageKey; label: string }[] = [
   { key: 'ldt', label: 'LDT library' },
   { key: 'projects', label: 'Projects' },
   { key: 'inquiries', label: 'Inquiries' },
+  { key: 'visitors', label: 'Visitor analysis' },
   { key: 'settings', label: 'Settings' },
   { key: 'ai', label: 'AI' },
   { key: 'users', label: 'Users' },
@@ -58,7 +60,7 @@ const ALL_PAGES = [...ADMIN_PAGE_KEYS];
 export const DEFAULT_ROLE_PAGES: Record<AdminRole, AdminPageKey[]> = {
   system: ALL_PAGES,
   admin: ALL_PAGES,
-  operation: ['catalog', 'lightx', 'ldt', 'projects', 'inquiries', 'settings', 'ai'],
+  operation: ['catalog', 'lightx', 'ldt', 'projects', 'inquiries', 'visitors', 'settings', 'ai'],
 };
 
 export function isAdminRole(value: unknown): value is AdminRole {
@@ -138,6 +140,7 @@ export function pageKeyForAdminPath(pathname: string): AdminPageKey | null {
   if (path.startsWith('/admin/external-catalog')) return 'lightx';
   if (path.startsWith('/admin/ldt-library')) return 'ldt';
   if (path.startsWith('/admin/inquiries')) return 'inquiries';
+  if (path.startsWith('/admin/visitors')) return 'visitors';
   if (path.startsWith('/admin/projects')) return 'projects';
   if (path.startsWith('/admin/settings')) return 'settings';
   if (path.startsWith('/admin/ai')) return 'ai';

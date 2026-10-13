@@ -56,6 +56,8 @@ describe('admin roles and page access', () => {
     assert.ok(defaultPagesForRole('admin').includes('deploy'));
     assert.equal(pageKeyForAdminPath('/admin/product-series/12'), 'catalog');
     assert.equal(pageKeyForAdminPath('/admin/external-catalog'), 'lightx');
+    assert.equal(pageKeyForAdminPath('/admin/visitors'), 'visitors');
+    assert.ok(defaultPagesForRole('operation').includes('visitors'));
     assert.equal(pageKeyForBackendPath('product-series/3'), 'catalog');
     assert.equal(pageKeyForBackendPath('projects/9'), 'projects');
     assert.ok(defaultPagesForRole('operation').includes('catalog'));
@@ -85,6 +87,9 @@ describe('admin roles and page access', () => {
     assert.ok(next.system.includes('ai'));
     assert.ok(next.admin.includes('ai'));
     assert.ok(next.operation.includes('ai'));
+    assert.ok(next.system.includes('visitors'));
+    assert.ok(next.admin.includes('visitors'));
+    assert.ok(next.operation.includes('visitors'));
     const unchanged = matrixWithNewDefaultPages(defaultRolePageMatrix(), [
       'catalog',
       'lightx',

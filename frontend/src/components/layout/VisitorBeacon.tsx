@@ -12,7 +12,11 @@ export default function VisitorBeacon() {
     fetch('/api/visitors/hit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: pathname }),
+      body: JSON.stringify({
+        path: pathname,
+        query: window.location.search,
+        referrer: document.referrer,
+      }),
       keepalive: true,
     }).catch(() => {});
   }, [pathname]);

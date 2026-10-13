@@ -9,7 +9,7 @@ import Card from '@/components/ui/Card';
 import StatTile from '@/components/ui/StatTile';
 import { visibleAdminNavSections } from '@/lib/admin-nav';
 import { adminLoginHref } from '@/lib/admin-session';
-import { isAdminRole, type AdminPageKey, type AdminRole } from '@shared/admin-roles';
+import { isAdminRole, roleCanOpenPage, type AdminPageKey, type AdminRole } from '@shared/admin-roles';
 
 type Me = { username: string; role: AdminRole; pages: AdminPageKey[] };
 
@@ -92,6 +92,11 @@ export default function AdminPage() {
         backHelpKey="admin.nav.home"
         actions={
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            {me && roleCanOpenPage(me.role, 'visitors', me.pages) ? (
+              <Button helpKey="admin.dash.link.visitors" variant="secondary" href="/admin/visitors">
+                Visitor analysis
+              </Button>
+            ) : null}
             {me ? (
               <span>
                 Signed in as <strong>{me.username}</strong> ({me.role})
@@ -148,11 +153,13 @@ export default function AdminPage() {
           label="Unique visitors (7 days)"
           value={stats?.uniqueVisitorsLast7Days ?? null}
           hint="Public visitors only; staff excluded"
+          href="/admin/visitors"
         />
         <StatTile
           helpKey="admin.dash.stat.views"
           label="Page views (7 days)"
           value={stats?.pageViewsLast7Days ?? null}
+          href="/admin/visitors"
         />
         <StatTile
           helpKey="admin.dash.stat.featured"

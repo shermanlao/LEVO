@@ -3,6 +3,14 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { expressBaseCandidates } from '@/lib/api-config';
 import { internalApiHeaders } from '@/lib/internal-api';
 import { ADMIN_SESSION_COOKIE, cookieIsSecure, verifySessionValue } from '@/lib/admin-session';
+import { countryFromRequestIp } from '@/lib/visitor-country';
+import {
+  sanitizeVisitorCountry,
+  sanitizeVisitorPath,
+  sanitizeVisitorQuery,
+  sanitizeVisitorReferrer,
+  visitorSiteHosts,
+} from '@shared/visitor-hit';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,24 +25,6 @@ function isBot(ua: string): boolean {
   );
 }
 
-function sanitizePath(raw: string): string | null {
-  let path = String(raw || '').trim();
-  if (!path.startsWith('/')) path = `/${path}`;
-  const q = path.indexOf('?');
-  if (q >= 0) path = path.slice(0, q);
-  const hash = path.indexOf('#');
-  if (hash >= 0) path = path.slice(0, hash);
-  if (path.length > 200) path = path.slice(0, 200);
-  const lower = path.toLowerCase();
-  if (lower.startsWith('/admin') || lower.startsWith('/api') || lower.startsWith('/_next')) {
-    return null;
-  }
-  if (/\.(ico|png|jpe?g|gif|webp|svg|css|js|map|woff2?|ttf|txt|xml|json)$/i.test(path)) {
-    return null;
-  }
-  return path || null;
-}
-
 function cookieOptions() {
   return {
     httpOnly: true,
@@ -45,8 +35,18 @@ function cookieOptions() {
   };
 }
 
-async function postEvent(visitorKey: string, path: string): Promise<boolean> {
-  const body = JSON.stringify({ visitor_key: visitorKey, path });
+function siteHosts(): string[] {
+  return visitorSiteHosts(process.env.SITE_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || '');
+}
+
+async function postEvent(payload: {
+  visitor_key: string;
+  path: string;
+  country: string | null;
+  referrer: string | null;
+  query: string | null;
+}): Promise<boolean> {
+  const body = JSON.stringify(payload);
   for (const base of expressBaseCandidates()) {
     try {
       const response = await fetch(`${base}/api/visitor-events`, {
@@ -81,13 +81,17 @@ export async function POST(request: NextRequest) {
   }
 
   let rawPath = '';
+  let rawQuery = '';
+  let rawReferrer = '';
   try {
     const body = await request.json();
     rawPath = String(body?.path || '');
+    rawQuery = String(body?.query || '');
+    rawReferrer = String(body?.referrer || '');
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
-  const path = sanitizePath(rawPath);
+  const path = sanitizeVisitorPath(rawPath);
   if (!path) {
     return NextResponse.json({ ok: true, skipped: 'path' });
   }
@@ -97,7 +101,11 @@ export async function POST(request: NextRequest) {
     visitorKey = crypto.randomUUID();
   }
 
-  await postEvent(visitorKey, path);
+  const country = sanitizeVisitorCountry(countryFromRequestIp(request.headers.get('x-real-ip')) || '');
+  const referrer = sanitizeVisitorReferrer(rawReferrer, siteHosts());
+  const query = sanitizeVisitorQuery(rawQuery);
+
+  await postEvent({ visitor_key: visitorKey, path, country, referrer, query });
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set(COOKIE, visitorKey, cookieOptions());

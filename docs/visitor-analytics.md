@@ -8,13 +8,26 @@ LEVO counts public page views in SQLite. There is no Cloudflare, Google Analytic
 
 ## What is stored
 
-Table `visitor_events`: `visitor_key`, `path` (no query string), `created_at`. No IP, no User-Agent.
+Table `visitor_events`: `visitor_key`, `path` (no query string), `country` (ISO 3166-1 alpha-2), `referrer` (external page that sent the visitor), `query_params` (sanitized query string), `created_at`. The raw IP and User-Agent are not stored.
 
-Public client `VisitorBeacon` posts the current path to `POST /api/visitors/hit` on navigation. Hits skip `/admin`, `/api`, `/_next`, static files, obvious bots, and **signed-in admin or staff** (anyone with `levo_admin_session`). Dashboard unique-visitor and page-view counts are public catalog traffic only. Events older than 90 days are deleted when the API starts.
+Public client `VisitorBeacon` posts the current path, query string, and `document.referrer` to `POST /api/visitors/hit` on navigation. The Next route resolves country from nginx `X-Real-IP` with an offline lookup, then forwards only the country code to Express. Hits skip `/admin`, `/api`, `/_next`, static files, obvious bots, and **signed-in admin or staff** (anyone with `levo_admin_session`). Same-site or empty referrers are stored as empty and shown as **Direct**. Password-like query keys (`password`, `token`, `session`, and similar) are dropped. Dashboard unique-visitor and page-view counts are public catalog traffic only. Events older than 90 days are deleted when the API starts.
+
+Hits recorded before country / referrer / query columns existed still appear in lists; those fields stay blank (**Unknown** / **Direct**).
 
 ## Dashboard
 
-Last **7 days**: unique `visitor_key` values, total page views, top 5 paths.
+Last **7 days**: unique `visitor_key` values, total page views, top 5 paths. The unique-visitors and page-views tiles, and a **Visitor analysis** button, open `/admin/visitors`.
+
+## Visitor analysis
+
+`/admin/visitors` lists public visits for the last 7, 30, or 90 days:
+
+- **Country** — ISO country code and view count
+- **Redirect link** — external referrer, or Direct
+- **Parameters** — each remaining `key=value` pair and count
+- Visit table — time, country, page, redirect link, and parameters (newest 500)
+
+Staff need the **Visitor analysis** page in the role matrix (on by default for system, admin, and operation). `GET /api/admin/visitors` requires that page.
 
 ## Privacy
 

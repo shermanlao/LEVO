@@ -15,6 +15,7 @@ function publicOriginIsHttps(): boolean {
 }
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['geoip-country'],
   eslint: {
     ignoreDuringBuilds: true,
   },
