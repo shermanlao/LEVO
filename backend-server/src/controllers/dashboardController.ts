@@ -14,9 +14,12 @@ import {
   parseVisitorDays,
   parseVisitorParamPairs,
   sanitizeVisitorCountry,
+  sanitizeVisitorDuration,
   sanitizeVisitorPath,
   sanitizeVisitorQuery,
   sanitizeVisitorReferrer,
+  stayMsForEvents,
+  VISITOR_STAY_CAP_MS,
   visitorSiteHosts,
 } from '../lib/shared/visitor-hit';
 
@@ -47,6 +50,21 @@ export const recordVisitorEvent = asyncHandler(async (req: Request, res: Respons
   const path = sanitizeVisitorPath(String(req.body?.path || ''));
   if (!isVisitorKey(visitorKey) || !path) {
     return res.status(400).json({ error: 'Invalid visitor hit' });
+  }
+  const durationMs = sanitizeVisitorDuration(req.body?.duration_ms);
+  if (durationMs != null) {
+    const since = new Date(Date.now() - VISITOR_STAY_CAP_MS);
+    const row = await VisitorEvent.findOne({
+      where: { visitor_key: visitorKey, path, created_at: { [Op.gte]: since } },
+      order: [
+        ['created_at', 'DESC'],
+        ['id', 'DESC'],
+      ],
+    });
+    if (row && (row.duration_ms == null || durationMs > row.duration_ms)) {
+      await row.update({ duration_ms: durationMs });
+    }
+    return res.status(204).end();
   }
   const hosts = visitorSiteHosts(siteOrigin());
   await VisitorEvent.create({
@@ -88,13 +106,12 @@ export const getVisitorAnalysis = asyncHandler(async (req: Request, res: Respons
       raw: true,
     }),
     VisitorEvent.findAll({
-      attributes: ['id', 'path', 'country', 'referrer', 'query_params', 'created_at'],
+      attributes: ['id', 'visitor_key', 'path', 'country', 'referrer', 'query_params', 'duration_ms', 'created_at'],
       where,
       order: [
-        ['created_at', 'DESC'],
-        ['id', 'DESC'],
+        ['created_at', 'ASC'],
+        ['id', 'ASC'],
       ],
-      limit: 500,
     }),
   ]);
 
@@ -121,29 +138,43 @@ export const getVisitorAnalysis = asyncHandler(async (req: Request, res: Respons
     [...paramCounts.entries()].map(([label, views]) => ({ label, views }))
   );
 
-  const visits = visitRows.map((row) => {
+  const plainVisits = visitRows.map((row) => {
     const plain = row.get({ plain: true }) as {
       id: number;
+      visitor_key: string;
       path: string;
       country: string | null;
       referrer: string | null;
       query_params: string | null;
+      duration_ms: number | null;
       created_at: Date;
     };
-    return {
+    return plain;
+  });
+  const stays = stayMsForEvents(plainVisits);
+  const visits = plainVisits
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime() || b.id - a.id)
+    .slice(0, 500)
+    .map((plain) => ({
       id: plain.id,
       path: plain.path,
       country: plain.country,
       referrer: plain.referrer,
       query_params: plain.query_params,
+      stay_ms: stays.get(plain.id) ?? null,
       created_at: plain.created_at,
-    };
-  });
+    }));
+  const knownStays = [...stays.values()].filter((ms): ms is number => ms != null);
+  const averageStayMs = knownStays.length
+    ? Math.round(knownStays.reduce((sum, ms) => sum + ms, 0) / knownStays.length)
+    : null;
 
   res.json({
     days,
     uniqueVisitors,
     pageViews,
+    averageStayMs,
     countries,
     redirectLinks,
     parameters,

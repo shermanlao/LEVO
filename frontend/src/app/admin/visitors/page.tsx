@@ -17,6 +17,7 @@ type VisitRow = {
   country: string | null;
   referrer: string | null;
   query_params: string | null;
+  stay_ms: number | null;
   created_at: string;
 };
 
@@ -24,6 +25,7 @@ type Analysis = {
   days: 7 | 30 | 90;
   uniqueVisitors: number;
   pageViews: number;
+  averageStayMs: number | null;
   countries: CountRow[];
   redirectLinks: CountRow[];
   parameters: CountRow[];
@@ -35,6 +37,15 @@ const RANGES: { days: 7 | 30 | 90; helpKey: string; label: string }[] = [
   { days: 30, helpKey: 'admin.visitors.range.30', label: '30 days' },
   { days: 90, helpKey: 'admin.visitors.range.90', label: '90 days' },
 ];
+
+function formatStay(ms: number | null | undefined) {
+  if (ms == null || !Number.isFinite(ms)) return '—';
+  const total = Math.max(0, Math.round(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  if (minutes <= 0) return `${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+}
 
 function formatSeen(value: string) {
   const date = new Date(value);
@@ -82,6 +93,7 @@ export default function AdminVisitorsPage() {
           days: parseVisitorDays(json.days),
           uniqueVisitors: Number(json.uniqueVisitors) || 0,
           pageViews: Number(json.pageViews) || 0,
+          averageStayMs: json.averageStayMs == null ? null : Number(json.averageStayMs),
           countries: Array.isArray(json.countries) ? json.countries : [],
           redirectLinks: Array.isArray(json.redirectLinks) ? json.redirectLinks : [],
           parameters: Array.isArray(json.parameters) ? json.parameters : [],
@@ -121,7 +133,17 @@ export default function AdminVisitorsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatTile helpKey="admin.dash.stat.visitors" label="Unique visitors" value={data?.uniqueVisitors ?? null} />
         <StatTile helpKey="admin.dash.stat.views" label="Page views" value={data?.pageViews ?? null} />
+        <StatTile
+          helpKey="admin.visitors.stat.stay"
+          label="Average stay"
+          value={data ? formatStay(data.averageStayMs) : null}
+        />
       </div>
+      <p className="text-sm text-gray-500 mb-6">
+        Country, redirect link, and parameters are stored only for visits after this tracking was added. Earlier
+        rows stay Unknown and Direct. Stay is the time on that page until the next page or until the tab closes, and
+        it stops counting at 30 minutes.
+      </p>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <CountList
           title="Country"
@@ -140,7 +162,7 @@ export default function AdminVisitorsPage() {
         />
       </div>
       <AdminTable
-        columns={['Time', 'Country', 'Page', 'Redirect link', 'Parameters']}
+        columns={['Time', 'Country', 'Page', 'Stay', 'Redirect link', 'Parameters']}
         loading={loading}
         empty={!loading && (data?.visits.length || 0) === 0}
       >
@@ -150,6 +172,9 @@ export default function AdminVisitorsPage() {
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{visit.country || 'Unknown'}</td>
             <td className="px-6 py-4 text-sm font-mono text-gray-800 max-w-xs truncate" title={visit.path}>
               {visit.path}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 tabular-nums">
+              {formatStay(visit.stay_ms)}
             </td>
             <td
               className="px-6 py-4 text-sm font-mono text-gray-700 max-w-sm truncate"

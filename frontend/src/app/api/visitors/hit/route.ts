@@ -6,6 +6,7 @@ import { ADMIN_SESSION_COOKIE, cookieIsSecure, verifySessionValue } from '@/lib/
 import { countryFromRequestIp } from '@/lib/visitor-country';
 import {
   sanitizeVisitorCountry,
+  sanitizeVisitorDuration,
   sanitizeVisitorPath,
   sanitizeVisitorQuery,
   sanitizeVisitorReferrer,
@@ -42,9 +43,10 @@ function siteHosts(): string[] {
 async function postEvent(payload: {
   visitor_key: string;
   path: string;
-  country: string | null;
-  referrer: string | null;
-  query: string | null;
+  country?: string | null;
+  referrer?: string | null;
+  query?: string | null;
+  duration_ms?: number;
 }): Promise<boolean> {
   const body = JSON.stringify(payload);
   for (const base of expressBaseCandidates()) {
@@ -83,11 +85,13 @@ export async function POST(request: NextRequest) {
   let rawPath = '';
   let rawQuery = '';
   let rawReferrer = '';
+  let durationMs: number | null = null;
   try {
     const body = await request.json();
     rawPath = String(body?.path || '');
     rawQuery = String(body?.query || '');
     rawReferrer = String(body?.referrer || '');
+    durationMs = sanitizeVisitorDuration(body?.duration_ms);
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
@@ -98,7 +102,15 @@ export async function POST(request: NextRequest) {
 
   let visitorKey = request.cookies.get(COOKIE)?.value || '';
   if (!UUID_RE.test(visitorKey)) {
+    if (durationMs != null) {
+      return NextResponse.json({ ok: true, skipped: 'stay' });
+    }
     visitorKey = crypto.randomUUID();
+  }
+
+  if (durationMs != null) {
+    await postEvent({ visitor_key: visitorKey, path, duration_ms: durationMs });
+    return NextResponse.json({ ok: true });
   }
 
   const country = sanitizeVisitorCountry(countryFromRequestIp(request.headers.get('x-real-ip')) || '');

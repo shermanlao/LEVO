@@ -5,9 +5,11 @@ import {
   parseVisitorDays,
   parseVisitorParamPairs,
   sanitizeVisitorCountry,
+  sanitizeVisitorDuration,
   sanitizeVisitorPath,
   sanitizeVisitorQuery,
   sanitizeVisitorReferrer,
+  stayMsForEvents,
   visitorSiteHosts,
 } from './visitor-hit';
 
@@ -50,5 +52,19 @@ describe('visitor hit sanitizers', () => {
     assert.equal(sanitizeVisitorCountry('USA'), null);
     assert.equal(parseVisitorDays('30'), 30);
     assert.equal(parseVisitorDays('9'), 7);
+  });
+
+  it('caps stay time and fills a gap until the next page by the same visitor', () => {
+    assert.equal(sanitizeVisitorDuration(1500), 1500);
+    assert.equal(sanitizeVisitorDuration(-1), null);
+    assert.equal(sanitizeVisitorDuration(60 * 60 * 1000), 30 * 60 * 1000);
+    const stays = stayMsForEvents([
+      { id: 1, visitor_key: 'a', created_at: '2026-10-11T05:43:02.000Z', duration_ms: null },
+      { id: 2, visitor_key: 'a', created_at: '2026-10-11T05:43:08.000Z', duration_ms: null },
+      { id: 3, visitor_key: 'b', created_at: '2026-10-11T05:43:19.000Z', duration_ms: 4000 },
+    ]);
+    assert.equal(stays.get(1), 6000);
+    assert.equal(stays.get(2), null);
+    assert.equal(stays.get(3), 4000);
   });
 });

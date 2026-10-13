@@ -1,6 +1,8 @@
 export const VISITOR_PATH_MAX = 200;
 export const VISITOR_REFERRER_MAX = 500;
 export const VISITOR_QUERY_MAX = 500;
+/** A tab left open longer than this is not counted as stay time. */
+export const VISITOR_STAY_CAP_MS = 30 * 60 * 1000;
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -113,4 +115,44 @@ export function parseVisitorDays(raw: unknown): 7 | 30 | 90 {
   const n = Number(raw);
   if (n === 30 || n === 90) return n;
   return 7;
+}
+
+export function sanitizeVisitorDuration(raw: unknown): number | null {
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.min(Math.round(n), VISITOR_STAY_CAP_MS);
+}
+
+export function stayFromNextHit(current: Date, next: Date | null): number | null {
+  if (!next) return null;
+  const ms = next.getTime() - current.getTime();
+  if (!Number.isFinite(ms) || ms < 0 || ms > VISITOR_STAY_CAP_MS) return null;
+  return ms;
+}
+
+export function stayMsForEvents(
+  events: { id: number; visitor_key: string; created_at: string | Date; duration_ms: number | null }[]
+): Map<number, number | null> {
+  const ordered = [...events].sort((a, b) => {
+    if (a.visitor_key !== b.visitor_key) return a.visitor_key < b.visitor_key ? -1 : 1;
+    const delta = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return delta || a.id - b.id;
+  });
+  const stays = new Map<number, number | null>();
+  for (let i = 0; i < ordered.length; i += 1) {
+    const row = ordered[i];
+    const stored = sanitizeVisitorDuration(row.duration_ms);
+    if (stored != null) {
+      stays.set(row.id, stored);
+      continue;
+    }
+    const next = ordered[i + 1];
+    if (!next || next.visitor_key !== row.visitor_key) {
+      stays.set(row.id, null);
+      continue;
+    }
+    stays.set(row.id, stayFromNextHit(new Date(row.created_at), new Date(next.created_at)));
+  }
+  return stays;
 }

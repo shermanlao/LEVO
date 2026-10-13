@@ -232,6 +232,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Open country, redirect link, and URL parameter lists for public catalog visits.',
   },
   {
+    helpKey: 'admin.visitors.stat.stay',
+    title: 'Average stay',
+    body: 'Average time on a public page in the selected range. Measured until the next page or until the tab closes, and capped at 30 minutes.',
+  },
+  {
     helpKey: 'admin.visitors.range.7',
     title: 'Last 7 days',
     body: 'Show visitor country, redirect links, and URL parameters for the last 7 days.',
@@ -1819,6 +1824,12 @@ export async function ensureVisitorEventColumns(): Promise<void> {
   if (!table.query_params) {
     await qi.addColumn('visitor_events', 'query_params', {
       type: DataTypes.STRING(500),
+      allowNull: true,
+    });
+  }
+  if (!table.duration_ms) {
+    await qi.addColumn('visitor_events', 'duration_ms', {
+      type: DataTypes.INTEGER,
       allowNull: true,
     });
   }

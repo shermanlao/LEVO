@@ -8,6 +8,7 @@ class VisitorEvent extends Model {
   declare country: string | null;
   declare referrer: string | null;
   declare query_params: string | null;
+  declare duration_ms: number | null;
   declare created_at: Date;
 }
 
@@ -19,6 +20,7 @@ VisitorEvent.init(
     country: { type: DataTypes.STRING(2), allowNull: true },
     referrer: { type: DataTypes.STRING(500), allowNull: true },
     query_params: { type: DataTypes.STRING(500), allowNull: true },
+    duration_ms: { type: DataTypes.INTEGER, allowNull: true },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   },
   {
