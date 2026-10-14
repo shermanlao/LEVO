@@ -32,6 +32,7 @@
 - [Unused trees](docs/legacy-unused.md) — old `cms/` and `backend/` folders (do not run)
 - [PostgreSQL](docs/postgresql.md) — SQLite for local development, Postgres for production, copy script, and env vars
 - [VPS GitHub deploy](docs/vps-github.md) — ask Cursor to push/deploy, or run `levo-deploy`; how the VPS deploy key was set up
+- [VPS host security](docs/vps-security.md) — SSH key-only, firewall, fail2ban, and the Next.js floor after the October 2026 malware stop
 - [Several sites on the VPS](docs/vps-multiple-sites.md) — extra domains, nginx server blocks, ports, and Postgres
 - [Hostinger domain](docs/hostinger-domain.md) — point `levolight.com` DNS at the VPS and set `SITE_ORIGIN`
 - [PostgreSQL backups](docs/vps-postgres-backup.md) — daily dumps, SSH tunnel bind for pgAdmin, monitor and restore
