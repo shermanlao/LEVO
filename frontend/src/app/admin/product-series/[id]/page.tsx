@@ -32,6 +32,7 @@ import {
   valuesEqual,
   variantKindLabel,
   variantSpecFields,
+  wattageSizeSaveError,
   SIZE_KIND,
   type SeriesOptionDto,
   type VariantCatalogOption,
@@ -48,7 +49,22 @@ type DraftOption = {
   main_image_A?: string;
   main_image_B?: string;
   size_image?: string;
+  sizes?: string[];
 };
+
+function sizeDraftLabel(row: DraftOption): string {
+  return optionText(row.value) || optionText(row.dimensions);
+}
+
+function currentSizeValues(drafts: Record<string, DraftOption[]>): string[] {
+  return (drafts[SIZE_KIND] || []).map(sizeDraftLabel).filter(Boolean);
+}
+
+function resolvedWattageSizes(row: DraftOption, drafts: Record<string, DraftOption[]>): string[] {
+  const available = currentSizeValues(drafts);
+  const selected = Array.isArray(row.sizes) ? row.sizes : available;
+  return selected.filter((value) => available.some((size) => valuesEqual(SIZE_KIND, size, value)));
+}
 
 function emptyDraft(patch?: Partial<DraftOption>): DraftOption {
   return {
@@ -96,9 +112,14 @@ function draftsFromOptions(
         cutout_size: option.cutout_size || '',
         packId: pack?.id,
         size_image: String(pack?.attributes?.size_image || ''),
+        sizes: field.key === 'wattage' && Array.isArray(option.sizes) ? option.sizes : undefined,
       };
     });
     if (!drafts[field.key].length) drafts[field.key] = [];
+  }
+  const sizeValues = currentSizeValues(drafts);
+  for (const row of drafts.wattage || []) {
+    if (!Array.isArray(row.sizes)) row.sizes = [...sizeValues];
   }
   return drafts;
 }
@@ -127,6 +148,7 @@ function flattenDrafts(drafts: Record<string, DraftOption[]>): SeriesOptionDto[]
         code: optionText(row.code) || null,
         pack_id: field.key === SIZE_KIND ? row.packId ?? null : null,
         size_image: field.key === SIZE_KIND ? optionText(row.size_image) || null : null,
+        sizes: field.key === 'wattage' ? resolvedWattageSizes(row, drafts) : undefined,
       });
       sort += 1;
     }
@@ -250,9 +272,10 @@ export default function SeriesVariantEditorPage() {
       const next = isAppearanceKind(kind)
         ? list.filter((row) => !isAppearanceNa(row.value))
         : list;
+      const sizes = kind === 'wattage' ? currentSizeValues(prev) : undefined;
       return {
         ...prev,
-        [kind]: [...next, emptyDraft({ value, code: optionText(option.code) })],
+        [kind]: [...next, emptyDraft({ value, code: optionText(option.code), sizes })],
       };
     });
   }
@@ -354,7 +377,30 @@ export default function SeriesVariantEditorPage() {
     return tags;
   }
 
+  function toggleWattageSize(wattageIndex: number, sizeValue: string) {
+    setDrafts((prev) => {
+      const list = [...(prev.wattage || [])];
+      const row = list[wattageIndex];
+      if (!row) return prev;
+      const current = resolvedWattageSizes(row, prev);
+      const has = current.some((value) => valuesEqual(SIZE_KIND, value, sizeValue));
+      list[wattageIndex] = {
+        ...row,
+        sizes: has
+          ? current.filter((value) => !valuesEqual(SIZE_KIND, value, sizeValue))
+          : [...current, sizeValue],
+      };
+      return { ...prev, wattage: list };
+    });
+  }
+
   async function save() {
+    const problem = wattageSizeSaveError(flattenDrafts(drafts));
+    if (problem) {
+      setError(problem);
+      showSaveNotice(problem, 'error');
+      return;
+    }
     setSaving(true);
     setError(null);
     setSuccess(null);
@@ -696,6 +742,25 @@ export default function SeriesVariantEditorPage() {
                                 value={row.system_lumen}
                                 onChange={(e) => updateRow(field.key, index, { system_lumen: e.target.value })}
                               />
+                              <div>
+                                <p className="mb-2 text-sm font-medium text-gray-700">Sizes</p>
+                                <VariantOptionPicker
+                                  label="Sizes"
+                                  tags={currentSizeValues(drafts).map((value) => ({
+                                    value,
+                                    code: '',
+                                    selected: resolvedWattageSizes(row, drafts).some((item) =>
+                                      valuesEqual(SIZE_KIND, item, value)
+                                    ),
+                                  }))}
+                                  includeNa={false}
+                                  naSelected={false}
+                                  onToggle={(tag) => toggleWattageSize(index, tag.value)}
+                                  onToggleNa={() => undefined}
+                                  menuHelpKey="admin.product_series.wattage_sizes"
+                                  emptyHint="Add a size first, then choose which sizes this wattage uses."
+                                />
+                              </div>
                             </div>
                           ))
                         : null}

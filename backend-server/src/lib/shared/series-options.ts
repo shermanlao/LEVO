@@ -33,6 +33,13 @@ export type SeriesOptionDto = {
   main_image_A?: string | null;
   main_image_B?: string | null;
   size_image?: string | null;
+  /** Size labels this wattage is sold in. Omitted when the series has no stored pairs (full product). */
+  sizes?: string[] | null;
+};
+
+export type WattageSizePair = {
+  wattage_value: string;
+  size_value: string;
 };
 
 export type VariantCatalogOption = {
@@ -251,6 +258,17 @@ function optionDisplayRank(kind: string, value: string): number {
   return 0;
 }
 
+function mergeSizeLists(left?: string[] | null, right?: string[] | null): string[] | undefined {
+  if (!Array.isArray(left) && !Array.isArray(right)) return undefined;
+  const out: string[] = [];
+  for (const raw of [...(left || []), ...(right || [])]) {
+    const value = optionText(raw);
+    if (!value) continue;
+    if (!out.some((item) => valuesEqual(SIZE_KIND, item, value))) out.push(value);
+  }
+  return out;
+}
+
 function mergeOption(keep: SeriesOptionDto, extra: SeriesOptionDto): SeriesOptionDto {
   return {
     ...keep,
@@ -262,6 +280,7 @@ function mergeOption(keep: SeriesOptionDto, extra: SeriesOptionDto): SeriesOptio
     main_image_A: keep.main_image_A || extra.main_image_A,
     main_image_B: keep.main_image_B || extra.main_image_B,
     size_image: keep.size_image || extra.size_image,
+    sizes: mergeSizeLists(keep.sizes, extra.sizes),
   };
 }
 
@@ -307,10 +326,135 @@ export function realOptionsForKind(kind: string, list: SeriesOptionDto[]): Serie
   return (list || []).filter((option) => !isAppearanceNa(option.value));
 }
 
-export function visibleSelectorKinds(grouped: Record<string, SeriesOptionDto[]>): SpecField[] {
+export function visibleSelectorKinds(
+  grouped: Record<string, SeriesOptionDto[]>,
+  selection?: Record<string, string>
+): SpecField[] {
   return variantSpecFields().filter(
-    (field) => realOptionsForKind(field.key, grouped[field.key] || []).length >= 2
+    (field) => selectorOptionsForKind(grouped, field.key, selection).length >= 2
   );
+}
+
+export function hasWattageSizeConstraints(grouped: Record<string, SeriesOptionDto[]>): boolean {
+  return (grouped.wattage || []).some((option) => Array.isArray(option.sizes));
+}
+
+export function attachWattageSizeLists(
+  options: SeriesOptionDto[],
+  pairs: WattageSizePair[]
+): SeriesOptionDto[] {
+  if (!pairs.length) return options;
+  return options.map((option) => {
+    if (option.kind !== 'wattage') return option;
+    return {
+      ...option,
+      sizes: pairs
+        .filter((pair) => valuesEqual('wattage', pair.wattage_value, option.value))
+        .map((pair) => pair.size_value),
+    };
+  });
+}
+
+function findWattageOption(
+  grouped: Record<string, SeriesOptionDto[]>,
+  wattageValue: string
+): SeriesOptionDto | null {
+  return (grouped.wattage || []).find((option) => valuesEqual('wattage', option.value, wattageValue)) || null;
+}
+
+function sizeOptionsMatching(
+  grouped: Record<string, SeriesOptionDto[]>,
+  values: string[]
+): SeriesOptionDto[] {
+  const sizes = realOptionsForKind(SIZE_KIND, grouped[SIZE_KIND] || []);
+  return sizes.filter((option) => values.some((value) => valuesEqual(SIZE_KIND, option.value, value)));
+}
+
+/** Sizes this wattage is sold in. Empty wattage lists every size that at least one wattage includes. */
+export function sizesForWattage(
+  grouped: Record<string, SeriesOptionDto[]>,
+  wattageValue?: string
+): SeriesOptionDto[] {
+  const sizes = realOptionsForKind(SIZE_KIND, grouped[SIZE_KIND] || []);
+  if (!hasWattageSizeConstraints(grouped)) return sizes;
+  const wattage = optionText(wattageValue);
+  if (wattage) {
+    const option = findWattageOption(grouped, wattage);
+    return sizeOptionsMatching(grouped, option?.sizes || []);
+  }
+  const linked: string[] = [];
+  for (const option of grouped.wattage || []) {
+    for (const value of option.sizes || []) {
+      if (!linked.some((item) => valuesEqual(SIZE_KIND, item, value))) linked.push(value);
+    }
+  }
+  return sizeOptionsMatching(grouped, linked);
+}
+
+/** Wattages sold in this size. Empty size lists every wattage. */
+export function wattagesForSize(
+  grouped: Record<string, SeriesOptionDto[]>,
+  sizeValue?: string
+): SeriesOptionDto[] {
+  const watts = realOptionsForKind('wattage', grouped.wattage || []);
+  if (!hasWattageSizeConstraints(grouped)) return watts;
+  const size = optionText(sizeValue);
+  if (!size) return watts;
+  return watts.filter((option) =>
+    (option.sizes || []).some((value) => valuesEqual(SIZE_KIND, value, size))
+  );
+}
+
+export function selectorOptionsForKind(
+  grouped: Record<string, SeriesOptionDto[]>,
+  kind: string,
+  selection?: Record<string, string>
+): SeriesOptionDto[] {
+  if (kind === SIZE_KIND) return sizesForWattage(grouped, selection?.wattage);
+  if (kind === 'wattage') return wattagesForSize(grouped, selection?.[SIZE_KIND]);
+  return realOptionsForKind(kind, grouped[kind] || []);
+}
+
+export function wattageSizeCompatible(
+  grouped: Record<string, SeriesOptionDto[]>,
+  wattageValue?: string,
+  sizeValue?: string
+): boolean {
+  if (!hasWattageSizeConstraints(grouped)) return true;
+  const wattage = optionText(wattageValue);
+  const size = optionText(sizeValue);
+  if (wattage && size) {
+    const option = findWattageOption(grouped, wattage);
+    if (!option || !Array.isArray(option.sizes)) return false;
+    return option.sizes.some((value) => valuesEqual(SIZE_KIND, value, size));
+  }
+  if (wattage) {
+    const sizes = grouped[SIZE_KIND] || [];
+    if (!realOptionsForKind(SIZE_KIND, sizes).length) return true;
+    return sizesForWattage(grouped, wattage).length > 0;
+  }
+  if (size) {
+    const watts = grouped.wattage || [];
+    if (!realOptionsForKind('wattage', watts).length) return true;
+    return wattagesForSize(grouped, size).length > 0;
+  }
+  return true;
+}
+
+export function wattageSizeSaveError(options: SeriesOptionDto[]): string | null {
+  const grouped = groupOptionsByKind(options);
+  const sizes = realOptionsForKind(SIZE_KIND, grouped[SIZE_KIND] || []);
+  if (!sizes.length) return null;
+  for (const watt of grouped.wattage || []) {
+    const linked = Array.isArray(watt.sizes)
+      ? watt.sizes.filter((value) => sizes.some((size) => valuesEqual(SIZE_KIND, size.value, value)))
+      : sizes.map((size) => size.value);
+    if (!linked.length) {
+      const label = formatSpecValue(watt.value, 'W') || watt.value;
+      return `Select at least one size for ${label}`;
+    }
+  }
+  return null;
 }
 
 export function findSizeOption(
@@ -423,16 +567,33 @@ export function comboRowId(selection: Record<string, string>): string {
     .join('|');
 }
 
-export function comboCount(grouped: Record<string, SeriesOptionDto[]>): number {
-  const axes = visibleSelectorKinds(grouped);
-  if (axes.length === 0) {
-    return Object.keys(grouped).some((kind) => realOptionsForKind(kind, grouped[kind] || []).length > 0)
-      ? 1
-      : 0;
+function wattageSizeBodyCount(grouped: Record<string, SeriesOptionDto[]>): number {
+  const watts = realOptionsForKind('wattage', grouped.wattage || []);
+  const sizes = realOptionsForKind(SIZE_KIND, grouped[SIZE_KIND] || []);
+  if (!watts.length && !sizes.length) return 1;
+  const wattList = watts.length ? watts : [null];
+  const sizeList = sizes.length ? sizes : [null];
+  let count = 0;
+  for (const watt of wattList) {
+    for (const size of sizeList) {
+      if (wattageSizeCompatible(grouped, watt?.value, size?.value)) count += 1;
+    }
   }
-  return axes.reduce(
+  return count;
+}
+
+export function comboCount(grouped: Record<string, SeriesOptionDto[]>): number {
+  const hasAny = Object.values(grouped).some((list) => (list || []).length > 0);
+  if (!hasAny) return 0;
+  const otherAxes = visibleSelectorKinds(grouped).filter(
+    (field) => field.key !== 'wattage' && field.key !== SIZE_KIND
+  );
+  const bodies = wattageSizeBodyCount(grouped);
+  if (bodies === 0) return 0;
+  if (otherAxes.length === 0) return bodies;
+  return otherAxes.reduce(
     (total, field) => total * Math.max(realOptionsForKind(field.key, grouped[field.key] || []).length, 1),
-    1
+    bodies
   );
 }
 
@@ -444,6 +605,14 @@ export function filledSelection(
   for (const [kind, list] of Object.entries(grouped)) {
     const real = realOptionsForKind(kind, list);
     if (real.length === 1 && !filled[kind]) filled[kind] = real[0].value;
+  }
+  if (filled.wattage && !filled[SIZE_KIND]) {
+    const sizes = sizesForWattage(grouped, filled.wattage);
+    if (sizes.length === 1) filled[SIZE_KIND] = sizes[0].value;
+  }
+  if (filled[SIZE_KIND] && !filled.wattage) {
+    const watts = wattagesForSize(grouped, filled[SIZE_KIND]);
+    if (watts.length === 1) filled.wattage = watts[0].value;
   }
   return filled;
 }
@@ -487,14 +656,48 @@ export function specFromCombo(
 
 export const MAX_CARTESIAN_COMBO_ROWS = 200;
 
-export function cartesianComboRows(grouped: Record<string, SeriesOptionDto[]>): SeriesComboRow[] {
-  const axes = visibleSelectorKinds(grouped);
-  if (axes.length === 0) {
-    const hasAny = Object.values(grouped).some((list) => list.length > 0);
-    return hasAny ? [{ id: 'default', selection: {}, optionsByKind: {} }] : [];
+function wattageSizeBodyRows(grouped: Record<string, SeriesOptionDto[]>): SeriesComboRow[] {
+  const watts = realOptionsForKind('wattage', grouped.wattage || []);
+  const sizes = realOptionsForKind(SIZE_KIND, grouped[SIZE_KIND] || []);
+  if (!watts.length && !sizes.length) {
+    return [{ id: 'default', selection: {}, optionsByKind: {} }];
   }
-  let rows: SeriesComboRow[] = [{ id: '', selection: {}, optionsByKind: {} }];
-  for (const field of axes) {
+  const wattVisible = watts.length >= 2;
+  const sizeVisible = sizes.length >= 2;
+  const wattList = watts.length ? watts : [null];
+  const sizeList = sizes.length ? sizes : [null];
+  const rows: SeriesComboRow[] = [];
+  for (const watt of wattList) {
+    for (const size of sizeList) {
+      if (!wattageSizeCompatible(grouped, watt?.value, size?.value)) continue;
+      const selection: Record<string, string> = {};
+      const optionsByKind: Record<string, SeriesOptionDto> = {};
+      if (watt && wattVisible) {
+        selection.wattage = watt.value;
+        optionsByKind.wattage = watt;
+      }
+      if (size && sizeVisible) {
+        selection[SIZE_KIND] = size.value;
+        optionsByKind[SIZE_KIND] = size;
+      }
+      rows.push({ id: comboRowId(selection), selection, optionsByKind });
+    }
+  }
+  return rows;
+}
+
+export function cartesianComboRows(grouped: Record<string, SeriesOptionDto[]>): SeriesComboRow[] {
+  const hasAny = Object.values(grouped).some((list) => (list || []).length > 0);
+  if (!hasAny) return [];
+  const otherAxes = visibleSelectorKinds(grouped).filter(
+    (field) => field.key !== 'wattage' && field.key !== SIZE_KIND
+  );
+  let rows = wattageSizeBodyRows(grouped);
+  if (rows.length === 0) return [];
+  if (otherAxes.length === 0) {
+    return rows.length > MAX_CARTESIAN_COMBO_ROWS ? rows.slice(0, MAX_CARTESIAN_COMBO_ROWS) : rows;
+  }
+  for (const field of otherAxes) {
     const list = realOptionsForKind(field.key, grouped[field.key] || []);
     if (list.length === 0) continue;
     const next: SeriesComboRow[] = [];
@@ -845,9 +1048,15 @@ export type FamilyWattageRow = {
 };
 
 /** Wattage rows with source / system lumen for the family size cards. */
-export function familyWattageRows(grouped: Record<string, SeriesOptionDto[]>): FamilyWattageRow[] {
+export function familyWattageRows(
+  grouped: Record<string, SeriesOptionDto[]>,
+  sizeValue?: string
+): FamilyWattageRow[] {
   const rows: FamilyWattageRow[] = [];
-  for (const option of familyOptionsForKind(grouped, 'wattage')) {
+  const watts = sizeValue
+    ? wattagesForSize(grouped, sizeValue)
+    : familyOptionsForKind(grouped, 'wattage');
+  for (const option of watts) {
     const wattage = formatSpecValue(option.value, 'W') || option.value;
     if (!wattage) continue;
     const source =

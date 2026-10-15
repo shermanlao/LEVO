@@ -59,6 +59,8 @@ export default function VariantOptionPicker({
   naSelected,
   onToggle,
   onToggleNa,
+  menuHelpKey = 'admin.product_series.option_menu',
+  emptyHint,
 }: {
   label: string;
   tags: VariantPickerTag[];
@@ -66,6 +68,8 @@ export default function VariantOptionPicker({
   naSelected: boolean;
   onToggle: (tag: { value: string; code: string }) => void;
   onToggleNa: () => void;
+  menuHelpKey?: string;
+  emptyHint?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -88,6 +92,7 @@ export default function VariantOptionPicker({
   }, [open]);
 
   if (!includeNa && tags.length === 0) {
+    if (emptyHint) return <p className="text-sm text-gray-500">{emptyHint}</p>;
     return (
       <p className="text-sm text-gray-500">
         No options yet.{' '}
@@ -108,7 +113,7 @@ export default function VariantOptionPicker({
   return (
     <div ref={rootRef} className={`relative ${open ? 'z-30' : ''}`}>
       <HelpButton
-        helpKey="admin.product_series.option_menu"
+        helpKey={menuHelpKey}
         type="button"
         aria-expanded={open}
         aria-controls={listId}

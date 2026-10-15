@@ -6,6 +6,9 @@ import {
   comboCount,
   compareOptionValues,
   groupOptionsByKind,
+  sizesForWattage,
+  wattageSizeSaveError,
+  wattagesForSize,
 } from './series-options';
 
 describe('series option cartesian', () => {
@@ -67,6 +70,82 @@ describe('series option cartesian', () => {
       'Silver/Black/White',
     ]);
     assert.ok(compareOptionValues('wattage', '10W', '2W') > 0);
+  });
+
+  it('keeps a full wattage × size product when no pairs are stored', () => {
+    const grouped = groupOptionsByKind([
+      { kind: 'wattage', value: '12', sort_order: 0 },
+      { kind: 'wattage', value: '18', sort_order: 1 },
+      { kind: 'size', value: 'Ø75', sort_order: 0 },
+      { kind: 'size', value: 'Ø90', sort_order: 1 },
+    ]);
+    const rows = cartesianComboRows(grouped);
+    assert.equal(comboCount(grouped), 4);
+    assert.equal(rows.length, 4);
+  });
+
+  it('multiplies only allowed wattage-size pairs, then CCT', () => {
+    const bodies = cartesianComboRows(
+      groupOptionsByKind([
+        { kind: 'wattage', value: '12', sort_order: 0, sizes: ['Ø75'] },
+        { kind: 'wattage', value: '18', sort_order: 1, sizes: ['Ø90', 'Ø120'] },
+        { kind: 'size', value: 'Ø75', sort_order: 0 },
+        { kind: 'size', value: 'Ø90', sort_order: 1 },
+        { kind: 'size', value: 'Ø120', sort_order: 2 },
+      ])
+    );
+    assert.equal(bodies.length, 3);
+    assert.deepEqual(
+      bodies.map((row) => `${row.selection.wattage}|${row.selection.size}`),
+      ['12|Ø75', '18|Ø90', '18|Ø120']
+    );
+    const grouped = groupOptionsByKind([
+      { kind: 'wattage', value: '12', sort_order: 0, sizes: ['Ø75'] },
+      { kind: 'wattage', value: '18', sort_order: 1, sizes: ['Ø90', 'Ø120'] },
+      { kind: 'size', value: 'Ø75', sort_order: 0 },
+      { kind: 'size', value: 'Ø90', sort_order: 1 },
+      { kind: 'size', value: 'Ø120', sort_order: 2 },
+      { kind: 'cct', value: '3000K', sort_order: 0 },
+      { kind: 'cct', value: '4000K', sort_order: 1 },
+    ]);
+    assert.equal(comboCount(grouped), 6);
+    const rows = cartesianComboRows(grouped);
+    assert.equal(rows.length, 6);
+    assert.ok(
+      rows.every((row) => {
+        if (row.selection.wattage === '12') return row.selection.size === 'Ø75';
+        return row.selection.size === 'Ø90' || row.selection.size === 'Ø120';
+      })
+    );
+  });
+
+  it('narrows size and wattage lists from stored pairs', () => {
+    const grouped = groupOptionsByKind([
+      { kind: 'wattage', value: '12', sort_order: 0, sizes: ['Ø75'] },
+      { kind: 'wattage', value: '18', sort_order: 1, sizes: ['Ø90', 'Ø120'] },
+      { kind: 'size', value: 'Ø75', sort_order: 0 },
+      { kind: 'size', value: 'Ø90', sort_order: 1 },
+      { kind: 'size', value: 'Ø120', sort_order: 2 },
+    ]);
+    assert.deepEqual(
+      sizesForWattage(grouped, '12').map((option) => option.value),
+      ['Ø75']
+    );
+    assert.deepEqual(
+      sizesForWattage(grouped, '18').map((option) => option.value),
+      ['Ø90', 'Ø120']
+    );
+    assert.deepEqual(
+      wattagesForSize(grouped, 'Ø90').map((option) => option.value),
+      ['18']
+    );
+    assert.equal(
+      wattageSizeSaveError([
+        { kind: 'wattage', value: '12', sort_order: 0, sizes: [] },
+        { kind: 'size', value: 'Ø75', sort_order: 0 },
+      ]),
+      'Select at least one size for 12W'
+    );
   });
 
   it('builds combo rows with white finish before black', () => {

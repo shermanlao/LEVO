@@ -18,7 +18,7 @@ Public series lookup uses `GET /api/product-series/by-slug/:slug` (not `/api/pro
 | `GET` | `/api/product-series/:id` | Numeric series id, including `attributes.products.data` (list payload). Public 404 when `show_on_site` is off |
 | `POST` | `/api/admin/backend/product-series` | Admin session. Create (name + slug required). New series append in their type (`max + 1`). Express still accepts this on loopback `/api/product-series` |
 | `PUT` | `/api/admin/backend/product-series/reorder` | Admin session. Body `{ ids: number[] }` must be every series in one type (or every untyped series). Writes `sort_order` as the index |
-| `PUT` | `/api/admin/backend/product-series/:id` | Admin session. Update (optional `options` array replaces `series_options`; optional `ldt_family`, `show_on_site`). Changing `product_type_id` appends the series in the new type |
+| `PUT` | `/api/admin/backend/product-series/:id` | Admin session. Update (optional `options` array replaces `series_options` and `series_wattage_sizes` from each wattage’s `sizes`; optional `ldt_family`, `show_on_site`). Changing `product_type_id` appends the series in the new type |
 | `DELETE` | `/api/admin/backend/product-series/:id` | System or admin session. Deletes the series, its options, its appearance photos, and every product (size pack) in it. Operation accounts get 403 even if they can open Catalog |
 
 Product endpoints:

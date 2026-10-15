@@ -1,5 +1,5 @@
 import sequelize from '../database';
-import { ensureDefaultProductTypes, ensureDefaultHelpTips, ensureDefaultCatalogSource, ensureDefaultSiteContact, ensureDefaultAdminUser, ensureAdminUserColumns, ensureAdminRolePermissions, ensureProductExternalColumns, ensureProductTypeColumns, ensureSeriesFeaturedImageColumn, ensureSeriesOptions, ensureSeriesAppearancePhotos, ensureVariantOptionCatalog, ensureAiSettingsColumns, ensureProjectFeaturedColumn, ensureVisitorEventColumns, backfillLightxProductCodes } from '../seed/ensureDefaults';
+import { ensureDefaultProductTypes, ensureDefaultHelpTips, ensureDefaultCatalogSource, ensureDefaultSiteContact, ensureDefaultAdminUser, ensureAdminUserColumns, ensureAdminRolePermissions, ensureProductExternalColumns, ensureProductTypeColumns, ensureSeriesFeaturedImageColumn, ensureSeriesOptions, ensureSeriesWattageSizes, ensureSeriesAppearancePhotos, ensureVariantOptionCatalog, ensureAiSettingsColumns, ensureProjectFeaturedColumn, ensureVisitorEventColumns, backfillLightxProductCodes } from '../seed/ensureDefaults';
 import AdminUser from './AdminUser';
 import AdminRolePermission from './AdminRolePermission';
 import { ensurePhotometricBeamLibrary } from '../lib/photometric/beamLibraryServer';
@@ -13,6 +13,7 @@ import Product from './Product';
 import ProductType from './ProductType';
 import ProductSeries from './ProductSeries';
 import SeriesOption from './SeriesOption';
+import SeriesWattageSize from './SeriesWattageSize';
 import SeriesAppearancePhoto from './SeriesAppearancePhoto';
 import VariantOptionCatalog from './VariantOptionCatalog';
 import ExternalCatalogSource from './ExternalCatalogSource';
@@ -48,6 +49,8 @@ ProductSeries.belongsTo(ProductType, { foreignKey: 'product_type_id', as: 'type'
 ProductSeries.hasMany(Product, { foreignKey: 'series_id', as: 'products' });
 ProductSeries.hasMany(SeriesOption, { foreignKey: 'series_id', as: 'options', onDelete: 'CASCADE' });
 SeriesOption.belongsTo(ProductSeries, { foreignKey: 'series_id', as: 'series' });
+ProductSeries.hasMany(SeriesWattageSize, { foreignKey: 'series_id', as: 'wattage_sizes', onDelete: 'CASCADE' });
+SeriesWattageSize.belongsTo(ProductSeries, { foreignKey: 'series_id', as: 'series' });
 ProductSeries.hasMany(SeriesAppearancePhoto, { foreignKey: 'series_id', as: 'appearance_photos', onDelete: 'CASCADE' });
 SeriesAppearancePhoto.belongsTo(ProductSeries, { foreignKey: 'series_id', as: 'series' });
 
@@ -59,6 +62,7 @@ async function syncDatabase() {
     await ensureProductTypeColumns();
     await ensureSeriesFeaturedImageColumn();
     await ensureSeriesOptions();
+    await ensureSeriesWattageSizes();
     await ensureSeriesAppearancePhotos();
     await ensureVariantOptionCatalog();
     await ensureAiSettingsColumns();
@@ -93,6 +97,7 @@ export {
   ProductType,
   ProductSeries,
   SeriesOption,
+  SeriesWattageSize,
   SeriesAppearancePhoto,
   VariantOptionCatalog,
   ExternalCatalogSource,

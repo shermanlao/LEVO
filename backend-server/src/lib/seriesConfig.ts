@@ -4,9 +4,11 @@ import ProductSeries from '../models/ProductSeries';
 import ProductType from '../models/ProductType';
 import SeriesOption from '../models/SeriesOption';
 import SeriesAppearancePhoto from '../models/SeriesAppearancePhoto';
+import SeriesWattageSize from '../models/SeriesWattageSize';
 import {
   ALWAYS_VISIBLE_KINDS,
   SIZE_KIND,
+  attachWattageSizeLists,
   filledSelection,
   findSizeOption,
   findSizePack,
@@ -20,7 +22,10 @@ import {
   variantSpecFields,
   visibleSelectorKinds,
   wattageOptionValue,
+  wattageSizeCompatible,
+  wattageSizeSaveError,
   type SeriesOptionDto,
+  type WattageSizePair,
 } from './shared/series-options';
 import { uniqueSlug } from './slugify';
 import { upsertCatalogOption } from './variantCatalog';
@@ -57,6 +62,39 @@ export function groupedSeriesOptions(options: SeriesOptionDto[]) {
   return groupOptionsByKind(options);
 }
 
+function pairFromRow(row: SeriesWattageSize | Record<string, unknown>): WattageSizePair & {
+  series_id: number;
+} {
+  const p =
+    typeof (row as SeriesWattageSize).get === 'function'
+      ? (row as SeriesWattageSize).get({ plain: true })
+      : row;
+  const rec = p as Record<string, unknown>;
+  return {
+    series_id: Number(rec.series_id) || 0,
+    wattage_value: String(rec.wattage_value || ''),
+    size_value: String(rec.size_value || ''),
+  };
+}
+
+async function loadWattageSizePairsForIds(
+  seriesIds: number[]
+): Promise<Map<number, WattageSizePair[]>> {
+  const map = new Map<number, WattageSizePair[]>();
+  const ids = seriesIds.filter((id) => Number.isInteger(id));
+  for (const id of ids) map.set(id, []);
+  if (ids.length === 0) return map;
+  const rows = await SeriesWattageSize.findAll({ where: { series_id: ids } });
+  for (const row of rows) {
+    const pair = pairFromRow(row);
+    if (!pair.series_id || !pair.wattage_value || !pair.size_value) continue;
+    const list = map.get(pair.series_id) || [];
+    list.push({ wattage_value: pair.wattage_value, size_value: pair.size_value });
+    map.set(pair.series_id, list);
+  }
+  return map;
+}
+
 export async function loadSeriesOptions(seriesId: number): Promise<SeriesOptionDto[]> {
   const rows = await SeriesOption.findAll({
     where: { series_id: seriesId },
@@ -66,7 +104,9 @@ export async function loadSeriesOptions(seriesId: number): Promise<SeriesOptionD
       ['id', 'ASC'],
     ],
   });
-  return rows.map(serializeSeriesOption);
+  const options = rows.map(serializeSeriesOption);
+  const pairsById = await loadWattageSizePairsForIds([seriesId]);
+  return attachWattageSizeLists(options, pairsById.get(seriesId) || []);
 }
 
 export async function loadSeriesOptionsForIds(
@@ -89,6 +129,10 @@ export async function loadSeriesOptionsForIds(
     const list = map.get(seriesId) || [];
     list.push(serializeSeriesOption(row));
     map.set(seriesId, list);
+  }
+  const pairsById = await loadWattageSizePairsForIds(ids);
+  for (const id of ids) {
+    map.set(id, attachWattageSizeLists(map.get(id) || [], pairsById.get(id) || []));
   }
   return map;
 }
@@ -202,9 +246,14 @@ export async function resolveSeriesConfig(
     }
   }
 
+  const filled = filledSelection(grouped, selection);
+  if (filled.wattage && filled[SIZE_KIND] && !wattageSizeCompatible(grouped, filled.wattage, filled[SIZE_KIND])) {
+    return { ok: false, status: 400, error: 'Unknown size for this wattage' };
+  }
+
   if (opts?.requireComplete) {
-    const visible = visibleSelectorKinds(grouped);
-    const missing = visible.filter((field) => !selection[field.key]).map((field) => field.label);
+    const visible = visibleSelectorKinds(grouped, filled);
+    const missing = visible.filter((field) => !filled[field.key]).map((field) => field.label);
     if (missing.length) {
       return {
         ok: false,
@@ -239,14 +288,13 @@ export async function resolveSeriesConfig(
   };
 
   for (const [kind, list] of Object.entries(grouped)) {
-    if (list.length === 1 && !selection[kind]) applyOption(spec, list[0]);
+    if (list.length === 1 && !filled[kind]) applyOption(spec, list[0]);
   }
-  for (const [kind, selected] of Object.entries(selection)) {
+  for (const [kind, selected] of Object.entries(filled)) {
     const option = optionForKind(grouped, kind, selected);
     if (option) applyOption(spec, option);
   }
 
-  const filled = filledSelection(grouped, selection);
   const sizePack = findSizePack(productPlains, optionText(spec.size) || filled[SIZE_KIND], grouped);
 
   if (sizePack) {
@@ -283,9 +331,43 @@ export async function resolveSeriesConfig(
   };
 }
 
+function parseSizeList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out: string[] = [];
+  for (const raw of value) {
+    const text = optionText(raw);
+    if (!text) continue;
+    if (!out.some((item) => valuesEqual(SIZE_KIND, item, text))) out.push(text);
+  }
+  return out;
+}
+
+async function replaceWattageSizePairs(
+  seriesId: number,
+  grouped: Record<string, SeriesOptionDto[]>
+): Promise<WattageSizePair[]> {
+  await SeriesWattageSize.destroy({ where: { series_id: seriesId } });
+  const watts = grouped.wattage || [];
+  const sizes = (grouped[SIZE_KIND] || []).filter((option) => option.value);
+  const rows: Array<{ series_id: number; wattage_value: string; size_value: string }> = [];
+  for (const watt of watts) {
+    const linked = Array.isArray(watt.sizes) ? watt.sizes : sizes.map((size) => size.value);
+    for (const sizeValue of linked) {
+      const size = sizes.find((option) => valuesEqual(SIZE_KIND, option.value, sizeValue));
+      if (!size) continue;
+      rows.push({
+        series_id: seriesId,
+        wattage_value: wattageOptionValue(watt.value) || watt.value,
+        size_value: size.value,
+      });
+    }
+  }
+  if (rows.length) await SeriesWattageSize.bulkCreate(rows);
+  return rows.map((row) => ({ wattage_value: row.wattage_value, size_value: row.size_value }));
+}
+
 export async function replaceSeriesOptions(seriesId: number, incoming: unknown): Promise<SeriesOptionDto[]> {
   const list = Array.isArray(incoming) ? incoming : [];
-  await SeriesOption.destroy({ where: { series_id: seriesId } });
   const parsed: SeriesOptionDto[] = [];
   let index = 0;
   for (const raw of list) {
@@ -309,9 +391,17 @@ export async function replaceSeriesOptions(seriesId: number, incoming: unknown):
         main_image_A: optionText(rec.main_image_A) || null,
         main_image_B: optionText(rec.main_image_B) || null,
         size_image: optionText(rec.size_image) || null,
+        sizes: kind === 'wattage' ? parseSizeList(rec.sizes) : undefined,
       });
     index += 1;
   }
+  const problem = wattageSizeSaveError(parsed);
+  if (problem) {
+    const error = new Error(problem);
+    (error as { status?: number }).status = 400;
+    throw error;
+  }
+  await SeriesOption.destroy({ where: { series_id: seriesId } });
   const grouped = groupOptionsByKind(parsed);
   const created: SeriesOptionDto[] = [];
   let sort = 0;
@@ -330,15 +420,16 @@ export async function replaceSeriesOptions(seriesId: number, incoming: unknown):
       if (option.kind !== SIZE_KIND && !isAppearanceNa(option.value)) {
         await upsertCatalogOption(option.kind, option.value, option.code);
       }
-      created.push(serializeSeriesOption(row));
+      created.push({ ...serializeSeriesOption(row), sizes: option.sizes });
       sort += 1;
     }
   }
+  const pairs = await replaceWattageSizePairs(seriesId, grouped);
   await upsertSeriesSizePacks(
     seriesId,
     parsed.filter((option) => option.kind === SIZE_KIND)
   );
-  return created;
+  return attachWattageSizeLists(created, pairs);
 }
 
 function parsePackId(value: unknown): number | null {
@@ -463,6 +554,47 @@ async function upsertOption(
   if (!skipCatalog) await upsertCatalogOption(kind, value);
 }
 
+async function backfillWattageSizeCartesian(seriesId: number): Promise<void> {
+  const rows = await SeriesOption.findAll({ where: { series_id: seriesId } });
+  const grouped = groupOptionsByKind(rows.map(serializeSeriesOption));
+  const watts = grouped.wattage || [];
+  const sizes = grouped[SIZE_KIND] || [];
+  if (!watts.length || !sizes.length) return;
+  await SeriesWattageSize.bulkCreate(
+    watts.flatMap((watt) =>
+      sizes.map((size) => ({
+        series_id: seriesId,
+        wattage_value: wattageOptionValue(watt.value) || watt.value,
+        size_value: size.value,
+      }))
+    )
+  );
+}
+
+export async function upsertWattageSizePair(
+  seriesId: number,
+  wattageValue: string,
+  sizeValue: string
+): Promise<void> {
+  const wattage = wattageOptionValue(wattageValue);
+  const size = optionText(sizeValue);
+  if (!wattage || !size) return;
+  const existingCount = await SeriesWattageSize.count({ where: { series_id: seriesId } });
+  if (existingCount === 0) await backfillWattageSizeCartesian(seriesId);
+  const rows = await SeriesWattageSize.findAll({ where: { series_id: seriesId } });
+  const found = rows.some(
+    (row) =>
+      valuesEqual('wattage', row.get('wattage_value'), wattage) &&
+      valuesEqual(SIZE_KIND, row.get('size_value'), size)
+  );
+  if (found) return;
+  await SeriesWattageSize.create({
+    series_id: seriesId,
+    wattage_value: wattage,
+    size_value: size,
+  });
+}
+
 export async function mergeProductIntoSeriesOptions(
   seriesId: number,
   product: Record<string, unknown>
@@ -476,8 +608,9 @@ export async function mergeProductIntoSeriesOptions(
   }
   const dim = optionText(product.dimensions);
   const cut = optionText(product.cutout_size);
+  const sizeValue = sizeLabel(dim, cut) || dim;
   if (dim || cut) {
-    await upsertOption(seriesId, SIZE_KIND, sizeLabel(dim, cut) || dim, {
+    await upsertOption(seriesId, SIZE_KIND, sizeValue, {
       dimensions: dim || null,
       cutout_size: cut || null,
     });
@@ -487,6 +620,7 @@ export async function mergeProductIntoSeriesOptions(
     const value = optionText(product[field.key]);
     if (value) await upsertOption(seriesId, field.key, value);
   }
+  if (wattage && sizeValue) await upsertWattageSizePair(seriesId, wattage, sizeValue);
 }
 
 export async function backfillSeriesOptionsFromProducts(): Promise<void> {

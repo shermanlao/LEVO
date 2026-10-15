@@ -7,6 +7,7 @@ const COPY_TABLES = [
   'product_series',
   'products',
   'series_options',
+  'series_wattage_sizes',
   'series_appearance_photos',
   'variant_option_catalog',
   'product_code_sequences',

@@ -30,12 +30,15 @@ import {
   findSizePack,
   groupOptionsByKind,
   optionText,
-  realOptionsForKind,
+  selectorOptionsForKind,
   selectionFromSearchParams,
+  sizesForWattage,
   specFromCombo,
+  valuesEqual,
   variantKindLabel,
   visibleSelectorKinds,
   wattageOptionValue,
+  wattagesForSize,
   type SeriesOptionDto,
   type VariantCatalogOption,
 } from '@shared/series-options';
@@ -123,8 +126,9 @@ export default function SeriesConfigurator({
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const grouped = useMemo(() => groupOptionsByKind(options), [options]);
-  const selectors = useMemo(() => visibleSelectorKinds(grouped), [grouped]);
   const selection = useMemo(() => selectionFromSearchParams(searchParams), [searchParams]);
+  const selectors = useMemo(() => visibleSelectorKinds(grouped, selection), [grouped, selection]);
+  const filled = useMemo(() => filledSelection(grouped, selection), [grouped, selection]);
   const catalog = useMemo(() => catalogFromOptions(options), [options]);
   const packs = useMemo(() => products.map(productPlain), [products]);
   const selectionKey = searchParams.toString();
@@ -269,12 +273,30 @@ export default function SeriesConfigurator({
     );
   }, [appearancePhotos, grouped, selection, seriesImageUrl, seriesName]);
 
-  const complete = selectors.length > 0 && selectors.every((field) => Boolean(selection[field.key]));
+  const complete = selectors.length > 0 && selectors.every((field) => Boolean(filled[field.key]));
 
   function setKind(kind: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(kind, value);
     else params.delete(kind);
+
+    if (kind === 'wattage') {
+      const sizes = sizesForWattage(grouped, value);
+      const currentSize = params.get(SIZE_KIND) || '';
+      if (value && sizes.length === 1) {
+        params.set(SIZE_KIND, sizes[0].value);
+      } else if (value && currentSize && !sizes.some((option) => valuesEqual(SIZE_KIND, option.value, currentSize))) {
+        params.delete(SIZE_KIND);
+      }
+    }
+    if (kind === SIZE_KIND) {
+      const watts = wattagesForSize(grouped, value);
+      const currentWattage = params.get('wattage') || '';
+      if (value && currentWattage && !watts.some((option) => valuesEqual('wattage', option.value, currentWattage))) {
+        params.delete('wattage');
+      }
+    }
+
     const q = params.toString();
     router.push(q ? `${pathname}?${q}` : pathname, { scroll: false });
   }
@@ -307,7 +329,7 @@ export default function SeriesConfigurator({
         </div>
         <div className="space-y-2.5 min-w-0">
           {selectors.map((field) => {
-            const list = realOptionsForKind(field.key, grouped[field.key] || []);
+            const list = selectorOptionsForKind(grouped, field.key, selection);
             return (
               <label
                 key={field.key}
@@ -336,7 +358,7 @@ export default function SeriesConfigurator({
         {complete ? (
           <div className="pt-1 flex flex-wrap items-center gap-2">
             <HelpLink
-              href={getSeriesDatasheetUrl(seriesSlug, selection)}
+              href={getSeriesDatasheetUrl(seriesSlug, filled)}
               helpKey="catalog.datasheet.download"
               target="_blank"
               rel="noopener noreferrer"
@@ -346,7 +368,7 @@ export default function SeriesConfigurator({
               Datasheet
             </HelpLink>
             <HelpLink
-              href={getSeriesLdtUrl(seriesSlug, selection)}
+              href={getSeriesLdtUrl(seriesSlug, filled)}
               helpKey="catalog.ldt.download"
               download
               className={FILE_BTN}

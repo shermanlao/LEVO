@@ -1347,6 +1347,11 @@ export const DEFAULT_HELP_TIPS = [
     body: 'Insert a copy of this size row below it, including dimensions, cutout, and the size drawing. Appearance photos tagged with this size are copied onto the new size label. The label gets “ (copy)” so Save variants creates a new size pack instead of merging with the original. Edit the copy, then click Save variants.',
   },
   {
+    helpKey: 'admin.product_series.wattage_sizes',
+    title: 'Wattage sizes',
+    body: 'Choose which sizes this wattage is sold in. The same size can be used on more than one wattage. CCT, beam, dimming, and finish stay independent. Save variants stores the pairs.',
+  },
+  {
     helpKey: 'admin.product_series.option_remove',
     title: 'Remove option',
     body: 'Remove this option from the series. Listed products are not deleted. On the variants page, click the selected chip under the menu, or click the option again in the menu.',
@@ -2220,6 +2225,18 @@ export async function ensureSeriesOptions(): Promise<void> {
   );
   const { backfillSeriesOptionsFromProducts } = await import('../lib/seriesConfig');
   await backfillSeriesOptionsFromProducts();
+}
+
+export async function ensureSeriesWattageSizes(): Promise<void> {
+  await ensureTable('series_wattage_sizes', {
+    id: { ...integerId },
+    series_id: { type: DataTypes.INTEGER, allowNull: false },
+    wattage_value: { type: DataTypes.STRING, allowNull: false },
+    size_value: { type: DataTypes.STRING, allowNull: false },
+  });
+  await ensureIndex(
+    'CREATE UNIQUE INDEX IF NOT EXISTS series_wattage_sizes_series_wattage_size ON series_wattage_sizes (series_id, wattage_value, size_value)'
+  );
 }
 
 export async function ensureSeriesAppearancePhotos(): Promise<void> {

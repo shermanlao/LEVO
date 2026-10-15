@@ -17,7 +17,7 @@ Credentials are stored in `external_catalog_sources` (SQLite locally, PostgreSQL
 1. Open a series at `/admin/product-series/[id]` (type and series are already set). `/admin/products` redirects here.
 2. Use **Import from partner**.
 3. Search, tick rows, **Import selected**. Use **First / Previous / page numbers / Next / Last**, or **Go to** a page, to move through the partner catalog (the API returns 20 rows per page).
-4. Unique spec values are merged into `series_options`. Size drawings copy onto the matching **size pack** when that pack is missing them. Product photos are copied into the tagged appearance library (by size) and cleared from the pack. Import does not create one product row per LightX article.
+4. Unique spec values are merged into `series_options`. Each imported article also records its wattage–size pair in `series_wattage_sizes` (a series with no pairs yet is filled with the current wattage × size list first, so existing catalog rows stay). Size drawings copy onto the matching **size pack** when that pack is missing them. Product photos are copied into the tagged appearance library (by size) and cleared from the pack. Import does not create one product row per LightX article.
 
 LightX `category.name` is **not** a LEVO category. Import never creates a new product type (that is why an “Imported” card used to appear on `/products`).
 

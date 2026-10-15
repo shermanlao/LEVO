@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Product, ProductSeries, ProductType, SeriesAppearancePhoto } from '../models';
 import SeriesOption from '../models/SeriesOption';
+import SeriesWattageSize from '../models/SeriesWattageSize';
 import sequelize from '../database';
 import { asyncHandler, deleteSuccess, notFound } from '../lib/asyncHandler';
 import { deleteProductLdtFile } from '../lib/photometric/writeProductLdtFile';
@@ -8,7 +9,7 @@ import { serializeProductListItem } from '../lib/serializeProduct';
 import { setPublicListCache } from '../lib/publicCache';
 import { parseSpecs, serializeTypeEnvelope, strapiMedia } from '../lib/strapiSerialize';
 import { extractStoredImageUrl } from '../lib/productMedia';
-import { comboCount, groupOptionsByKind, lookupCatalogCode, lookupCatalogLabel } from '../lib/shared/series-options';
+import { comboCount, groupOptionsByKind, lookupCatalogCode, lookupCatalogLabel, wattageSizeSaveError } from '../lib/shared/series-options';
 import {
   parseDatasheetLabels,
   stringifyDatasheetLabels,
@@ -269,6 +270,8 @@ export const createProductSeries = asyncHandler(async (req: Request, res: Respon
   payload.sort_order = await nextProductSeriesSortOrder(payload.product_type_id);
   const created = await ProductSeries.create(payload);
   if (Array.isArray(req.body?.options)) {
+    const problem = wattageSizeSaveError(req.body.options);
+    if (problem) return res.status(400).json({ error: problem });
     await replaceSeriesOptions(Number(created.get('id')), req.body.options);
   }
   await clearGeneratedPdfCache();
@@ -299,6 +302,8 @@ export const updateProductSeries = asyncHandler(async (req: Request, res: Respon
   }
   await series.update(payload);
   if (Array.isArray(req.body?.options)) {
+    const problem = wattageSizeSaveError(req.body.options);
+    if (problem) return res.status(400).json({ error: problem });
     await replaceSeriesOptions(Number(series.get('id')), req.body.options);
   }
   await clearGeneratedPdfCache();
@@ -316,6 +321,7 @@ export const deleteProductSeries = asyncHandler(async (req: Request, res: Respon
   }
   await sequelize.transaction(async (transaction) => {
     await SeriesOption.destroy({ where: { series_id: seriesId }, transaction });
+    await SeriesWattageSize.destroy({ where: { series_id: seriesId }, transaction });
     await SeriesAppearancePhoto.destroy({ where: { series_id: seriesId }, transaction });
     await Product.destroy({ where: { series_id: seriesId }, transaction });
     await series.destroy({ transaction });

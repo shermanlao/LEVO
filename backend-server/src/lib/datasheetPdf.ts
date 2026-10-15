@@ -30,6 +30,7 @@ import {
   familyWattageRows,
   findSizePack,
   groupOptionsByKind,
+  hasWattageSizeConstraints,
   optionText,
   parseOptionNumber,
   selectionFromSpec,
@@ -1455,8 +1456,8 @@ function drawFamilySizeCards(
     heading: string;
     cutout: string;
     drawing: Buffer | null;
+    wattageRows: FamilyWattageRow[];
   }>,
-  wattageRows: FamilyWattageRow[],
   y: number
 ): number {
   if (!blocks.length) return y;
@@ -1467,15 +1468,17 @@ function drawFamilySizeCards(
   const photoSize = Math.min(188, colW);
 
   const headingH = 28;
-  const tableH = wattageRows.length ? 11 + wattageRows.length * 12 + 8 : 0;
   const drawingH = photoSize + 6;
-  y = ensureSpace(doc, y, 22 + headingH + drawingH + tableH + 12);
+  const tableHFor = (rows: FamilyWattageRow[]) => (rows.length ? 11 + rows.length * 12 + 8 : 0);
+  const firstTableH = tableHFor(blocks[0]?.wattageRows || []);
+  y = ensureSpace(doc, y, 22 + headingH + drawingH + firstTableH + 12);
   doc.fillColor(BLACK).font('Helvetica-Bold').fontSize(9).text('SIZES', MARGIN, y, { width: innerW });
   y = doc.y + 8;
 
   for (let i = 0; i < blocks.length; i += cols) {
     const row = blocks.slice(i, i + cols);
-    y = ensureSpace(doc, y, headingH + drawingH + tableH + 12);
+    const rowTableH = Math.max(...row.map((block) => tableHFor(block.wattageRows)));
+    y = ensureSpace(doc, y, headingH + drawingH + rowTableH + 12);
     const rowTop = y;
     let rowBottom = y;
     row.forEach((block, col) => {
@@ -1491,7 +1494,7 @@ function drawFamilySizeCards(
         drawImageBox(doc, block.drawing, x, cy, photoSize);
         cy += photoSize + 6;
       }
-      cy = drawWattageMiniTable(doc, wattageRows, x, cy, photoSize);
+      cy = drawWattageMiniTable(doc, block.wattageRows, x, cy, photoSize);
       rowBottom = Math.max(rowBottom, cy);
     });
     y = rowBottom + 8;
@@ -1832,20 +1835,24 @@ export async function buildFamilyDatasheetPdf(
   const heading = 'Family Datasheet';
   const titleBits = [name, code].filter(Boolean).join(', ');
   const keyFacts = familyKeyFacts(grouped);
-  const wattageRows = familyWattageRows(grouped);
   const colourGroups = familyColourGroups(grouped);
+  const constrainSizes = hasWattageSizeConstraints(grouped);
 
   const sizeOptions = familyOptionsForKind(grouped, SIZE_KIND);
   const sizeBlocks: Array<{
     heading: string;
     cutout: string;
     pack: Record<string, unknown> | null;
+    wattageRows: FamilyWattageRow[];
   }> = [];
   for (const option of sizeOptions) {
+    const wattageRows = familyWattageRows(grouped, option.value);
+    if (constrainSizes && !wattageRows.length) continue;
     sizeBlocks.push({
       heading: optionText(option.dimensions) || option.value,
       cutout: optionText(option.cutout_size),
       pack: findSizePack(products, option.value, grouped),
+      wattageRows,
     });
   }
 
@@ -1946,8 +1953,8 @@ export async function buildFamilyDatasheetPdf(
       heading: block.heading,
       cutout: block.cutout,
       drawing: sizeDrawings[index],
+      wattageRows: block.wattageRows,
     })),
-    wattageRows,
     y
   );
 

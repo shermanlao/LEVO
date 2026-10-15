@@ -2,7 +2,7 @@
 
 Shared layout tokens live in `frontend/src/app/globals.css`. React wrappers live in `frontend/src/components/ui/`.
 
-Public pages sit in the root layout `main` (`py-4`). Catalog wrappers use matching `py-4` / `pt-4` so header-to-breadcrumb space stays tight (about 2rem total, not stacked `py-8`).
+Public pages sit in the root layout `main` (`pt-8 pb-4`). That `pt-8` is 2rem under the site bar. Catalog wrappers add matching `py-4` / `pt-4` on top of it.
 
 The site header (`Header.tsx`) is fixed on every page, with a matching spacer so content does not sit under the bar. At the top it uses the full lockup (`py-4`, wordmark plus slogan). After you leave the top it shortens (`py-1.5`, wordmark only at `h-6`). Scrolling down hides it; scrolling up brings the short bar back. Hover, open search, the mobile menu, or keyboard focus inside the header keeps it visible. Sticky catalog filters use `--site-header-offset` so they sit below the current bar.
 
@@ -70,7 +70,7 @@ Do not invent a third button color. Admin create/save actions use primary (black
 | `AdminNavSectionBody` | Shared Catalog / Projects / Settings / AI / Users link lists for the dashboard cards and header hover panels |
 | `StatTile` | Dashboard number + label; optional `href` + `helpKey` |
 | `OptionTag` | Compact catalog chip. Filled black = selected. Requires `helpKey`. On series variants the filled chips sit under each dropdown and remove that option when clicked. Datasheet extra icons still use them as the picker. |
-| `VariantOptionPicker` | Series variants page (`/admin/product-series/[id]`). One multi-select menu per kind, laid out four across from `xl` and three from `lg`. **Select options** opens the catalog list (`admin.product_series.option_menu`); click a row to add or remove it. Chosen values, including Finish / Trim / Reflector **N/A**, show as chips under the menu. |
+| `VariantOptionPicker` | Series variants page (`/admin/product-series/[id]`). One multi-select menu per kind, laid out four across from `xl` and three from `lg`. **Select options** opens the catalog list (`admin.product_series.option_menu`); click a row to add or remove it. Chosen values, including Finish / Trim / Reflector **N/A**, show as chips under the menu. Wattage cards reuse it for **Sizes** (`admin.product_series.wattage_sizes`) from this series’ size list. |
 | `SpecificationsEditor` | Series/product key-value specs |
 | Size packs | Series variants page (`SizePackPhotos`); `/admin/products` redirects to series |
 
