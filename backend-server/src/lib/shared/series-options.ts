@@ -654,7 +654,8 @@ export function specFromCombo(
   return spec;
 }
 
-export const MAX_CARTESIAN_COMBO_ROWS = 200;
+/** Safety cap on generated SKU rows. Each row is still a full combination. */
+export const MAX_CARTESIAN_COMBO_ROWS = 2000;
 
 function wattageSizeBodyRows(grouped: Record<string, SeriesOptionDto[]>): SeriesComboRow[] {
   const watts = realOptionsForKind('wattage', grouped.wattage || []);
@@ -686,33 +687,92 @@ function wattageSizeBodyRows(grouped: Record<string, SeriesOptionDto[]>): Series
   return rows;
 }
 
-export function cartesianComboRows(grouped: Record<string, SeriesOptionDto[]>): SeriesComboRow[] {
+function bodiesMatchingSelection(
+  bodies: SeriesComboRow[],
+  selection?: Record<string, string>
+): SeriesComboRow[] {
+  if (!selection) return bodies;
+  return bodies.filter((row) => {
+    if (
+      selection.wattage &&
+      row.selection.wattage &&
+      !valuesEqual('wattage', row.selection.wattage, selection.wattage)
+    ) {
+      return false;
+    }
+    if (
+      selection[SIZE_KIND] &&
+      row.selection[SIZE_KIND] &&
+      !valuesEqual(SIZE_KIND, row.selection[SIZE_KIND], selection[SIZE_KIND])
+    ) {
+      return false;
+    }
+    return true;
+  });
+}
+
+/**
+ * Full combinations of every visible selector.
+ * `selection` narrows axes before the cap, so a Configure filter still finds SKUs
+ * that would sit past the first page of the unfiltered list.
+ * The cap never drops a later axis (such as dimming) off an otherwise complete row.
+ */
+export function cartesianComboRows(
+  grouped: Record<string, SeriesOptionDto[]>,
+  selection?: Record<string, string>
+): SeriesComboRow[] {
   const hasAny = Object.values(grouped).some((list) => (list || []).length > 0);
   if (!hasAny) return [];
   const otherAxes = visibleSelectorKinds(grouped).filter(
     (field) => field.key !== 'wattage' && field.key !== SIZE_KIND
   );
-  let rows = wattageSizeBodyRows(grouped);
-  if (rows.length === 0) return [];
-  if (otherAxes.length === 0) {
-    return rows.length > MAX_CARTESIAN_COMBO_ROWS ? rows.slice(0, MAX_CARTESIAN_COMBO_ROWS) : rows;
-  }
+  const bodies = bodiesMatchingSelection(wattageSizeBodyRows(grouped), selection);
+  if (bodies.length === 0) return [];
+
+  const axes: Array<{ key: string; options: SeriesOptionDto[] }> = [];
   for (const field of otherAxes) {
-    const list = realOptionsForKind(field.key, grouped[field.key] || []);
-    if (list.length === 0) continue;
-    const next: SeriesComboRow[] = [];
-    for (const row of rows) {
-      for (const option of list) {
-        const selection = { ...row.selection, [field.key]: option.value };
-        next.push({
-          id: comboRowId(selection),
-          selection,
-          optionsByKind: { ...row.optionsByKind, [field.key]: option },
-        });
+    const all = realOptionsForKind(field.key, grouped[field.key] || []);
+    if (all.length === 0) continue;
+    const picked = optionText(selection?.[field.key]);
+    const list = picked ? all.filter((option) => valuesEqual(field.key, option.value, picked)) : all;
+    if (picked && list.length === 0) return [];
+    axes.push({ key: field.key, options: list });
+  }
+
+  if (axes.length === 0) {
+    return bodies.length > MAX_CARTESIAN_COMBO_ROWS ? bodies.slice(0, MAX_CARTESIAN_COMBO_ROWS) : bodies;
+  }
+
+  const rows: SeriesComboRow[] = [];
+  const indexes = new Array<number>(axes.length).fill(0);
+  for (const body of bodies) {
+    indexes.fill(0);
+    while (rows.length < MAX_CARTESIAN_COMBO_ROWS) {
+      const nextSelection = { ...body.selection };
+      const optionsByKind = { ...body.optionsByKind };
+      for (let i = 0; i < axes.length; i += 1) {
+        const option = axes[i].options[indexes[i]];
+        nextSelection[axes[i].key] = option.value;
+        optionsByKind[axes[i].key] = option;
       }
+      rows.push({
+        id: comboRowId(nextSelection),
+        selection: nextSelection,
+        optionsByKind,
+      });
+      if (rows.length >= MAX_CARTESIAN_COMBO_ROWS) return rows;
+
+      let carry = true;
+      for (let i = axes.length - 1; i >= 0 && carry; i -= 1) {
+        indexes[i] += 1;
+        if (indexes[i] < axes[i].options.length) {
+          carry = false;
+        } else {
+          indexes[i] = 0;
+        }
+      }
+      if (carry) break;
     }
-    rows = next.length > MAX_CARTESIAN_COMBO_ROWS ? next.slice(0, MAX_CARTESIAN_COMBO_ROWS) : next;
-    if (rows.length >= MAX_CARTESIAN_COMBO_ROWS) break;
   }
   return rows;
 }

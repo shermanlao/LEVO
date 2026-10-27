@@ -135,7 +135,7 @@ export default function SeriesConfigurator({
 
   const filteredCombos = useMemo(
     () =>
-      cartesianComboRows(grouped).filter((combo) =>
+      cartesianComboRows(grouped, selection).filter((combo) =>
         comboMatchesSelection(combo.selection, selection)
       ),
     [grouped, selection]

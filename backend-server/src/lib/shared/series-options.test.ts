@@ -30,6 +30,25 @@ describe('series option cartesian', () => {
     }
     const rows = cartesianComboRows(groupOptionsByKind(options));
     assert.ok(rows.length <= MAX_CARTESIAN_COMBO_ROWS);
+    assert.ok(rows.every((row) => row.selection.wattage && row.selection.cct));
+  });
+
+  it('keeps later axes such as dimming when the product exceeds the cap', () => {
+    const options = [];
+    for (let i = 0; i < 30; i += 1) options.push({ kind: 'wattage', value: String(i + 1), sort_order: i });
+    for (let i = 0; i < 10; i += 1) options.push({ kind: 'cct', value: `${2700 + i * 100}K`, sort_order: i });
+    for (let i = 0; i < 10; i += 1) options.push({ kind: 'beam_angle', value: `${10 + i}°`, sort_order: i });
+    options.push({ kind: 'dimming', value: 'DALI', sort_order: 0 });
+    options.push({ kind: 'dimming', value: 'Non-dim', sort_order: 1 });
+    const grouped = groupOptionsByKind(options);
+    const rows = cartesianComboRows(grouped);
+    assert.equal(rows.length, MAX_CARTESIAN_COMBO_ROWS);
+    assert.ok(rows.every((row) => row.selection.dimming === 'DALI' || row.selection.dimming === 'Non-dim'));
+    assert.ok(rows.every((row) => row.selection.cct && row.selection.beam_angle && row.selection.wattage));
+
+    const filtered = cartesianComboRows(grouped, { wattage: '30' });
+    assert.equal(filtered.length, 200);
+    assert.ok(filtered.every((row) => row.selection.wattage === '30' && row.selection.dimming));
   });
 
   it('keeps size pack_id and photos when merging duplicate size labels', () => {
