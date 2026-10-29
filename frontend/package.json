@@ -14,7 +14,7 @@
     "@types/pdfkit": "^0.14.0",
     "better-sqlite3": "^11.10.0",
     "geoip-country": "^5.0.202610100242",
-    "next": "15.5.27",
+    "next": "15.5.28",
     "pdfkit": "^0.17.1",
     "react": "19.1.2",
     "react-dom": "19.1.2",

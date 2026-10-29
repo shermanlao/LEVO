@@ -29,7 +29,7 @@ Express listens on `127.0.0.1:3333` only. Next **fallback** rewrites public read
 - Login `next` path allowlisted to `/admin/...`
 - Staff directory in the app database; user APIs require the Users page (`system` or `admin`); last active system or admin cannot be removed; page APIs check `admin_role_permissions`
 - First-party visitor hits (`levo_vid`) go through Next `POST /api/visitors/hit`; dashboard counts require an admin session
-- Production Next.js is pinned to `15.5.27` (React `19.1.2`). `15.3.1` was missing the React Server Components fix and was the way onto the VPS. `levo-deploy` exits if the installed `next` is older than `15.5.27`. Host firewall and SSH: [VPS host security](vps-security.md)
+- Production Next.js is pinned to `15.5.28` (React `19.1.2`). `15.3.1` was missing the React Server Components fix and was the way onto the VPS. `levo-deploy` exits if the installed `next` is older than `15.5.28`. The VPS Node binary must be `22.23.4`. Host firewall and SSH: [VPS host security](vps-security.md)
 
 ## Production secrets
 

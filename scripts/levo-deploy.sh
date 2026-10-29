@@ -76,8 +76,9 @@ sudo -u levo npx tsc
 echo "==> installing and building site"
 cd "$APP/frontend"
 sudo -u levo npm install
-# 15.3.1 was exploited (React Server Components RCE). Do not deploy an older Next.
-sudo -u levo node -e "const v=require('./node_modules/next/package.json').version.split('.').map(Number); if(!(v[0]>15||(v[0]===15&&v[1]>5)||(v[0]===15&&v[1]===5&&v[2]>=27))){console.error('next '+v.join('.')+' is below 15.5.27'); process.exit(1)}"
+# 15.3.1 was exploited (React Server Components RCE). 15.5.27 is still inside the
+# vulnerable range; do not deploy Next older than 15.5.28.
+sudo -u levo node -e "const v=require('./node_modules/next/package.json').version.split('.').map(Number); if(!(v[0]>15||(v[0]===15&&v[1]>5)||(v[0]===15&&v[1]===5&&v[2]>=28))){console.error('next '+v.join('.')+' is below 15.5.28'); process.exit(1)}"
 sudo -u levo npm run build
 
 echo "==> restarting services"
