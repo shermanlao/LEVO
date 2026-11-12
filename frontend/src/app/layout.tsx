@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import BackToTop from "@/components/layout/BackToTop";
 import SaveNotice from "@/components/ui/SaveNotice";
 import VisitorBeacon from "@/components/layout/VisitorBeacon";
+import CookieConsentBar from "@/components/layout/CookieConsentBar";
 import PublicCatalogGate from "@/components/layout/PublicCatalogGate";
 import JsonLd from "@/components/layout/JsonLd";
 import { loadPublicNavMenus } from "@/lib/public-nav";
@@ -117,13 +118,14 @@ export default async function RootLayout({
           productCategories={navMenus.productCategories}
           projectCategories={navMenus.projectCategories}
         />
-        <main className="container mx-auto py-4 px-4">
+        <main className="container mx-auto pt-8 pb-4 px-4">
           <PublicCatalogGate constructionOn={constructionOn}>
             {children}
           </PublicCatalogGate>
         </main>
         <Footer contact={contact} />
         <BackToTop />
+        <CookieConsentBar />
         <SaveNotice />
         <VisitorBeacon />
       </body>

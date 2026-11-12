@@ -41,6 +41,9 @@ class SiteContact extends Model {
   declare seo_title: string | null;
   declare seo_description: string | null;
   declare og_image: string | null;
+  declare cookie_notice: string | null;
+  declare cookie_policy_title: string | null;
+  declare cookie_policy_body: string | null;
   declare public_under_construction: boolean;
 }
 
@@ -85,6 +88,9 @@ SiteContact.init(
     seo_title: { type: DataTypes.STRING, allowNull: true },
     seo_description: { type: DataTypes.TEXT, allowNull: true },
     og_image: { type: DataTypes.STRING, allowNull: true },
+    cookie_notice: { type: DataTypes.TEXT, allowNull: true },
+    cookie_policy_title: { type: DataTypes.STRING, allowNull: true },
+    cookie_policy_body: { type: DataTypes.TEXT, allowNull: true },
     public_under_construction: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   },
   {

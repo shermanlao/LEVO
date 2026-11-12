@@ -178,6 +178,9 @@ export type SiteContact = {
   seo_title?: string;
   seo_description?: string;
   og_image?: string;
+  cookie_notice?: string;
+  cookie_policy_title?: string;
+  cookie_policy_body?: string;
   public_under_construction?: boolean;
 };
 

@@ -12,6 +12,7 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+  padding-bottom: var(--cookie-bar-space, 0px);
 }
 
 @layer components {

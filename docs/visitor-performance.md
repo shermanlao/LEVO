@@ -14,7 +14,7 @@ Public catalog HTML, JSON, and product photos are cached so repeat visitors do n
 
 Tags: `catalog` (products, types, series, uploads), `projects`, `contact`.
 
-The under-construction gate does not read the staff cookie on the server. [`PublicCatalogGate`](../frontend/src/components/layout/PublicCatalogGate.tsx) receives `constructionOn` from the cached contact payload and asks `/api/admin/me` in the browser (same request the header already makes). Signed-out visitors stay on UNDER CONSTRUCTION. Signed-in staff see the catalog after that check. `/admin` stays dynamic so staff screens are not stored in the public page cache.
+The under-construction gate does not read the staff cookie on the server. [`PublicCatalogGate`](../frontend/src/components/layout/PublicCatalogGate.tsx) receives `constructionOn` from the cached contact payload and asks `/api/admin/me` in the browser (same request the header already makes). Signed-out visitors stay on UNDER CONSTRUCTION. Signed-in staff see the catalog after that check. `/policies/cookie-policy` stays available during construction. `/admin` stays dynamic so staff screens are not stored in the public page cache. `GET` and `POST /api/cookie-consent` are `private, no-store` because the answer depends on the visitor IP.
 
 Do not add `_nocache` query params on public catalog reads. Admin image preview may still append `?t=` via `resolveProductDisplaySrc`.
 

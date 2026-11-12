@@ -2,7 +2,7 @@
 
 - [Admin login](docs/admin-login.md) — `/admin` session, SQLite staff logins, and Product Types → Series → Variants dashboard layers
 - [Admin dashboard](docs/admin-dashboard.md) — stats tiles, shortcuts, and attention counts on `/admin`
-- [Site settings](docs/admin-site-settings.md) — `/admin/settings` brand logos, homepage copy, contact/footer, and SEO
+- [Site settings](docs/admin-site-settings.md) — `/admin/settings` brand logos, homepage copy, contact/footer, cookie notice, and SEO
 - [SEO and marketing](docs/seo.md) — robots, sitemap, canonicals, JSON-LD, go-live checklist
 - [Visitor analytics](docs/visitor-analytics.md) — first-party `levo_vid` cookie, 7-day dashboard counts, and `/admin/visitors` country / redirect / parameter lists
 - [Visitor catalog performance](docs/visitor-performance.md) — 120s public HTML and JSON cache, image cache, admin writes stay uncached
@@ -15,7 +15,7 @@
 - [Appearance photos](docs/appearance-photos.md) — tagged Finish / Trim / Reflector / Size library; most-specific matching photo wins on the series page and datasheets
 - [Variant options](docs/variant-options.md) — global spec option labels, SKU codes, and datasheet badge artwork (`/admin/variant-options`)
 - [Contact Us page](docs/contact-page.md) — `/contact` page, seeded contact details, inquiry form API, and `/admin/inquiries`
-- [Resource pages](docs/resource-pages.md) — footer Resources / Media columns and staff-editable `/warranty`, `/certifications`, `/technical`
+- [Resource pages](docs/resource-pages.md) — footer Resources / Media columns and staff-editable `/warranty`, `/certifications`, `/technical`, and `/policies/cookie-policy`
 - [Product datasheets](docs/product-datasheet.md) — generated LEVO datasheet and installation PDFs (`/api/datasheets/:slug`, `/api/datasheets/:slug/installation`)
 - [Product labels](docs/product-label.md) — printable SKU and brand sticker PDFs from `/admin/products` (`/api/labels/:slug`, `/api/labels/general`)
 - [Security improvement plan](docs/security-improvement-plan.md) — auth boundary, uploads, XSS/SSRF, and production secret cutover
@@ -26,13 +26,13 @@
 - [Product photo AI](docs/product-photo-ai.md) — size drawing generate/refine, 16:9 card extend with a feathered join and this photo’s ceiling grey, optional catalog photo style on appearance photos with chat refine after stylize (sends the filled series phrase)
 - [Admin AI settings](docs/admin-ai-settings.md) — `/admin/ai` keys, routing, failover, usage, size-drawing prompts, catalog photo style prompt, size-drawing and catalog photo style references
 - [Catalog page route](docs/catalog-page-route.md) — shared `Products / …` and `Projects / …` breadcrumb on public product and project pages
-- [Frontend UI](docs/frontend-ui.md) — CSS tokens, Button/FormField/Card, and helpKey
+- [Frontend UI](docs/frontend-ui.md) — CSS tokens, Button/FormField/Card, cookie consent bar, and helpKey
 - [Image crop board](docs/image-cutboard.md) — contain-start cutboard; series featured image is one source plus 16:9 / 4:5 / 1:1 crops
 - [Shared modules](docs/shared-modules.md) — product specs, slugify, API clients, Express helpers
 - [Unused trees](docs/legacy-unused.md) — old `cms/` and `backend/` folders (do not run)
 - [PostgreSQL](docs/postgresql.md) — SQLite for local development, Postgres for production, copy script, and env vars
 - [VPS GitHub deploy](docs/vps-github.md) — ask Cursor to push/deploy, or run `levo-deploy`; how the VPS deploy key was set up
-- [VPS host security](docs/vps-security.md) — SSH key-only, firewall, fail2ban, Next.js 15.5.28 floor, and Node 22.23.4
+- [VPS host security](docs/vps-security.md) — SSH key-only, firewall, fail2ban, Next.js 15.5.28 floor, and Node 22.23.5
 - [Several sites on the VPS](docs/vps-multiple-sites.md) — extra domains, nginx server blocks, ports, and Postgres
 - [Hostinger domain](docs/hostinger-domain.md) — point `levolight.com` DNS at the VPS and set `SITE_ORIGIN`
 - [PostgreSQL backups](docs/vps-postgres-backup.md) — daily dumps, SSH tunnel bind for pgAdmin, monitor and restore

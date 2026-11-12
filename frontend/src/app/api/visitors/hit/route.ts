@@ -66,6 +66,34 @@ async function postEvent(payload: {
   return false;
 }
 
+type ConsentGate = 'all' | 'block' | 'unknown';
+
+async function consentGate(request: NextRequest): Promise<ConsentGate> {
+  const headers = internalApiHeaders();
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp?.trim()) headers['x-real-ip'] = realIp.trim();
+  for (const base of expressBaseCandidates()) {
+    try {
+      const response = await fetch(`${base}/api/cookie-consent`, {
+        headers,
+        cache: 'no-store',
+        signal: AbortSignal.timeout(4000),
+      });
+      if (!response.ok) continue;
+      const json = (await response.json()) as { choice?: string };
+      return json?.choice === 'all' ? 'all' : 'block';
+    } catch {
+      /* try next base */
+    }
+  }
+  return 'unknown';
+}
+
+function clearVisitorCookie(response: NextResponse) {
+  response.cookies.set(COOKIE, '', { ...cookieOptions(), maxAge: 0 });
+  return response;
+}
+
 export async function POST(request: NextRequest) {
   const limited = consumeRateLimit(request, 'visitor-hit', { windowMs: 60 * 1000, max: 60 });
   if (!limited.ok) {
@@ -80,6 +108,13 @@ export async function POST(request: NextRequest) {
   const staffSession = await verifySessionValue(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (staffSession) {
     return NextResponse.json({ ok: true, skipped: 'staff' });
+  }
+
+  const consent = await consentGate(request);
+  if (consent !== 'all') {
+    const response = NextResponse.json({ ok: true, skipped: consent === 'unknown' ? 'consent-unknown' : 'consent' });
+    if (consent === 'block') clearVisitorCookie(response);
+    return response;
   }
 
   let rawPath = '';

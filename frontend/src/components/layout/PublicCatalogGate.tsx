@@ -8,6 +8,10 @@ function isAdminAppPath(pathname: string): boolean {
   return pathname === '/admin' || pathname.startsWith('/admin/');
 }
 
+function isCookiePolicyPath(pathname: string): boolean {
+  return pathname === '/policies/cookie-policy';
+}
+
 export default function PublicCatalogGate({
   constructionOn,
   children,
@@ -18,7 +22,7 @@ export default function PublicCatalogGate({
   const pathname = usePathname() || '';
   const { session } = useAdminMe();
   const staff = session === 'ok';
-  if (constructionOn && !isAdminAppPath(pathname) && !staff) {
+  if (constructionOn && !isAdminAppPath(pathname) && !isCookiePolicyPath(pathname) && !staff) {
     return <UnderConstruction />;
   }
   return children;

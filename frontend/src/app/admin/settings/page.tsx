@@ -56,6 +56,9 @@ function emptySettings(): SiteContact {
     seo_title: '',
     seo_description: '',
     og_image: '',
+    cookie_notice: '',
+    cookie_policy_title: '',
+    cookie_policy_body: '',
     public_under_construction: true,
   };
 }
@@ -446,6 +449,34 @@ export default function AdminSiteSettingsPage() {
                 value={form.resource_technical_body || ''}
                 onChange={(e) => patch({ resource_technical_body: e.target.value })}
                 className="md:col-span-2"
+              />
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="text-xl font-bold mb-2">Cookies</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              The storefront bar uses the notice. The policy page is /policies/cookie-policy, linked from the bar and the footer.
+            </p>
+            <div className="grid grid-cols-1 gap-4">
+              <TextareaField
+                label="Cookie notice"
+                hint="Shown on the consent bar and in Cookie settings."
+                rows={4}
+                value={form.cookie_notice || ''}
+                onChange={(e) => patch({ cookie_notice: e.target.value })}
+              />
+              <TextInput
+                label="Cookie policy title"
+                value={form.cookie_policy_title || ''}
+                onChange={(e) => patch({ cookie_policy_title: e.target.value })}
+              />
+              <TextareaField
+                label="Cookie policy"
+                hint="Public page at /policies/cookie-policy. Filled on API start only when this is empty."
+                rows={10}
+                value={form.cookie_policy_body || ''}
+                onChange={(e) => patch({ cookie_policy_body: e.target.value })}
               />
             </div>
           </Card>

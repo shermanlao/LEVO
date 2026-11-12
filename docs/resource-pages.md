@@ -6,10 +6,10 @@ Public footer **Resources** and **Media** sit in the same column grid as Contact
 
 [`Footer.tsx`](../frontend/src/components/layout/Footer.tsx):
 
-- **Resources** — Warranty → `/warranty`, Certifications → `/certifications`, Technical Underneath → `/technical`
+- **Resources** — Warranty → `/warranty`, Certifications → `/certifications`, Technical Underneath → `/technical`, Cookie policy → `/policies/cookie-policy`
 - **Media** — icon links for LinkedIn, Facebook, Instagram, Threads, and Pinterest. A network is hidden when its URL is empty.
 
-Help keys: `catalog.footer.warranty`, `catalog.footer.certifications`, `catalog.footer.technical`, `catalog.footer.linkedin`, `catalog.footer.facebook`, `catalog.footer.instagram`, `catalog.footer.threads`, `catalog.footer.pinterest`.
+Help keys: `catalog.footer.warranty`, `catalog.footer.certifications`, `catalog.footer.technical`, `cookies.policy`, `catalog.footer.linkedin`, `catalog.footer.facebook`, `catalog.footer.instagram`, `catalog.footer.threads`, `catalog.footer.pinterest`.
 
 ## Public pages
 
@@ -20,8 +20,9 @@ Shared view: [`ResourcePage.tsx`](../frontend/src/components/layout/ResourcePage
 | `/warranty` | Warranty | `resource_warranty_title`, `resource_warranty_body` |
 | `/certifications` | Certifications | `resource_certifications_title`, `resource_certifications_body` |
 | `/technical` | Technical Underneath | `resource_technical_title`, `resource_technical_body` |
+| `/policies/cookie-policy` | Cookie policy | `cookie_policy_title`, `cookie_policy_body` |
 
-Certifications and Technical show `Home / {title}` (`resourceRouteItems` in [`pageRouteItems.ts`](../frontend/src/components/layout/pageRouteItems.ts)), an `h1` from the stored title, and body with preserved whitespace (same contact-intro panel style).
+Certifications, Technical, and Cookie policy show `Home / {title}` (`resourceRouteItems` in [`pageRouteItems.ts`](../frontend/src/components/layout/pageRouteItems.ts)), an `h1` from the stored title, and body with preserved whitespace (same contact-intro panel style). Cookie policy copy is `cookie_policy_title` / `cookie_policy_body`. The page stays available while the public site is under construction.
 
 `/warranty` uses [`WarrantyStatement.tsx`](../frontend/src/components/layout/WarrantyStatement.tsx). The opening line, period tiles, period table, covered / not covered, conditions, remedy, and claim text come from `warranty_schedule` on `GET /api/contact`. That object is parsed from `site_contacts.resource_warranty_schedule` (JSON). The grey **Warranty statement** panel is `resource_warranty_body`, which staff edit at `/admin/settings`. **Download PDF** (`catalog.warranty.download`) saves `LEVO-Warranty.pdf` from `GET /api/contact/warranty.pdf`, built with the same schedule and statement. **Contact Us** (`catalog.warranty.contact`) opens `/contact`.
 

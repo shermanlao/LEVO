@@ -24,6 +24,7 @@ import PhotometricBeamTemplate from './PhotometricBeamTemplate';
 import AiProviderSettings from './AiProviderSettings';
 import AiTokenUsageLog from './AiTokenUsageLog';
 import VisitorEvent from './VisitorEvent';
+import CookieConsent from './CookieConsent';
 import ProductCodeSequence from './ProductCodeSequence';
 import { pruneOldVisitorEvents } from '../controllers/dashboardController';
 import { unifyExistingSeriesCards } from '../lib/unifySeriesCardGrey';
@@ -110,5 +111,6 @@ export {
   AdminUser,
   AdminRolePermission,
   VisitorEvent,
+  CookieConsent,
   ProductCodeSequence,
 };

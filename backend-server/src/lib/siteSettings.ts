@@ -148,6 +148,15 @@ export const DEFAULT_RESOURCE_CERTIFICATIONS_BODY =
 export const DEFAULT_RESOURCE_TECHNICAL_TITLE = 'Technical Underneath';
 export const DEFAULT_RESOURCE_TECHNICAL_BODY =
   'Technical documents for LEVO series — datasheets, installation guides, and photometric LDT files — are available on each series page. Use Family Datasheet for the full coding key, or open a SKU row for a specific combination.';
+export const DEFAULT_COOKIE_NOTICE =
+  'This site uses a staff login cookie and, only if you choose Allow, a first-party visit counter. It does not use advertising cookies. Allow or Reject is remembered for this network.';
+export const DEFAULT_COOKIE_POLICY_TITLE = 'Cookie policy';
+export const DEFAULT_COOKIE_POLICY_BODY =
+  'LEVO Lighting uses a staff login cookie and, only when you choose Allow, a first-party visit counter. It does not use advertising cookies.\n\n' +
+  'Strictly necessary. The staff login cookie (levo_admin_session) keeps a signed-in staff session for /admin. It is set when you sign in, whether or not you choose Allow. The public catalog does not need it.\n\n' +
+  'Visit counter. Allow stores levo_vid, a random identifier used to count public page views. It is not tied to your name or email. Reject, or Save in Cookie settings, leaves that cookie off. Page views are not recorded for this network until someone on the same IP chooses Allow.\n\n' +
+  'How the choice is remembered. The site stores a SHA-256 hash of the server secret plus your IP address in cookie_consents. The raw address is not stored. There is no expiry. The same network keeps the same choice. A different IP, which is common on mobile data, is asked again. On a shared office or mobile network, one person’s choice applies to everyone on that IP. On a local development machine, every browser shares 127.0.0.1.\n\n' +
+  'The bar is not shown on /admin, and it is not shown after you sign in.';
 
 export const WHY_CARD_ICONS = ['energy', 'lifespan', 'design'] as const;
 export type WhyCardIcon = (typeof WHY_CARD_ICONS)[number];
@@ -206,6 +215,9 @@ export const SITE_SETTINGS_COLUMNS: Record<string, { type: typeof DataTypes.STRI
   seo_title: { type: DataTypes.STRING },
   seo_description: { type: DataTypes.TEXT },
   og_image: { type: DataTypes.STRING },
+  cookie_notice: { type: DataTypes.TEXT },
+  cookie_policy_title: { type: DataTypes.STRING },
+  cookie_policy_body: { type: DataTypes.TEXT },
 };
 
 export const SITE_ASSET_SLOTS = ['header', 'pdf', 'icon', 'hero', 'og'] as const;
@@ -389,6 +401,9 @@ export type SerializedSiteSettings = {
   seo_title: string;
   seo_description: string;
   og_image: string;
+  cookie_notice: string;
+  cookie_policy_title: string;
+  cookie_policy_body: string;
   public_under_construction: boolean;
 };
 
@@ -433,6 +448,9 @@ export function serializeSiteSettings(row: SiteContact): SerializedSiteSettings 
     seo_title: text(p.seo_title, DEFAULT_SEO_TITLE),
     seo_description: text(p.seo_description, DEFAULT_SEO_DESCRIPTION),
     og_image: text(p.og_image),
+    cookie_notice: text(p.cookie_notice, DEFAULT_COOKIE_NOTICE),
+    cookie_policy_title: text(p.cookie_policy_title, DEFAULT_COOKIE_POLICY_TITLE),
+    cookie_policy_body: text(p.cookie_policy_body, DEFAULT_COOKIE_POLICY_BODY),
     public_under_construction: p.public_under_construction !== false,
   };
 }
@@ -469,6 +487,9 @@ export async function getOrCreateSiteContact(): Promise<SiteContact> {
     resource_technical_body: DEFAULT_RESOURCE_TECHNICAL_BODY,
     seo_title: DEFAULT_SEO_TITLE,
     seo_description: DEFAULT_SEO_DESCRIPTION,
+    cookie_notice: DEFAULT_COOKIE_NOTICE,
+    cookie_policy_title: DEFAULT_COOKIE_POLICY_TITLE,
+    cookie_policy_body: DEFAULT_COOKIE_POLICY_BODY,
     public_under_construction: true,
   });
 }

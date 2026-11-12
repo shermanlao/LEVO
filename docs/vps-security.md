@@ -21,9 +21,9 @@ A second file, `/tmp/safenet-client`, appeared at 09:02 UTC on 14 Oct 2026, owne
 
 Do not roll a deploy back to a commit that pins Next.js below `15.5.28`. `levo-deploy` refuses to finish if `frontend/node_modules/next` is older than that.
 
-## Node 22.23.4
+## Node 22.23.5
 
-The VPS runs Node directly. This repo has no `Dockerfile` and no `engines` field. `node -v` must be `22.23.4`. Stay on the Node 22 line. The 21 Oct 2026 patches (Brotli and the eMudhra CA certificate) also exist as `24.22.1` and `26.12.1`, but this app does not move to Node 24 or 26. Node 18 and 20 are end of life and did not get that release.
+The VPS runs Node directly. This repo has no `Dockerfile` and no `engines` field. `node -v` must be `22.23.5` (11 Nov 2026 security release). Stay on the Node 22 line. The same fixes exist as `24.22.3` and `26.13.1`, but this app does not move to Node 24 or 26. Node 18 and 20 are end of life and did not get that release. The host package is NodeSource `node_22.x` (`/etc/apt/sources.list.d/nodesource.sources`). Do not leave the `node_20.x` repo in place: apt will keep offering 20.x and will not install 22.23.5.
 
 After upgrading Node on the VPS:
 

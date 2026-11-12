@@ -23,7 +23,7 @@ Product detail also has a thin wrapper: [`frontend/src/components/products/Bread
 
 The last crumb is the current page (semibold, no link). Earlier crumbs are links. Root crumbs **Products** and **Projects** use `HelpLink`.
 
-Vertical space above the breadcrumb comes from the root layout `main` (`py-4`) plus the page wrapper (`py-4` / `pt-4` on catalog pages). Do not add another `py-8` on those wrappers.
+Vertical space above the breadcrumb comes from the root layout `main` (`pt-8`) plus the page wrapper (`py-4` / `pt-4` on catalog pages). Do not add another `py-8` on those wrappers.
 
 ## Catalog pages
 

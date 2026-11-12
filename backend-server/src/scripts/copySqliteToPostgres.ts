@@ -26,6 +26,7 @@ const COPY_TABLES = [
   'admin_users',
   'admin_role_permissions',
   'visitor_events',
+  'cookie_consents',
 ] as const;
 
 function requirePostgresUrl(): string {

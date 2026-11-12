@@ -33,6 +33,9 @@ import { isLegacyProductPhotoStylePrompt } from '../lib/ai/productPhotoStyleProm
 import {
   DEFAULT_COMPANY_NAME,
   DEFAULT_COMPANY_SHORT_NAME,
+  DEFAULT_COOKIE_NOTICE,
+  DEFAULT_COOKIE_POLICY_BODY,
+  DEFAULT_COOKIE_POLICY_TITLE,
   DEFAULT_FEATURED_HEADING,
   DEFAULT_FEATURED_PROJECTS_HEADING,
   DEFAULT_HERO_CTA_HREF,
@@ -750,6 +753,31 @@ export const DEFAULT_HELP_TIPS = [
     helpKey: 'catalog.footer.technical',
     title: 'Technical Underneath',
     body: 'Find datasheets, installation guides, and photometric files.',
+  },
+  {
+    helpKey: 'cookies.allow',
+    title: 'Allow',
+    body: 'Allow the first-party visit counter on this network. The staff login cookie stays on either way.',
+  },
+  {
+    helpKey: 'cookies.reject',
+    title: 'Reject',
+    body: 'Keep only the staff login cookie. The visit counter stays off for this network.',
+  },
+  {
+    helpKey: 'cookies.settings',
+    title: 'Cookie settings',
+    body: 'Open cookie settings. Strictly necessary cookies stay on.',
+  },
+  {
+    helpKey: 'cookies.save',
+    title: 'Save',
+    body: 'Save strictly necessary cookies only for this network.',
+  },
+  {
+    helpKey: 'cookies.policy',
+    title: 'Cookie policy',
+    body: 'Read how this site uses cookies and how your choice is remembered for this network.',
   },
   {
     helpKey: 'catalog.footer.facebook',
@@ -1716,6 +1744,9 @@ export async function ensureDefaultSiteContact(): Promise<void> {
       resource_technical_body: DEFAULT_RESOURCE_TECHNICAL_BODY,
       seo_title: DEFAULT_SEO_TITLE,
       seo_description: DEFAULT_SEO_DESCRIPTION,
+      cookie_notice: DEFAULT_COOKIE_NOTICE,
+      cookie_policy_title: DEFAULT_COOKIE_POLICY_TITLE,
+      cookie_policy_body: DEFAULT_COOKIE_POLICY_BODY,
     });
     return;
   }
@@ -1770,6 +1801,13 @@ export async function ensureDefaultSiteContact(): Promise<void> {
   }
   if (!String(row.get('resource_technical_body') || '').trim()) {
     patch.resource_technical_body = DEFAULT_RESOURCE_TECHNICAL_BODY;
+  }
+  if (!String(row.get('cookie_notice') || '').trim()) patch.cookie_notice = DEFAULT_COOKIE_NOTICE;
+  if (!String(row.get('cookie_policy_title') || '').trim()) {
+    patch.cookie_policy_title = DEFAULT_COOKIE_POLICY_TITLE;
+  }
+  if (!String(row.get('cookie_policy_body') || '').trim()) {
+    patch.cookie_policy_body = DEFAULT_COOKIE_POLICY_BODY;
   }
   if (Object.keys(patch).length) {
     await row.update(patch);

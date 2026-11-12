@@ -6,6 +6,8 @@ LEVO counts public page views in SQLite. There is no Cloudflare, Google Analytic
 
 `levo_vid` is a random UUID. httpOnly, `SameSite=Lax`, path `/`, about one year. `Secure` only when the public site is HTTPS (`SITE_ORIGIN` / `COOKIE_SECURE`). It only distinguishes unique browsers. It is not the admin session and is not tied to a name or email.
 
+It is set only after this IP’s cookie choice is `all`. `necessary`, or no choice yet, skips the hit and clears `levo_vid`. Signed-in staff are still skipped. The consent bar is documented in [frontend-ui.md](frontend-ui.md).
+
 ## What is stored
 
 Table `visitor_events`: `visitor_key`, `path` (no query string), `country` (ISO 3166-1 alpha-2), `referrer` (external page that sent the visitor), `query_params` (sanitized query string), `duration_ms` (time on that page), `created_at`. The raw IP and User-Agent are not stored.
@@ -34,6 +36,6 @@ Staff need the **Visitor analysis** page in the role matrix (on by default for s
 
 ## Privacy
 
-This is first-party counting for the catalog operator. It is not advertising. If the public site is aimed at the UK or EU, show a cookie notice and treat `levo_vid` as an analytics cookie.
+This is first-party counting for the catalog operator. It is not advertising. The visit counter runs only when the stored choice is `all`. `necessary` keeps the staff login cookie and leaves the counter off. The choice is a hash of the IP in `cookie_consents` (the raw address is not stored) and does not expire.
 
 Rate limits trust nginx `X-Real-IP` (not the first `X-Forwarded-For` hop).

@@ -76,6 +76,9 @@ export const updateSiteSettings = asyncHandler(async (req: Request, res: Respons
     'resource_technical_body',
     'seo_title',
     'seo_description',
+    'cookie_notice',
+    'cookie_policy_title',
+    'cookie_policy_body',
   ] as const;
 
   const hrefFields = new Set([

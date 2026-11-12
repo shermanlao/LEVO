@@ -50,7 +50,7 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   {
     id: 'settings',
     label: 'Settings',
-    description: 'Brand, homepage, contact, resources, and SEO.',
+    description: 'Brand, homepage, contact, resources, cookies, and SEO.',
     helpKey: 'admin.nav.settings',
     links: [
       { href: '/admin/settings', label: 'Site settings', helpKey: 'admin.dash.link.settings', pageKey: 'settings' },

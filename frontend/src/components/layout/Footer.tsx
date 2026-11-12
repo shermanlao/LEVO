@@ -186,6 +186,11 @@ export default function Footer({ contact }: { contact: SiteContact | null }) {
                   Technical Underneath
                 </HelpLink>
               </li>
+              <li>
+                <HelpLink href="/policies/cookie-policy" helpKey="cookies.policy" className={LINK_CLASS}>
+                  Cookie policy
+                </HelpLink>
+              </li>
             </ul>
           </div>
           {safeMedia.length ? (

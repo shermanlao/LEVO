@@ -4,12 +4,21 @@ type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
 
-function clientIp(req: Request): string {
+/** Nginx `X-Real-IP`, otherwise the socket address. Loopback is always `127.0.0.1`. */
+export function clientIp(req: Request): string {
   const realIp = req.headers['x-real-ip'];
-  if (typeof realIp === 'string' && realIp.trim()) {
-    return realIp.trim();
-  }
-  return req.ip || req.socket.remoteAddress || 'unknown';
+  const raw =
+    typeof realIp === 'string' && realIp.trim()
+      ? realIp.trim()
+      : req.ip || req.socket.remoteAddress || 'unknown';
+  return normalizeClientIp(raw);
+}
+
+export function normalizeClientIp(ip: string): string {
+  let value = String(ip || '').trim();
+  if (value.startsWith('::ffff:')) value = value.slice('::ffff:'.length);
+  if (value === '::1') return '127.0.0.1';
+  return value || 'unknown';
 }
 
 export function rateLimit(options: { windowMs: number; max: number; name: string }) {
